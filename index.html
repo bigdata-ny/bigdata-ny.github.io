@@ -235,6 +235,125 @@
             
               
                 
+                <a class="post-title-link" href="/2016/07/30/introducing-apache-spark-2-0/" itemprop="url">
+                  Apache Spark 2.0 正式发布：Easier、Faster、Smarter
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-07-30T00:25:44+08:00" content="2016-07-30">
+              2016-07-30
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p><em>摘要</em>：Apache Spark 2.0 正式发布，下面来深度解读一下。主要从Apache Spark 2.0的Easier、Faster和Smarter三方面来体现。</p>
+<h4 id="Easier-ANSI-SQL-and-Streamlined-APIs"><a href="#Easier-ANSI-SQL-and-Streamlined-APIs" class="headerlink" title="Easier: ANSI SQL and Streamlined APIs"></a>Easier: ANSI SQL and Streamlined APIs</h4><p>除了Spark一贯“引以为傲”的简单易用API外，Spark 2.0主要聚焦在两方面：<br>(1) standard SQL support；<br>(2) DataFrame/Dataset API的统一。</p>
+<p>在SQL方面，扩展了Spark的SQL支持，引入ANSI SQL解析器和子查询。Spark 2.0 可执行所有99 TPC-DS查询（支持SQL:2003）。</p>
+<p>在API编程方面，主要是提供了简化的Spark APIs：</p>
+<ul>
+<li>DataFrames和Datasets的API统一，支持Scala/Java，关于RDD、DataFrames和Datasets三种API的详细解析见《<a href="http://mp.weixin.qq.com/s?__biz=MzI0MDIxMDM0MQ==&amp;mid=2247483705&amp;idx=1&amp;sn=5e836945a9951e0cbfd2e3f3dfed4f82&amp;scene=21#wechat_redirect" target="_blank" rel="external">Apache Spark 2.0三种API的传说：RDD，DataFrame和Dataset</a>》；</li>
+<li>SparkSession：SparkSession在Spark 2.0中是替代SQLContext和HiveContext的，作为新的入口点。老的SQLContext和HiveContext继续保留，味了向后兼容；</li>
+<li>更简单、更高效的Accumulator API；</li>
+<li>基于DataFrame的Machine Learning API作为主要的ML API；</li>
+<li>机器学习管道的持久化，详细解析见《<a href="http://mp.weixin.qq.com/s?__biz=MzI0MDIxMDM0MQ==&amp;mid=2247483651&amp;idx=1&amp;sn=f500ab53b594428ac00d3fe26cf558df&amp;scene=21#wechat_redirect" target="_blank" rel="external">Apache Spark 2.0预览： 机器学习模型持久化</a>》；</li>
+<li>R语言支持Distributed algorithm。</li>
+</ul>
+<h4 id="Faster-Apache-Spark-as-a-Compiler"><a href="#Faster-Apache-Spark-as-a-Compiler" class="headerlink" title="Faster: Apache Spark as a Compiler"></a>Faster: Apache Spark as a Compiler</h4><p>重新思考Spark的物理执行层时，发现大部分CPU时间花费在毫无意义的工作上了，比如，虚拟函数的调用或者读/写中间数据到CPU cache或者内存，着在其它现代数据引擎中都存在（Spark或者MPP数据库）。所以得想办法减少CPU时间浪费。</p>
+<p>Spark 2.0 使用第二代Tungsten engine。Tungsten engine应用现代编译器原理和MPP数据库技术到Spark。主要得方法是“whole-stage code generation”。具体分析见我在InfoQ上的文章。</p>
+<h4 id="Smarter-Structured-Streaming"><a href="#Smarter-Structured-Streaming" class="headerlink" title="Smarter: Structured Streaming"></a>Smarter: Structured Streaming</h4><p>Spark Streaming在Spark 2.0之前仅仅是个streaming engine。但广大使用者需要的是离线处理和实时处理深度结合的系统，并能处理业务逻辑的变化，和外部数据存储交互。</p>
+<p>对比之前的streaming系统，Structured Streaming有三方面的优化：</p>
+<ul>
+<li>和批处理job作业的API整合：开发者简单的用DataFrame / Dataset API写完批处理计算，Spark会以Streaming形式自动的进行增量计算;</li>
+<li>和存储系统交互中保持事务性：Structured Streaming会在跨引擎和存储系统中处理fault tolerance和consistency;</li>
+<li>和Spark其它组件紧密集成： Structured Streaming处理完的数据可直接放入Spark SQL和MLlib等处理。</li>
+</ul>
+<h4 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h4><p>以上即为Apache Spark 2.0的解读，主要在用户的易用性和性能上做了优化。</p>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2016/07/23/first-blog/" itemprop="url">
                   Hello 小小妮
                 </a>
@@ -342,14 +461,14 @@
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
           <img class="site-author-image" itemprop="image"
                src="/images/avatar.gif"
-               alt="John Doe" />
-          <p class="site-author-name" itemprop="name">John Doe</p>
+               alt="侠天" />
+          <p class="site-author-name" itemprop="name">侠天</p>
           <p class="site-description motion-element" itemprop="description"></p>
         </div>
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">1</span>
+              <span class="site-state-item-count">2</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -393,7 +512,7 @@
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
-  <span class="author" itemprop="copyrightHolder">John Doe</span>
+  <span class="author" itemprop="copyrightHolder">侠天</span>
 </div>
 
 <div class="powered-by">
@@ -491,6 +610,26 @@
   
 
   
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+  </script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+    });
+  </script>
+  <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
 
   
 
