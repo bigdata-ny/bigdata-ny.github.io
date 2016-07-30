@@ -84,15 +84,24 @@
 
 
 
-<meta name="description" content="侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。">
-<meta property="og:type" content="website">
+<meta name="description" content="如何编写自己的推荐系统摘要：推荐系统过去都是用在物品推荐上，Netflix是最典型的例子。当你浏览几个物品之后，它会给你推荐新的物品。你是否思考过这是如何工作的？或者应用到你自己的网站或者应用中？
+作者将使用Python完成一个完整的、简单的推荐系统，并给出相应的代码。这里将使用电影点击率数据（1 － 5 星）作为源数据集。
+小规模实例在进行成千上万大规模点击率实验之前，先使用小规模的数据集来展">
+<meta property="og:type" content="article">
 <meta property="og:title" content="神机喵算">
-<meta property="og:url" content="http://yoursite.com/index.html">
+<meta property="og:url" content="http://yoursite.com/2016/07/31/how-to-write-your-own-recommendation-system-part-1/index.html">
 <meta property="og:site_name" content="神机喵算">
-<meta property="og:description" content="侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。">
+<meta property="og:description" content="如何编写自己的推荐系统摘要：推荐系统过去都是用在物品推荐上，Netflix是最典型的例子。当你浏览几个物品之后，它会给你推荐新的物品。你是否思考过这是如何工作的？或者应用到你自己的网站或者应用中？
+作者将使用Python完成一个完整的、简单的推荐系统，并给出相应的代码。这里将使用电影点击率数据（1 － 5 星）作为源数据集。
+小规模实例在进行成千上万大规模点击率实验之前，先使用小规模的数据集来展">
+<meta property="og:image" content="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg">
+<meta property="og:updated_time" content="2016-07-30T17:35:49.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="神机喵算">
-<meta name="twitter:description" content="侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。">
+<meta name="twitter:description" content="如何编写自己的推荐系统摘要：推荐系统过去都是用在物品推荐上，Netflix是最典型的例子。当你浏览几个物品之后，它会给你推荐新的物品。你是否思考过这是如何工作的？或者应用到你自己的网站或者应用中？
+作者将使用Python完成一个完整的、简单的推荐系统，并给出相应的代码。这里将使用电影点击率数据（1 － 5 星）作为源数据集。
+小规模实例在进行成千上万大规模点击率实验之前，先使用小规模的数据集来展">
+<meta name="twitter:image" content="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg">
 
 
 
@@ -113,9 +122,9 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/"/>
+  <link rel="canonical" href="http://yoursite.com/2016/07/31/how-to-write-your-own-recommendation-system-part-1/"/>
 
-  <title> 神机喵算 </title>
+  <title>  | 神机喵算 </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -136,9 +145,7 @@
     
   
 
-  <div class="container one-collumn sidebar-position-left 
-   page-home 
- ">
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -215,9 +222,9 @@
         <div class="content-wrap">
           <div id="content" class="content">
             
-  <section id="posts" class="posts-expand">
+
+  <div id="posts" class="posts-expand">
     
-      
 
   
   
@@ -238,123 +245,6 @@
             
               
                 
-                <a class="post-title-link" href="/2016/07/31/building-machine-learning-estimator-in-tensorflow/" itemprop="url">
-                  未命名
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-07-31T01:41:06+08:00" content="2016-07-31">
-              2016-07-31
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <hr>
-<h2 id="【机器学习】在TensorFlow中构建自定义Estimator：深度解析TensorFlow组件Estimator"><a href="#【机器学习】在TensorFlow中构建自定义Estimator：深度解析TensorFlow组件Estimator" class="headerlink" title="【机器学习】在TensorFlow中构建自定义Estimator：深度解析TensorFlow组件Estimator"></a>【机器学习】在TensorFlow中构建自定义Estimator：深度解析TensorFlow组件Estimator</h2><p>你是否思考过TensorFlow的tutorial<a href="https://www.tensorflow.org/versions/master/tutorials/linear/overview.html#large-scale-linear-models-with-tensorflow" target="_blank" rel="external"><large-scale linear="" models=""></large-scale></a>和<a href="https://www.tensorflow.org/versions/master/tutorials/wide_and_deep/index.html#tensorflow-wide-deep-learning-tutorial" target="_blank" rel="external"><wide &="" deep="" learning=""></wide></a>其背后的“魔力”？希望这篇文章至少能给你思考的正确方向。</p>
-<p>TensorFlow的基本概念可以去查看TensorFlow官方文档。这里将帮你更好的理解<a href="https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib/learn/python/learn" target="_blank" rel="external">TensorFlow Learn</a>中estimator的工作原理，并指导你构建适合自己特定应用的estimator。</p>
-<h4 id="BaseEstimator和Estimator的理解"><a href="#BaseEstimator和Estimator的理解" class="headerlink" title="BaseEstimator和Estimator的理解"></a>BaseEstimator和Estimator的理解</h4><p>BaseEstimator是TensorFlow训练和评估模块的抽象和基类。它利用graph_actions.py的隐藏逻辑，提供像fit()，partial_fit()，evaluate()和predict()的基本功能，处理不同类型的输入数据批量拉取(<em>Note</em>：未来learn.DataFrame将替代DataFeeder)。它通过dtypes来检查输入数据的兼容，考虑输入数据是否稀疏需要使用estimators.tensor_signature。</p>
-<p>BaseEstimator为monitors，checkpointing等初始化设置，并提供了构建和评估自定义模块的大部分逻辑。_get_train_ops()， _get_eval_ops()和_get_predict_ops()放在子类中实现，给Estimator自定义带来了更大的自由。BaseEstimator也是分布式的。</p>
-<p>TensorFlow模块中Estimator的实现给我们重写BaseEstimator子类提供了很好的范本。<br>例如，Estimator中的_get_train_ops()载入features和targets作为输入，返回训练Operation和损失Tensor的一个tuple。如果你想完成自己的estimator，并且用于非监督机器学习训练，这时你就可以自由决定targets是否可忽略。</p>
-<p>类似地，子类中的_get_eval_ops()可自定义metric来评估每步的训练。在TensorFlow的high-level模块中可发现一打适用的metric。它们会返回Tensor对象的字典，表示指定metric的评价ops。</p>
-<p>_get_predict_ops()可实现自定义的prediction，例如 概率 v.s. 实际预测输出。它将返回一个Tensor或者Tensor对象的字典，表示预测ops。你可以很轻松的使用父类的predict()函数实现像transform()的功能。</p>
-<h4 id="Estimator示例"><a href="#Estimator示例" class="headerlink" title="Estimator示例"></a>Estimator示例</h4><h5 id="逻辑回归（LogisticRegressor）"><a href="#逻辑回归（LogisticRegressor）" class="headerlink" title="逻辑回归（LogisticRegressor）"></a>逻辑回归（LogisticRegressor）</h5><p>Estimator已经提供了自定义estimator大部分实现。例如，LogisticRegressor仅需实现自己的metric即可，比如AUC，accuracy，precision和recall。开发者使用LogisticRegressor子类即可实现二值分类问题。</p>
-<h5 id="随机森林（TensorForestEstimator）"><a href="#随机森林（TensorForestEstimator）" class="headerlink" title="随机森林（TensorForestEstimator）"></a>随机森林（TensorForestEstimator）</h5><p>TensorForestEstimator已经增加到TensorFlow Learn。contrib.tensor_forest详细的实现了随机森林算法（Random Forests）评估器，并对外提供high-level API使得开发者构建随机森林评估器更简单。</p>
-<p>例如，开发者只需传入params到构造器，params使用params.fill()来填充，而不用传入所有的超参数，Tensor Forest自己的RandomForestGraphs使用这些参数来构建整幅图。</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">TensorForestEstimator</span><span class="params">(estimator.BaseEstimator)</span>:</span></div><div class="line">  <span class="string">"""An estimator that can train and evaluate a random forest."""</span></div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, params, device_assigner=None, model_dir=None,</span></span></div><div class="line">               graph_builder_class=tensor_forest.RandomForestGraphs,</div><div class="line">               master=<span class="string">''</span>, accuracy_metric=None,</div><div class="line">               tf_random_seed=None, verbose=<span class="number">1</span>,</div><div class="line">               config=None):</div><div class="line">    self.params = params.fill()</div></pre></td></tr></table></figure>
-<p>随机森林算法的接口实现有许多细节，_get_predict_ops()利用tensor_forest.RandomForestGraphs来构建随机森林图，调用graph_builder.inference_graph来获取预测ops。</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">_get_predict_ops</span><span class="params">(self, features)</span>:</span></div><div class="line">    graph_builder = self.graph_builder_class(</div><div class="line">        self.params, device_assigner=self.device_assigner, training=<span class="keyword">False</span>,</div><div class="line">        **self.construction_args)</div><div class="line">    features, spec = data_ops.ParseDataTensorOrDict(features)</div><div class="line">    <span class="keyword">return</span> graph_builder.inference_graph(features, data_spec=spec)</div></pre></td></tr></table></figure>
-<p>类似地，使用graph_builder.training_loss来实现_get_train_ops()。注意，TensorForestEstimator使用了tensor_forest.data.data_ops的模块功能，比如 ParseDataTensorOrDict和ParseLabelTensorOrDict解析输入特征和标签。</p>
-<h4 id="其它用例"><a href="#其它用例" class="headerlink" title="其它用例"></a>其它用例</h4><p>K-means聚类的estimator刚加入项目，放在contrib.factorization.python.ops.kmeans。 更多的例子可以在learn.estimators中找到。</p>
-<p>强烈推荐你先领悟代码整体结构，开始实现自己的estimator之旅！</p>
-<h6 id="参考：http-terrytangyuan-github-io-2016-07-08-understand-and-build-tensorflow-estimator"><a href="#参考：http-terrytangyuan-github-io-2016-07-08-understand-and-build-tensorflow-estimator" class="headerlink" title="参考：http://terrytangyuan.github.io/2016/07/08/understand-and-build-tensorflow-estimator"></a>参考：<a href="http://terrytangyuan.github.io/2016/07/08/understand-and-build-tensorflow-estimator" target="_blank" rel="external">http://terrytangyuan.github.io/2016/07/08/understand-and-build-tensorflow-estimator</a></h6><hr>
-<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
-<p>若发现以上文章有任何不妥，请联系我。</p>
-<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/07/31/how-to-write-your-own-recommendation-system-part-1/" itemprop="url">
-                  未命名
-                </a>
               
             
           </h1>
@@ -394,9 +284,7 @@
       
 
       
-        
-          
-            <hr>
+        <hr>
 <h2 id="如何编写自己的推荐系统"><a href="#如何编写自己的推荐系统" class="headerlink" title="如何编写自己的推荐系统"></a>如何编写自己的推荐系统</h2><p><em>摘要</em>：推荐系统过去都是用在物品推荐上，Netflix是最典型的例子。当你浏览几个物品之后，它会给你推荐新的物品。你是否思考过这是如何工作的？或者应用到你自己的网站或者应用中？</p>
 <p>作者将使用Python完成一个完整的、简单的推荐系统，并给出相应的代码。这里将使用电影点击率数据（1 － 5 星）作为源数据集。</p>
 <h4 id="小规模实例"><a href="#小规模实例" class="headerlink" title="小规模实例"></a>小规模实例</h4><p>在进行成千上万大规模点击率实验之前，先使用小规模的数据集来展示推荐系统是如何工作的，这样会很快看到一些有意义的结果。</p>
@@ -488,16 +376,20 @@
 <p>若发现以上文章有任何不妥，请联系我。</p>
 <p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
 
-          
+      
+    </div>
+
+    <div>
+      
         
+
       
     </div>
 
     <div>
       
-    </div>
+        
 
-    <div>
       
     </div>
 
@@ -505,232 +397,36 @@
       
 
       
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
             
+              <a href="/2016/07/30/introducing-apache-spark-2-0/" rel="next" title="Apache Spark 2.0 正式发布：Easier、Faster、Smarter">
+                <i class="fa fa-chevron-left"></i> Apache Spark 2.0 正式发布：Easier、Faster、Smarter
+              </a>
             
-              
-                
-                <a class="post-title-link" href="/2016/07/30/introducing-apache-spark-2-0/" itemprop="url">
-                  Apache Spark 2.0 正式发布：Easier、Faster、Smarter
-                </a>
-              
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
             
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-07-30T00:25:44+08:00" content="2016-07-30">
-              2016-07-30
-            </time>
-          </span>
-
-          
-
-          
+              <a href="/2016/07/31/building-machine-learning-estimator-in-tensorflow/" rel="prev" title="">
+                 <i class="fa fa-chevron-right"></i>
+              </a>
             
-          
-
-          
-
-          
-          
-
-          
+          </div>
         </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
       
 
       
-        
-          
-            <p><em>摘要</em>：Apache Spark 2.0 正式发布，下面来深度解读一下。主要从Apache Spark 2.0的Easier、Faster和Smarter三方面来体现。</p>
-<h4 id="Easier-ANSI-SQL-and-Streamlined-APIs"><a href="#Easier-ANSI-SQL-and-Streamlined-APIs" class="headerlink" title="Easier: ANSI SQL and Streamlined APIs"></a>Easier: ANSI SQL and Streamlined APIs</h4><p>除了Spark一贯“引以为傲”的简单易用API外，Spark 2.0主要聚焦在两方面：<br>(1) standard SQL support；<br>(2) DataFrame/Dataset API的统一。</p>
-<p>在SQL方面，扩展了Spark的SQL支持，引入ANSI SQL解析器和子查询。Spark 2.0 可执行所有99 TPC-DS查询（支持SQL:2003）。</p>
-<p>在API编程方面，主要是提供了简化的Spark APIs：</p>
-<ul>
-<li>DataFrames和Datasets的API统一，支持Scala/Java，关于RDD、DataFrames和Datasets三种API的详细解析见《<a href="http://mp.weixin.qq.com/s?__biz=MzI0MDIxMDM0MQ==&amp;mid=2247483705&amp;idx=1&amp;sn=5e836945a9951e0cbfd2e3f3dfed4f82&amp;scene=21#wechat_redirect" target="_blank" rel="external">Apache Spark 2.0三种API的传说：RDD，DataFrame和Dataset</a>》；</li>
-<li>SparkSession：SparkSession在Spark 2.0中是替代SQLContext和HiveContext的，作为新的入口点。老的SQLContext和HiveContext继续保留，味了向后兼容；</li>
-<li>更简单、更高效的Accumulator API；</li>
-<li>基于DataFrame的Machine Learning API作为主要的ML API；</li>
-<li>机器学习管道的持久化，详细解析见《<a href="http://mp.weixin.qq.com/s?__biz=MzI0MDIxMDM0MQ==&amp;mid=2247483651&amp;idx=1&amp;sn=f500ab53b594428ac00d3fe26cf558df&amp;scene=21#wechat_redirect" target="_blank" rel="external">Apache Spark 2.0预览： 机器学习模型持久化</a>》；</li>
-<li>R语言支持Distributed algorithm。</li>
-</ul>
-<h4 id="Faster-Apache-Spark-as-a-Compiler"><a href="#Faster-Apache-Spark-as-a-Compiler" class="headerlink" title="Faster: Apache Spark as a Compiler"></a>Faster: Apache Spark as a Compiler</h4><p>重新思考Spark的物理执行层时，发现大部分CPU时间花费在毫无意义的工作上了，比如，虚拟函数的调用或者读/写中间数据到CPU cache或者内存，着在其它现代数据引擎中都存在（Spark或者MPP数据库）。所以得想办法减少CPU时间浪费。</p>
-<p>Spark 2.0 使用第二代Tungsten engine。Tungsten engine应用现代编译器原理和MPP数据库技术到Spark。主要得方法是“whole-stage code generation”。具体分析见我在InfoQ上的文章。</p>
-<h4 id="Smarter-Structured-Streaming"><a href="#Smarter-Structured-Streaming" class="headerlink" title="Smarter: Structured Streaming"></a>Smarter: Structured Streaming</h4><p>Spark Streaming在Spark 2.0之前仅仅是个streaming engine。但广大使用者需要的是离线处理和实时处理深度结合的系统，并能处理业务逻辑的变化，和外部数据存储交互。</p>
-<p>对比之前的streaming系统，Structured Streaming有三方面的优化：</p>
-<ul>
-<li>和批处理job作业的API整合：开发者简单的用DataFrame / Dataset API写完批处理计算，Spark会以Streaming形式自动的进行增量计算;</li>
-<li>和存储系统交互中保持事务性：Structured Streaming会在跨引擎和存储系统中处理fault tolerance和consistency;</li>
-<li>和Spark其它组件紧密集成： Structured Streaming处理完的数据可直接放入Spark SQL和MLlib等处理。</li>
-</ul>
-<h4 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h4><p>以上即为Apache Spark 2.0的解读，主要在用户的易用性和性能上做了优化。</p>
-<hr>
-<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
-<p>若发现以上文章有任何不妥，请联系我。</p>
-<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
       
     </footer>
   </article>
 
 
-    
-      
 
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/07/23/first-blog/" itemprop="url">
-                  Hello 小小妮
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-07-23T00:12:01+08:00" content="2016-07-23">
-              2016-07-23
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="主题"><a href="#主题" class="headerlink" title="主题"></a>主题</h3><p>you’re my world!</p>
-
-          
-        
+    <div class="post-spread">
       
     </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-  </section>
-
-  
+  </div>
 
 
           </div>
@@ -738,6 +434,10 @@
 
 
           
+  <div class="comments" id="comments">
+    
+  </div>
+
 
         </div>
         
@@ -757,8 +457,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview sidebar-panel  sidebar-panel-active ">
+      <section class="site-overview sidebar-panel ">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
           <img class="site-author-image" itemprop="image"
                src="http://img0.ph.126.net/3vPAbMoh_6fH3-g_I0zo-w==/6631748363397501906.jpg"
@@ -814,6 +523,17 @@
 
       </section>
 
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#如何编写自己的推荐系统"><span class="nav-number">1.</span> <span class="nav-text">如何编写自己的推荐系统</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#小规模实例"><span class="nav-number">1.0.1.</span> <span class="nav-text">小规模实例</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Cosine-Distance-Similarity"><span class="nav-number">1.0.2.</span> <span class="nav-text">Cosine Distance/Similarity</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#下期内容"><span class="nav-number">1.0.3.</span> <span class="nav-text">下期内容</span></a></li></ol></li></ol></li></ol></div>
+            
+          </div>
+        </section>
       
 
     </div>
@@ -910,6 +630,10 @@
   
 
   
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
 
   
 
