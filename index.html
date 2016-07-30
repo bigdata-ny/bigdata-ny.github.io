@@ -238,122 +238,8 @@
             
               
                 
-                <a class="post-title-link" href="/2016/07/31/building-machine-learning-estimator-in-tensorflow/" itemprop="url">
-                  未命名
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-07-31T01:41:06+08:00" content="2016-07-31">
-              2016-07-31
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <hr>
-<h2 id="【机器学习】在TensorFlow中构建自定义Estimator：深度解析TensorFlow组件Estimator"><a href="#【机器学习】在TensorFlow中构建自定义Estimator：深度解析TensorFlow组件Estimator" class="headerlink" title="【机器学习】在TensorFlow中构建自定义Estimator：深度解析TensorFlow组件Estimator"></a>【机器学习】在TensorFlow中构建自定义Estimator：深度解析TensorFlow组件Estimator</h2><p>你是否思考过TensorFlow的tutorial<a href="https://www.tensorflow.org/versions/master/tutorials/linear/overview.html#large-scale-linear-models-with-tensorflow" target="_blank" rel="external"><large-scale linear="" models=""></large-scale></a>和<a href="https://www.tensorflow.org/versions/master/tutorials/wide_and_deep/index.html#tensorflow-wide-deep-learning-tutorial" target="_blank" rel="external"><wide &="" deep="" learning=""></wide></a>其背后的“魔力”？希望这篇文章至少能给你思考的正确方向。</p>
-<p>TensorFlow的基本概念可以去查看TensorFlow官方文档。这里将帮你更好的理解<a href="https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib/learn/python/learn" target="_blank" rel="external">TensorFlow Learn</a>中estimator的工作原理，并指导你构建适合自己特定应用的estimator。</p>
-<h4 id="BaseEstimator和Estimator的理解"><a href="#BaseEstimator和Estimator的理解" class="headerlink" title="BaseEstimator和Estimator的理解"></a>BaseEstimator和Estimator的理解</h4><p>BaseEstimator是TensorFlow训练和评估模块的抽象和基类。它利用graph_actions.py的隐藏逻辑，提供像fit()，partial_fit()，evaluate()和predict()的基本功能，处理不同类型的输入数据批量拉取(<em>Note</em>：未来learn.DataFrame将替代DataFeeder)。它通过dtypes来检查输入数据的兼容，考虑输入数据是否稀疏需要使用estimators.tensor_signature。</p>
-<p>BaseEstimator为monitors，checkpointing等初始化设置，并提供了构建和评估自定义模块的大部分逻辑。_get_train_ops()， _get_eval_ops()和_get_predict_ops()放在子类中实现，给Estimator自定义带来了更大的自由。BaseEstimator也是分布式的。</p>
-<p>TensorFlow模块中Estimator的实现给我们重写BaseEstimator子类提供了很好的范本。<br>例如，Estimator中的_get_train_ops()载入features和targets作为输入，返回训练Operation和损失Tensor的一个tuple。如果你想完成自己的estimator，并且用于非监督机器学习训练，这时你就可以自由决定targets是否可忽略。</p>
-<p>类似地，子类中的_get_eval_ops()可自定义metric来评估每步的训练。在TensorFlow的high-level模块中可发现一打适用的metric。它们会返回Tensor对象的字典，表示指定metric的评价ops。</p>
-<p>_get_predict_ops()可实现自定义的prediction，例如 概率 v.s. 实际预测输出。它将返回一个Tensor或者Tensor对象的字典，表示预测ops。你可以很轻松的使用父类的predict()函数实现像transform()的功能。</p>
-<h4 id="Estimator示例"><a href="#Estimator示例" class="headerlink" title="Estimator示例"></a>Estimator示例</h4><h5 id="逻辑回归（LogisticRegressor）"><a href="#逻辑回归（LogisticRegressor）" class="headerlink" title="逻辑回归（LogisticRegressor）"></a>逻辑回归（LogisticRegressor）</h5><p>Estimator已经提供了自定义estimator大部分实现。例如，LogisticRegressor仅需实现自己的metric即可，比如AUC，accuracy，precision和recall。开发者使用LogisticRegressor子类即可实现二值分类问题。</p>
-<h5 id="随机森林（TensorForestEstimator）"><a href="#随机森林（TensorForestEstimator）" class="headerlink" title="随机森林（TensorForestEstimator）"></a>随机森林（TensorForestEstimator）</h5><p>TensorForestEstimator已经增加到TensorFlow Learn。contrib.tensor_forest详细的实现了随机森林算法（Random Forests）评估器，并对外提供high-level API使得开发者构建随机森林评估器更简单。</p>
-<p>例如，开发者只需传入params到构造器，params使用params.fill()来填充，而不用传入所有的超参数，Tensor Forest自己的RandomForestGraphs使用这些参数来构建整幅图。</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">TensorForestEstimator</span><span class="params">(estimator.BaseEstimator)</span>:</span></div><div class="line">  <span class="string">"""An estimator that can train and evaluate a random forest."""</span></div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, params, device_assigner=None, model_dir=None,</span></span></div><div class="line">               graph_builder_class=tensor_forest.RandomForestGraphs,</div><div class="line">               master=<span class="string">''</span>, accuracy_metric=None,</div><div class="line">               tf_random_seed=None, verbose=<span class="number">1</span>,</div><div class="line">               config=None):</div><div class="line">    self.params = params.fill()</div></pre></td></tr></table></figure>
-<p>随机森林算法的接口实现有许多细节，_get_predict_ops()利用tensor_forest.RandomForestGraphs来构建随机森林图，调用graph_builder.inference_graph来获取预测ops。</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">_get_predict_ops</span><span class="params">(self, features)</span>:</span></div><div class="line">    graph_builder = self.graph_builder_class(</div><div class="line">        self.params, device_assigner=self.device_assigner, training=<span class="keyword">False</span>,</div><div class="line">        **self.construction_args)</div><div class="line">    features, spec = data_ops.ParseDataTensorOrDict(features)</div><div class="line">    <span class="keyword">return</span> graph_builder.inference_graph(features, data_spec=spec)</div></pre></td></tr></table></figure>
-<p>类似地，使用graph_builder.training_loss来实现_get_train_ops()。注意，TensorForestEstimator使用了tensor_forest.data.data_ops的模块功能，比如 ParseDataTensorOrDict和ParseLabelTensorOrDict解析输入特征和标签。</p>
-<h4 id="其它用例"><a href="#其它用例" class="headerlink" title="其它用例"></a>其它用例</h4><p>K-means聚类的estimator刚加入项目，放在contrib.factorization.python.ops.kmeans。 更多的例子可以在learn.estimators中找到。</p>
-<p>强烈推荐你先领悟代码整体结构，开始实现自己的estimator之旅！</p>
-<h6 id="参考：http-terrytangyuan-github-io-2016-07-08-understand-and-build-tensorflow-estimator"><a href="#参考：http-terrytangyuan-github-io-2016-07-08-understand-and-build-tensorflow-estimator" class="headerlink" title="参考：http://terrytangyuan.github.io/2016/07/08/understand-and-build-tensorflow-estimator"></a>参考：<a href="http://terrytangyuan.github.io/2016/07/08/understand-and-build-tensorflow-estimator" target="_blank" rel="external">http://terrytangyuan.github.io/2016/07/08/understand-and-build-tensorflow-estimator</a></h6><hr>
-<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
-<p>若发现以上文章有任何不妥，请联系我。</p>
-<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
                 <a class="post-title-link" href="/2016/07/31/how-to-write-your-own-recommendation-system-part-1/" itemprop="url">
-                  未命名
+                  如何编写自己的推荐系统
                 </a>
               
             
@@ -366,7 +252,7 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-07-31T01:35:49+08:00" content="2016-07-31">
+            <time itemprop="dateCreated" datetime="2016-07-31T01:55:12+08:00" content="2016-07-31">
               2016-07-31
             </time>
           </span>
@@ -396,8 +282,7 @@
       
         
           
-            <hr>
-<h2 id="如何编写自己的推荐系统"><a href="#如何编写自己的推荐系统" class="headerlink" title="如何编写自己的推荐系统"></a>如何编写自己的推荐系统</h2><p><em>摘要</em>：推荐系统过去都是用在物品推荐上，Netflix是最典型的例子。当你浏览几个物品之后，它会给你推荐新的物品。你是否思考过这是如何工作的？或者应用到你自己的网站或者应用中？</p>
+            <p><em>摘要</em>：推荐系统过去都是用在物品推荐上，Netflix是最典型的例子。当你浏览几个物品之后，它会给你推荐新的物品。你是否思考过这是如何工作的？或者应用到你自己的网站或者应用中？</p>
 <p>作者将使用Python完成一个完整的、简单的推荐系统，并给出相应的代码。这里将使用电影点击率数据（1 － 5 星）作为源数据集。</p>
 <h4 id="小规模实例"><a href="#小规模实例" class="headerlink" title="小规模实例"></a>小规模实例</h4><p>在进行成千上万大规模点击率实验之前，先使用小规模的数据集来展示推荐系统是如何工作的，这样会很快看到一些有意义的结果。</p>
 <p>作者使用的样列数据见<a href="http://infolab.stanford.edu/~ullman/mmds/ch9.pdf" target="_blank" rel="external">链接</a>。<strong>HP</strong>代表&lt;哈利波特&gt;（Harry Potter）三部曲，<strong>TW</strong>代&lt;表暮光之城&gt;（Twilight），<strong>SW</strong>代表&lt;星球大战&gt;（Star Wars）前三部。</p>
@@ -484,6 +369,119 @@
 <h4 id="下期内容"><a href="#下期内容" class="headerlink" title="下期内容"></a>下期内容</h4><p>在下篇文章中，作者使用真实场景的数据集进行实战。主要关注三部分：推荐算法的性能、推荐结果质量和推荐算法精度的计算。</p>
 <p><a href="http://elliot.land/how-to-write-your-own-recommendation-system-part-1" target="_blank" rel="external">http://elliot.land/how-to-write-your-own-recommendation-system-part-1</a></p>
 <hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/07/31/building-machine-learning-estimator-in-tensorflow/" itemprop="url">
+                  【机器学习】在TensorFlow中构建自定义Estimator：深度解析TensorFlow组件Estimator
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-07-31T01:54:52+08:00" content="2016-07-31">
+              2016-07-31
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>你是否思考过TensorFlow的tutorial<a href="https://www.tensorflow.org/versions/master/tutorials/linear/overview.html#large-scale-linear-models-with-tensorflow" target="_blank" rel="external"><large-scale linear="" models=""></large-scale></a>和<a href="https://www.tensorflow.org/versions/master/tutorials/wide_and_deep/index.html#tensorflow-wide-deep-learning-tutorial" target="_blank" rel="external"><wide &="" deep="" learning=""></wide></a>其背后的“魔力”？希望这篇文章至少能给你思考的正确方向。</p>
+<p>TensorFlow的基本概念可以去查看TensorFlow官方文档。这里将帮你更好的理解<a href="https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib/learn/python/learn" target="_blank" rel="external">TensorFlow Learn</a>中estimator的工作原理，并指导你构建适合自己特定应用的estimator。</p>
+<h4 id="BaseEstimator和Estimator的理解"><a href="#BaseEstimator和Estimator的理解" class="headerlink" title="BaseEstimator和Estimator的理解"></a>BaseEstimator和Estimator的理解</h4><p>BaseEstimator是TensorFlow训练和评估模块的抽象和基类。它利用graph_actions.py的隐藏逻辑，提供像fit()，partial_fit()，evaluate()和predict()的基本功能，处理不同类型的输入数据批量拉取(<em>Note</em>：未来learn.DataFrame将替代DataFeeder)。它通过dtypes来检查输入数据的兼容，考虑输入数据是否稀疏需要使用estimators.tensor_signature。</p>
+<p>BaseEstimator为monitors，checkpointing等初始化设置，并提供了构建和评估自定义模块的大部分逻辑。_get_train_ops()， _get_eval_ops()和_get_predict_ops()放在子类中实现，给Estimator自定义带来了更大的自由。BaseEstimator也是分布式的。</p>
+<p>TensorFlow模块中Estimator的实现给我们重写BaseEstimator子类提供了很好的范本。<br>例如，Estimator中的_get_train_ops()载入features和targets作为输入，返回训练Operation和损失Tensor的一个tuple。如果你想完成自己的estimator，并且用于非监督机器学习训练，这时你就可以自由决定targets是否可忽略。</p>
+<p>类似地，子类中的_get_eval_ops()可自定义metric来评估每步的训练。在TensorFlow的high-level模块中可发现一打适用的metric。它们会返回Tensor对象的字典，表示指定metric的评价ops。</p>
+<p>_get_predict_ops()可实现自定义的prediction，例如 概率 v.s. 实际预测输出。它将返回一个Tensor或者Tensor对象的字典，表示预测ops。你可以很轻松的使用父类的predict()函数实现像transform()的功能。</p>
+<h4 id="Estimator示例"><a href="#Estimator示例" class="headerlink" title="Estimator示例"></a>Estimator示例</h4><h5 id="逻辑回归（LogisticRegressor）"><a href="#逻辑回归（LogisticRegressor）" class="headerlink" title="逻辑回归（LogisticRegressor）"></a>逻辑回归（LogisticRegressor）</h5><p>Estimator已经提供了自定义estimator大部分实现。例如，LogisticRegressor仅需实现自己的metric即可，比如AUC，accuracy，precision和recall。开发者使用LogisticRegressor子类即可实现二值分类问题。</p>
+<h5 id="随机森林（TensorForestEstimator）"><a href="#随机森林（TensorForestEstimator）" class="headerlink" title="随机森林（TensorForestEstimator）"></a>随机森林（TensorForestEstimator）</h5><p>TensorForestEstimator已经增加到TensorFlow Learn。contrib.tensor_forest详细的实现了随机森林算法（Random Forests）评估器，并对外提供high-level API使得开发者构建随机森林评估器更简单。</p>
+<p>例如，开发者只需传入params到构造器，params使用params.fill()来填充，而不用传入所有的超参数，Tensor Forest自己的RandomForestGraphs使用这些参数来构建整幅图。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">TensorForestEstimator</span><span class="params">(estimator.BaseEstimator)</span>:</span></div><div class="line">  <span class="string">"""An estimator that can train and evaluate a random forest."""</span></div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, params, device_assigner=None, model_dir=None,</span></span></div><div class="line">               graph_builder_class=tensor_forest.RandomForestGraphs,</div><div class="line">               master=<span class="string">''</span>, accuracy_metric=None,</div><div class="line">               tf_random_seed=None, verbose=<span class="number">1</span>,</div><div class="line">               config=None):</div><div class="line">    self.params = params.fill()</div></pre></td></tr></table></figure>
+<p>随机森林算法的接口实现有许多细节，_get_predict_ops()利用tensor_forest.RandomForestGraphs来构建随机森林图，调用graph_builder.inference_graph来获取预测ops。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">_get_predict_ops</span><span class="params">(self, features)</span>:</span></div><div class="line">    graph_builder = self.graph_builder_class(</div><div class="line">        self.params, device_assigner=self.device_assigner, training=<span class="keyword">False</span>,</div><div class="line">        **self.construction_args)</div><div class="line">    features, spec = data_ops.ParseDataTensorOrDict(features)</div><div class="line">    <span class="keyword">return</span> graph_builder.inference_graph(features, data_spec=spec)</div></pre></td></tr></table></figure>
+<p>类似地，使用graph_builder.training_loss来实现_get_train_ops()。注意，TensorForestEstimator使用了tensor_forest.data.data_ops的模块功能，比如 ParseDataTensorOrDict和ParseLabelTensorOrDict解析输入特征和标签。</p>
+<h4 id="其它用例"><a href="#其它用例" class="headerlink" title="其它用例"></a>其它用例</h4><p>K-means聚类的estimator刚加入项目，放在contrib.factorization.python.ops.kmeans。 更多的例子可以在learn.estimators中找到。</p>
+<p>强烈推荐你先领悟代码整体结构，开始实现自己的estimator之旅！</p>
+<h6 id="参考：http-terrytangyuan-github-io-2016-07-08-understand-and-build-tensorflow-estimator"><a href="#参考：http-terrytangyuan-github-io-2016-07-08-understand-and-build-tensorflow-estimator" class="headerlink" title="参考：http://terrytangyuan.github.io/2016/07/08/understand-and-build-tensorflow-estimator"></a>参考：<a href="http://terrytangyuan.github.io/2016/07/08/understand-and-build-tensorflow-estimator" target="_blank" rel="external">http://terrytangyuan.github.io/2016/07/08/understand-and-build-tensorflow-estimator</a></h6><hr>
 <p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
 <p>若发现以上文章有任何不妥，请联系我。</p>
 <p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>

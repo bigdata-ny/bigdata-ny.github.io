@@ -84,20 +84,23 @@
 
 
 
-<meta name="description" content="【机器学习】在TensorFlow中构建自定义Estimator：深度解析TensorFlow组件Estimator你是否思考过TensorFlow的tutorial和其背后的“魔力”？希望这篇文章至少能给你思考的正确方向。
-TensorFlow的基本概念可以去查看TensorFlow官方文档。这里将帮你更好的理解TensorFlow Learn中estimator的工作原理，并指导你构建适合自">
+<meta name="description" content="你是否思考过TensorFlow的tutorial和其背后的“魔力”？希望这篇文章至少能给你思考的正确方向。
+TensorFlow的基本概念可以去查看TensorFlow官方文档。这里将帮你更好的理解TensorFlow Learn中estimator的工作原理，并指导你构建适合自己特定应用的estimator。
+BaseEstimator和Estimator的理解BaseEstimator是Te">
 <meta property="og:type" content="article">
-<meta property="og:title" content="神机喵算">
+<meta property="og:title" content="【机器学习】在TensorFlow中构建自定义Estimator：深度解析TensorFlow组件Estimator">
 <meta property="og:url" content="http://yoursite.com/2016/07/31/building-machine-learning-estimator-in-tensorflow/index.html">
 <meta property="og:site_name" content="神机喵算">
-<meta property="og:description" content="【机器学习】在TensorFlow中构建自定义Estimator：深度解析TensorFlow组件Estimator你是否思考过TensorFlow的tutorial和其背后的“魔力”？希望这篇文章至少能给你思考的正确方向。
-TensorFlow的基本概念可以去查看TensorFlow官方文档。这里将帮你更好的理解TensorFlow Learn中estimator的工作原理，并指导你构建适合自">
+<meta property="og:description" content="你是否思考过TensorFlow的tutorial和其背后的“魔力”？希望这篇文章至少能给你思考的正确方向。
+TensorFlow的基本概念可以去查看TensorFlow官方文档。这里将帮你更好的理解TensorFlow Learn中estimator的工作原理，并指导你构建适合自己特定应用的estimator。
+BaseEstimator和Estimator的理解BaseEstimator是Te">
 <meta property="og:image" content="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg">
-<meta property="og:updated_time" content="2016-07-30T17:41:06.000Z">
+<meta property="og:updated_time" content="2016-07-30T17:54:52.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="神机喵算">
-<meta name="twitter:description" content="【机器学习】在TensorFlow中构建自定义Estimator：深度解析TensorFlow组件Estimator你是否思考过TensorFlow的tutorial和其背后的“魔力”？希望这篇文章至少能给你思考的正确方向。
-TensorFlow的基本概念可以去查看TensorFlow官方文档。这里将帮你更好的理解TensorFlow Learn中estimator的工作原理，并指导你构建适合自">
+<meta name="twitter:title" content="【机器学习】在TensorFlow中构建自定义Estimator：深度解析TensorFlow组件Estimator">
+<meta name="twitter:description" content="你是否思考过TensorFlow的tutorial和其背后的“魔力”？希望这篇文章至少能给你思考的正确方向。
+TensorFlow的基本概念可以去查看TensorFlow官方文档。这里将帮你更好的理解TensorFlow Learn中estimator的工作原理，并指导你构建适合自己特定应用的estimator。
+BaseEstimator和Estimator的理解BaseEstimator是Te">
 <meta name="twitter:image" content="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg">
 
 
@@ -121,7 +124,7 @@ TensorFlow的基本概念可以去查看TensorFlow官方文档。这里将帮你
 
   <link rel="canonical" href="http://yoursite.com/2016/07/31/building-machine-learning-estimator-in-tensorflow/"/>
 
-  <title>  | 神机喵算 </title>
+  <title> 【机器学习】在TensorFlow中构建自定义Estimator：深度解析TensorFlow组件Estimator | 神机喵算 </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -241,7 +244,7 @@ TensorFlow的基本概念可以去查看TensorFlow官方文档。这里将帮你
             
             
               
-                
+                【机器学习】在TensorFlow中构建自定义Estimator：深度解析TensorFlow组件Estimator
               
             
           </h1>
@@ -253,7 +256,7 @@ TensorFlow的基本概念可以去查看TensorFlow官方文档。这里将帮你
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-07-31T01:41:06+08:00" content="2016-07-31">
+            <time itemprop="dateCreated" datetime="2016-07-31T01:54:52+08:00" content="2016-07-31">
               2016-07-31
             </time>
           </span>
@@ -281,8 +284,7 @@ TensorFlow的基本概念可以去查看TensorFlow官方文档。这里将帮你
       
 
       
-        <hr>
-<h2 id="【机器学习】在TensorFlow中构建自定义Estimator：深度解析TensorFlow组件Estimator"><a href="#【机器学习】在TensorFlow中构建自定义Estimator：深度解析TensorFlow组件Estimator" class="headerlink" title="【机器学习】在TensorFlow中构建自定义Estimator：深度解析TensorFlow组件Estimator"></a>【机器学习】在TensorFlow中构建自定义Estimator：深度解析TensorFlow组件Estimator</h2><p>你是否思考过TensorFlow的tutorial<a href="https://www.tensorflow.org/versions/master/tutorials/linear/overview.html#large-scale-linear-models-with-tensorflow" target="_blank" rel="external"><large-scale linear="" models=""></large-scale></a>和<a href="https://www.tensorflow.org/versions/master/tutorials/wide_and_deep/index.html#tensorflow-wide-deep-learning-tutorial" target="_blank" rel="external"><wide &="" deep="" learning=""></wide></a>其背后的“魔力”？希望这篇文章至少能给你思考的正确方向。</p>
+        <p>你是否思考过TensorFlow的tutorial<a href="https://www.tensorflow.org/versions/master/tutorials/linear/overview.html#large-scale-linear-models-with-tensorflow" target="_blank" rel="external"><large-scale linear="" models=""></large-scale></a>和<a href="https://www.tensorflow.org/versions/master/tutorials/wide_and_deep/index.html#tensorflow-wide-deep-learning-tutorial" target="_blank" rel="external"><wide &="" deep="" learning=""></wide></a>其背后的“魔力”？希望这篇文章至少能给你思考的正确方向。</p>
 <p>TensorFlow的基本概念可以去查看TensorFlow官方文档。这里将帮你更好的理解<a href="https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib/learn/python/learn" target="_blank" rel="external">TensorFlow Learn</a>中estimator的工作原理，并指导你构建适合自己特定应用的estimator。</p>
 <h4 id="BaseEstimator和Estimator的理解"><a href="#BaseEstimator和Estimator的理解" class="headerlink" title="BaseEstimator和Estimator的理解"></a>BaseEstimator和Estimator的理解</h4><p>BaseEstimator是TensorFlow训练和评估模块的抽象和基类。它利用graph_actions.py的隐藏逻辑，提供像fit()，partial_fit()，evaluate()和predict()的基本功能，处理不同类型的输入数据批量拉取(<em>Note</em>：未来learn.DataFrame将替代DataFeeder)。它通过dtypes来检查输入数据的兼容，考虑输入数据是否稀疏需要使用estimators.tensor_signature。</p>
 <p>BaseEstimator为monitors，checkpointing等初始化设置，并提供了构建和评估自定义模块的大部分逻辑。_get_train_ops()， _get_eval_ops()和_get_predict_ops()放在子类中实现，给Estimator自定义带来了更大的自由。BaseEstimator也是分布式的。</p>
@@ -327,13 +329,17 @@ TensorFlow的基本概念可以去查看TensorFlow官方文档。这里将帮你
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/07/31/how-to-write-your-own-recommendation-system-part-1/" rel="next" title="">
-                <i class="fa fa-chevron-left"></i> 
+              <a href="/2016/07/30/introducing-apache-spark-2-0/" rel="next" title="Apache Spark 2.0 正式发布：Easier、Faster、Smarter">
+                <i class="fa fa-chevron-left"></i> Apache Spark 2.0 正式发布：Easier、Faster、Smarter
               </a>
             
           </div>
 
           <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/07/31/how-to-write-your-own-recommendation-system-part-1/" rel="prev" title="如何编写自己的推荐系统">
+                如何编写自己的推荐系统 <i class="fa fa-chevron-right"></i>
+              </a>
             
           </div>
         </div>
@@ -453,7 +459,7 @@ TensorFlow的基本概念可以去查看TensorFlow官方文档。这里将帮你
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#【机器学习】在TensorFlow中构建自定义Estimator：深度解析TensorFlow组件Estimator"><span class="nav-number">1.</span> <span class="nav-text">【机器学习】在TensorFlow中构建自定义Estimator：深度解析TensorFlow组件Estimator</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#BaseEstimator和Estimator的理解"><span class="nav-number">1.0.1.</span> <span class="nav-text">BaseEstimator和Estimator的理解</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Estimator示例"><span class="nav-number">1.0.2.</span> <span class="nav-text">Estimator示例</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#逻辑回归（LogisticRegressor）"><span class="nav-number">1.0.2.1.</span> <span class="nav-text">逻辑回归（LogisticRegressor）</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#随机森林（TensorForestEstimator）"><span class="nav-number">1.0.2.2.</span> <span class="nav-text">随机森林（TensorForestEstimator）</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#其它用例"><span class="nav-number">1.0.3.</span> <span class="nav-text">其它用例</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#参考：http-terrytangyuan-github-io-2016-07-08-understand-and-build-tensorflow-estimator"><span class="nav-number">1.0.3.0.1.</span> <span class="nav-text">参考：http://terrytangyuan.github.io/2016/07/08/understand-and-build-tensorflow-estimator</span></a></li></ol></li></ol></li></ol></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#BaseEstimator和Estimator的理解"><span class="nav-number">1.</span> <span class="nav-text">BaseEstimator和Estimator的理解</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Estimator示例"><span class="nav-number">2.</span> <span class="nav-text">Estimator示例</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#逻辑回归（LogisticRegressor）"><span class="nav-number">2.1.</span> <span class="nav-text">逻辑回归（LogisticRegressor）</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#随机森林（TensorForestEstimator）"><span class="nav-number">2.2.</span> <span class="nav-text">随机森林（TensorForestEstimator）</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#其它用例"><span class="nav-number">3.</span> <span class="nav-text">其它用例</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#参考：http-terrytangyuan-github-io-2016-07-08-understand-and-build-tensorflow-estimator"><span class="nav-number">3.0.1.</span> <span class="nav-text">参考：http://terrytangyuan.github.io/2016/07/08/understand-and-build-tensorflow-estimator</span></a></li></ol></li></ol></li></ol></div>
             
           </div>
         </section>
