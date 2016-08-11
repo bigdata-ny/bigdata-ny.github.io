@@ -1,0 +1,687 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="神机喵算" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="写在之前：本书是翻译自&amp;lt;first contact with tensorflow&amp;gt;，已获原作者授权。
+作者写这本书的目的是为了快速实践深度学习。因此，读者应该有基本的机器学习知识和必要的数据知识。本书将采用主流的机器学习算法来进行tensorflow训练。
+第一章将简短介绍TensorFlow代码和编程模型。
+Tensorflow基本概念本章将简短介绍TensorFlow代码和编程模">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深度学习快速实践：TensorFlow">
+<meta property="og:url" content="http://yoursite.com/2016/08/11/first-contact-with-tensorflow-1/index.html">
+<meta property="og:site_name" content="神机喵算">
+<meta property="og:description" content="写在之前：本书是翻译自&amp;lt;first contact with tensorflow&amp;gt;，已获原作者授权。
+作者写这本书的目的是为了快速实践深度学习。因此，读者应该有基本的机器学习知识和必要的数据知识。本书将采用主流的机器学习算法来进行tensorflow训练。
+第一章将简短介绍TensorFlow代码和编程模型。
+Tensorflow基本概念本章将简短介绍TensorFlow代码和编程模">
+<meta property="og:image" content="http://img2.ph.126.net/T1ezwNp0SFMKVJgWCZYEsg==/6631737368281209959.png">
+<meta property="og:image" content="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg">
+<meta property="og:updated_time" content="2016-08-11T15:08:27.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="深度学习快速实践：TensorFlow">
+<meta name="twitter:description" content="写在之前：本书是翻译自&amp;lt;first contact with tensorflow&amp;gt;，已获原作者授权。
+作者写这本书的目的是为了快速实践深度学习。因此，读者应该有基本的机器学习知识和必要的数据知识。本书将采用主流的机器学习算法来进行tensorflow训练。
+第一章将简短介绍TensorFlow代码和编程模型。
+Tensorflow基本概念本章将简短介绍TensorFlow代码和编程模">
+<meta name="twitter:image" content="http://img2.ph.126.net/T1ezwNp0SFMKVJgWCZYEsg==/6631737368281209959.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/08/11/first-contact-with-tensorflow-1/"/>
+
+  <title> 深度学习快速实践：TensorFlow | 神机喵算 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">神机喵算</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                深度学习快速实践：TensorFlow
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-08-11T23:08:27+08:00" content="2016-08-11">
+              2016-08-11
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><em>写在之前</em>：本书是翻译自&lt;<a href="http://www.jorditorres.org/first-contact-with-tensorflow/" target="_blank" rel="external">first contact with tensorflow</a>&gt;，已获原作者授权。</p>
+<p>作者写这本书的目的是为了快速实践深度学习。因此，读者应该有基本的机器学习知识和必要的数据知识。本书将采用主流的机器学习算法来进行tensorflow训练。</p>
+<p>第一章将简短介绍TensorFlow代码和编程模型。</p>
+<h4 id="Tensorflow基本概念"><a href="#Tensorflow基本概念" class="headerlink" title="Tensorflow基本概念"></a>Tensorflow基本概念</h4><p>本章将简短介绍TensorFlow代码和编程模型。学完本章后，期待读者会TensorFlow的package安装方法。</p>
+<h5 id="Tensorflow开源包"><a href="#Tensorflow开源包" class="headerlink" title="Tensorflow开源包"></a>Tensorflow开源包</h5><p>TensorFlow源于Google大脑团队的机器学习和深度神经网络研究。这个系统能够解决更广泛的机器学习问题。</p>
+<p>TensorFlow使用计算图来表示一个计算任务。图中的节点代表数学运算，也可以表示数据的输入、输出和读写等操作；图中的边表示多维数组(Tensors)，节点之间的某种联系。</p>
+<p>TensorFlow使用计算图来构建计算过程，用符号来表示计算操作。这使得TensorFlow可以同时运用Linux 64位操作系统的CPU 和GPU 性能，TensorFlow也可以在移动端Android 或者iOS 上执行。</p>
+<p>TensorFlow的可视化模块TensorBoard可监控算法的运行状态并显示。</p>
+<h5 id="TensorFlow-Serving"><a href="#TensorFlow-Serving" class="headerlink" title="TensorFlow Serving"></a>TensorFlow Serving</h5><p>Google最近开源了<a href="https://tensorflow.github.io/serving" target="_blank" rel="external">TensorFlow Serving</a>，TensorFlow Serving可以帮助机器学习开发者将他们的TensorFlow机器学习模型（可以扩展到其它各类型的机器学习模型）加载到产品中。TensorFlow Serving采用C++编写，并已开源到github。</p>
+<h4 id="TensorFlow和TensorFlow-Serving到底有啥区别呢？"><a href="#TensorFlow和TensorFlow-Serving到底有啥区别呢？" class="headerlink" title="TensorFlow和TensorFlow Serving到底有啥区别呢？"></a>TensorFlow和TensorFlow Serving到底有啥区别呢？</h4><p>TensorFlow项目主要是基于各种机器学习算法构建模型，并为某些特定类型的数据输入做适应学习，而TensorFlow Serving则专注于让这些模型能够加入到产品环境中。开发者使用TensorFlow构建模型，然后TensorFlow Serving基于客户端输入的数据使用前面TensorFlow训练好的模型进行预测。 </p>
+<p>个人认为TensorFlow Serving是将tensorflow训练出来的模型更好的应用于生产环境中，通过它的API等支持的方式来方便对外提供稳定可靠的服务。TensorFlow Serving的意义就在于能够很方便的将深度学习生产化，解决了模型无法提供服务的弊端，并且用的是C++语言，性能上应该不错。这样以后深度学习方向的创业公司都能很方便的将产品商业化，保证7*24小时的可靠服务。</p>
+<p>典型的pipeline：输入待训练的数据到学习者(Learner)中，输出训练模型。稍后模型验证之后发布到TensorFlow Serving系统。<br><img src="http://img2.ph.126.net/T1ezwNp0SFMKVJgWCZYEsg==/6631737368281209959.png" alt="image"><br>对于生产环境来说，启动模型，随着时间不断迭代模型，新的训练数据出现需要训练优化模型，这些都是常态。现在有了TensorFlow Serving就可以在不停止服务的情况下更新模型和数据，Google内部许多pipelines一直在运行。</p>
+<p>客户端和服务端之间的通信采用的是RPC协议实现，其为Google开源的一个高性能RPC框架。</p>
+<h4 id="安装TensorFlow"><a href="#安装TensorFlow" class="headerlink" title="安装TensorFlow"></a>安装TensorFlow</h4><p>是时候开始练手了，你需要一遍看书一边在电脑上操作。</p>
+<p>TensorFlow提供Python API（也可以用C / C ++），所以你得安装Python 2.7（具体咋安装自行Google）。</p>
+<p>一般来讲，使用Python工作时最好用virtualenv虚拟环境。Virtualenv可以在一台机器不同的项目间保持Python依赖隔离。使用virtualenv安装TensorFlow不会覆盖已有的Python版本，这样做也能使排查安装问题变得更容易。</p>
+<p>首先安装必备软件：<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># Ubuntu/Linux 64-bit</span></div><div class="line">$ sudo apt-get install python-pip python-dev python-virtualenv </div><div class="line"></div><div class="line"><span class="comment"># Mac OS X </span></div><div class="line">$ sudo easy_install pip</div><div class="line">$ sudo pip install --upgrade virtualenv</div></pre></td></tr></table></figure></p>
+<p>建立virtualenv环境. 为了将环境建在 ~/tensorflow 目录下, 执行:<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ virtualenv --system-site-packages ~/tensorflow</div></pre></td></tr></table></figure></p>
+<p>接下来激活virtualenv:<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ <span class="built_in">source</span> ~/tensorflow/bin/activate <span class="comment">#  with bash </span></div><div class="line">$ <span class="built_in">source</span> ~/tensorflow/bin/activate.csh <span class="comment">#  with csh</span></div><div class="line">(tensorflow)$</div></pre></td></tr></table></figure></p>
+<p>Once the virtualenv is activated, you can use pip to install TensorFlow inside it:<br>激活virtualenv后即可使用pip在virtualenv内安装TensorFlow：<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># Ubuntu/Linux 64-bit, CPU only:</span></div><div class="line">(tensorflow)$ sudo pip install --upgrade https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.7.1-cp27-none-linux_x86_64.whl </div><div class="line"></div><div class="line"><span class="comment"># Mac OS X, CPU only:</span></div><div class="line">(tensorflow)$ sudo easy_install --upgrade six</div><div class="line">(tensorflow)$ sudo pip install --upgrade https://storage.googleapis.com/tensorflow/mac/tensorflow-0.7.1-cp27-none-any.whl</div></pre></td></tr></table></figure></p>
+<p>你可访问官方文档来确认所安装的版本。</p>
+<p>如果你要在GPU上跑你的代码，你需要访问官方文档来看看是否满足指定的要求。运行Tensorflow GPU需要安装额外的软件。</p>
+<p>当你使用完后可执行如下命令关闭虚拟环境：<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">(tensorflow)$ deactivate</div></pre></td></tr></table></figure></p>
+<p>其它安装TensorFlow的方法请访问官方网站获取信息。</p>
+<h4 id="TensorFlow的-“Hello-World”"><a href="#TensorFlow的-“Hello-World”" class="headerlink" title="TensorFlow的 “Hello World”"></a>TensorFlow的 “Hello World”</h4><p>你可以使用任何文本编辑器编写python代码，然后保存为扩展名“.py”的文件(eg test.py)。用python命令行即可执行test.py。</p>
+<p>为了快速的熟悉TensorFlow编程，下面从一段简单的代码开始：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> tensorflow <span class="keyword">as</span> tf</div><div class="line">  </div><div class="line"> a = tf.placeholder(<span class="string">"float"</span>)</div><div class="line"> b = tf.placeholder(<span class="string">"float"</span>)</div><div class="line">  </div><div class="line"> y = tf.mul(a, b)</div><div class="line">  </div><div class="line"> sess = tf.Session()</div><div class="line">  </div><div class="line"> <span class="keyword">print</span> sess.run(y, feed_dict=&#123;a: <span class="number">3</span>, b: <span class="number">3</span>&#125;)</div></pre></td></tr></table></figure>
+<p>在上面的代码中，导入Python模块<em>tensorflow</em>。然后定义符号变量，也称为占位符。在后面程序执行中会操作这些变量。我们把这些变量作为参数，TensorFlow的乘法函数<em>tf.mul</em>会调用。数学函数<em>tf.mul</em>会操作tensor，这时的动态大小、多维数组。</p>
+<p>TensorFlow的算术操作如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">tf.add，tf.sub，tf.mul，tf.div，tf.mod，tf.abs，tf.neg，tf.sign，tf.inv，tf.square，tf.round，tf.sqrt，tf.pow，tf.exp，tf.log，tf.maximum，tf.minimum，tf.cos，tf.sin</div></pre></td></tr></table></figure></p>
+<p>TensorFlow也为程序员提供一些函数来进行数学操作，列表如下：<br>|操作    |描述|<br>—|—|<br>tf.diag|    给定对角线上的值，返回对角tensor|<br>tf.transpose|    转置|<br>tf.matmul|    tensor乘法，即矩阵乘法|<br>tf.matrix_determinant    |方阵的行列式|<br>tf.matrix_inverse|    方阵的逆矩阵|</p>
+<p>接下来，创建一个会话。事实上，直到这步还没有执行TensorFlow代码。程序通过<em>Session()</em>创建一个会话与Tensorflow库交互；直到调用<em>run()</em>方法才会创建会话，并运行指定的代码。在本例中，<em>run()</em>方法调用变量值和<em>feed_dict</em>参数，表达式运行完成退出会显示结果<em>9</em> 。</p>
+<p>本例比较简单，仅仅为了展示TensorFlow完整的过程。然而，我们更感兴趣的是灵活的结构化代码，插入操作来构建计算图。比如，类似于Python编程中的IPython。为了达到这个目的，TensorFlow提供了<em>tf.InteractiveSession()</em>类。</p>
+<p>编程模型的理解已经超出了本书的范围，但为了继续接下来的章节，我们仅仅需要知道计算结构包含所有的操作信息和数据。</p>
+<p>上面的计算图描述的是数学计算。节点（node）代表数学操作，但是它们也可以代表数据项的点，输出结果或者读写持久化的变量。边（edge）描述的是输入和输出的节点之间的关系。</p>
+<p>TensorFlow 将图形定义转换成分布式执行的操作, 以充分利用可用的计算资源(如 CPU 或 GPU). 一般你不需要显式指定使用 CPU 还是 GPU, TensorFlow 能自动检测. 如果检测到 GPU, TensorFlow 会尽可能地利用找到的第一个 GPU 来执行操作.</p>
+<p>并行计算能让代价大的算法计算加速执行，TensorFlow也在实现上对复杂操作进行了有效的改进。大部分核相关的操作都是设备相关的实现，比如GPU。下面是一些重要的操作/<a href="http://download.tensorflow.org/paper/whitepaper2015.pdf" target="_blank" rel="external">核</a>：</p>
+<table>
+<thead>
+<tr>
+<th>操作分组</th>
+<th>操作</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Maths</td>
+<td>Add, Sub, Mul, Div, Exp, Log, Greater, Less, Equal</td>
+<td></td>
+</tr>
+<tr>
+<td>Array</td>
+<td>Concat, Slice, Split, Constant, Rank, Shape, Shuffle</td>
+<td></td>
+</tr>
+<tr>
+<td>Matrix</td>
+<td>MatMul, MatrixInverse, MatrixDeterminant</td>
+<td></td>
+</tr>
+<tr>
+<td>Neuronal Network</td>
+<td>SoftMax, Sigmoid, ReLU, Convolution2D, MaxPool</td>
+<td></td>
+</tr>
+<tr>
+<td>Checkpointing</td>
+<td>Save, Restore</td>
+<td></td>
+</tr>
+<tr>
+<td>Queues and syncronizations</td>
+<td>Enqueue, Dequeue, MutexAcquire, MutexRelease</td>
+<td></td>
+</tr>
+<tr>
+<td>Flow control</td>
+<td>Merge, Switch, Enter, Leave, NextIteration</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h4 id="TensorBoard-可视化学习"><a href="#TensorBoard-可视化学习" class="headerlink" title="TensorBoard:可视化学习"></a>TensorBoard:可视化学习</h4><p>为了更方便TensorFlow 程序的理解，TensorFlow 包括从函数、调试与优化等方面进行了可视化，并发布了一套叫做<em>TensorBoard</em> 的可视化工具。TensorBoard 从不同统计数据来展现图计算过程的详细信息和参数。</p>
+<p>TensorBoard模块的数据展示是在TensorFlow执行和汇总数据存储的过程。在TensorFlow的<a href="https://www.tensorflow.org/versions/master/api_docs/python/train.html#summary-operations" target="_blank" rel="external">文档</a>，你可以找到更详细的Python API的解释。</p>
+<p>输入下面的指令来启动TensorBoard，包括跟踪（也可以成为序列化）的路径参数：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">(tensorflow)$ tensorboard --logdir=&amp;lt;trace file&amp;gt;</div></pre></td></tr></table></figure>
+<p>TensorBoard 开始运行，你可以通过在浏览器中输入<a href="http://localhost:6006" target="_blank" rel="external">http://localhost:6006</a> 来查看。TensorBoard可视化工具的详细使用已超出本书的范围，若想了解更多，可参见<a href="https://www.tensorflow.org/versions/master/how_tos/graph_viz/index.html" target="_blank" rel="external">文档</a>。</p>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/08/11/netflix-billing-migration-to-aws-part-ii/" rel="next" title="Netflix支付生态系统迁移到AWS的实践（part II）">
+                <i class="fa fa-chevron-left"></i> Netflix支付生态系统迁移到AWS的实践（part II）
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/08/11/graph-of-thrones-neo4j-social-network-analysis/" rel="prev" title="基于社区发现算法和图分析Neo4j解读《权力的游戏》">
+                基于社区发现算法和图分析Neo4j解读《权力的游戏》 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="http://img0.ph.126.net/3vPAbMoh_6fH3-g_I0zo-w==/6631748363397501906.jpg"
+               alt="侠天" />
+          <p class="site-author-name" itemprop="name">侠天</p>
+          <p class="site-description motion-element" itemprop="description">侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">8</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/1333564335" target="_blank" title="微博">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  微博
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://www.infoq.com/cn/author/%E4%BE%A0%E5%A4%A9" target="_blank" title="InfoQ">
+                  
+                    <i class="fa fa-fw fa-infoq"></i>
+                  
+                  InfoQ
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#Tensorflow基本概念"><span class="nav-number">1.</span> <span class="nav-text">Tensorflow基本概念</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Tensorflow开源包"><span class="nav-number">1.1.</span> <span class="nav-text">Tensorflow开源包</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#TensorFlow-Serving"><span class="nav-number">1.2.</span> <span class="nav-text">TensorFlow Serving</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#TensorFlow和TensorFlow-Serving到底有啥区别呢？"><span class="nav-number">2.</span> <span class="nav-text">TensorFlow和TensorFlow Serving到底有啥区别呢？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#安装TensorFlow"><span class="nav-number">3.</span> <span class="nav-text">安装TensorFlow</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#TensorFlow的-“Hello-World”"><span class="nav-number">4.</span> <span class="nav-text">TensorFlow的 “Hello World”</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#TensorBoard-可视化学习"><span class="nav-number">5.</span> <span class="nav-text">TensorBoard:可视化学习</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">侠天</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+  </script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+    });
+  </script>
+  <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+  
+
+  
+
+</body>
+</html>

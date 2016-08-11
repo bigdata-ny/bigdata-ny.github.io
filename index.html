@@ -238,6 +238,532 @@
             
               
                 
+                <a class="post-title-link" href="/2016/08/11/graph-of-thrones-neo4j-social-network-analysis/" itemprop="url">
+                  基于社区发现算法和图分析Neo4j解读《权力的游戏》
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-08-11T23:40:05+08:00" content="2016-08-11">
+              2016-08-11
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p><em>导读</em>：几个月前，数学家 Andrew Beveridge和Jie Shan在数学杂志上发表<a href="https://www.macalester.edu/~abeverid/thrones.html" target="_blank" rel="external">《权力的网络》</a>，主要分析畅销小说《冰与火之歌》第三部《冰雨的风暴》中人物关系，其已经拍成电视剧《权力的游戏》系列。他们在论文中介绍了如何通过文本分析和实体提取构建人物关系的网络。紧接着，使用社交网络分析算法对人物关系网络分析找出最重要的角色；应用社区发现算法来找到人物聚类。</p>
+<p>其中的分析和可视化是用Gephi做的，Gephi是非常流行的图分析工具。但作者觉得使用Neo4j来实现更有趣。</p>
+<h5 id="导入原始数据到Neo4j"><a href="#导入原始数据到Neo4j" class="headerlink" title="导入原始数据到Neo4j"></a>导入原始数据到Neo4j</h5><p>原始数据可从<a href="https://www.macalester.edu/~abeverid/data/stormofswords.csv" target="_blank" rel="external">网络上下载</a>，格式如下：</p>
+<pre><code>Source,Target,Weight
+Aemon,Grenn,5
+Aemon,Samwell,31
+Aerys,Jaime,18
+...
+</code></pre><p>上面是人物关系的之邻接表以及关系权重。作者使用简单的数据模型：<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">(:Character &#123;name&#125;)-[:INTERACTS]-&gt;(:Character &#123;name&#125;)</div></pre></td></tr></table></figure></p>
+<p>带有标签<em>Character</em>的节点代表小说中的角色，用单向关系类型<em>INTERACTS</em>代表小说中的角色有过接触。节点属性会存储角色的名字<em>name</em>，两角色间接触的次数作为关系的属性：权重（<em>weight</em>）。</p>
+<p>首先创建节点c，并做唯一限制性约束，<em>c.name</em>唯一，保证schema的完整性：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">CREATE CONSTRAINT ON (c:Character) ASSERT c.name IS UNIQUE;</div></pre></td></tr></table></figure></p>
+<p>一旦约束创建即相应的创建索引，这将有助于通过角色的名字查询的性能。作者使用Neo4j的Cypher（Cypher是一种声明式图查询语言，能表达高效查询和更新图数据库）<em>LOAD CSV</em>语句导入数据：<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">LOAD CSV WITH HEADERS FROM "https://www.macalester.edu/~abeverid/data/stormofswords.csv" AS row</div><div class="line">MERGE (src:Character &#123;name: row.Source&#125;)</div><div class="line">MERGE (tgt:Character &#123;name: row.Target&#125;)</div><div class="line">MERGE (src)-[r:INTERACTS]-&gt;(tgt)</div><div class="line">SET r.weight = toInt(row.Weight)</div></pre></td></tr></table></figure></p>
+<p>这样得到一个简单的数据模型：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">CALL apoc.meta.graph()</div></pre></td></tr></table></figure></p>
+<p><img src="http://img0.ph.126.net/iKaRxZgqA_gA2_mWqX8HIg==/6631569143001537963.png" alt="此处输入图片的描述"></p>
+<p>图1 ：《权力的游戏》模型的图。Character角色节点由INTERACTS关系联结</p>
+<p>我们能可视化整个图形，但是这并不能给我们很多信息，比如哪些是最重要的人物，以及他们相互接触的信息：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">MATCH p=(:Character)-[:INTERACTS]-(:Character)</div><div class="line">RETURN p</div></pre></td></tr></table></figure></p>
+<p><img src="http://img1.ph.126.net/Enc8q7NSeSO6Z4z2iTvuDw==/6631651606373623600.jpg" alt="此处输入图片的描述"></p>
+<p>图2</p>
+<h4 id="人物网络分析"><a href="#人物网络分析" class="headerlink" title="人物网络分析"></a>人物网络分析</h4><p>作者使用Neo4j的图查询语言Cypher来做《权力的游戏》图分析，应用到了网络分析的一些工具，具体见<a href="https://www.cs.cornell.edu/home/kleinber/networks-book/" target="_blank" rel="external">《网络，人群和市场：关于高度连接的世界》</a>。</p>
+<h5 id="人物数量"><a href="#人物数量" class="headerlink" title="人物数量"></a>人物数量</h5><p>万事以简单开始。先看看上图上由有多少人物：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">MATCH (c:Character) RETURN count(c)</div></pre></td></tr></table></figure></p>
+<table>
+<thead>
+<tr>
+<th>count(c)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>107</td>
+</tr>
+</tbody>
+</table>
+<h5 id="概要统计"><a href="#概要统计" class="headerlink" title="概要统计"></a>概要统计</h5><p>统计每个角色接触的其它角色的数目：<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">MATCH (c:Character)-[:INTERACTS]-&gt;()</div><div class="line">WITH c, count(*) AS num</div><div class="line">RETURN min(num) AS min, max(num) AS max, avg(num) AS avg_characters, stdev(num) AS stdev</div></pre></td></tr></table></figure></p>
+<p>│min│max│avg_characters   │stdev            │<br>—|—|—|—|<br>│1  │24 │4.957746478873241│6.227672391875085│</p>
+<h5 id="图（网络）的直径"><a href="#图（网络）的直径" class="headerlink" title="图（网络）的直径"></a>图（网络）的直径</h5><p>网络的直径或者测底线或者最长最短路径：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">// Find maximum diameter of network</div><div class="line">// maximum shortest path between two nodes</div><div class="line">MATCH (a:Character), (b:Character) WHERE id(a) &gt; id(b)</div><div class="line">MATCH p=shortestPath((a)-[:INTERACTS*]-(b))</div><div class="line">RETURN length(p) AS len, extract(x IN nodes(p) | x.name) AS path</div><div class="line">ORDER BY len DESC LIMIT <span class="number">4</span></div></pre></td></tr></table></figure></p>
+<pre><code>│len│path                                                        │
+</code></pre><p>—|—|<br>      │6  │[Illyrio, Belwas, Daenerys, Robert, Tywin, Oberyn, Amory]   │<br>      │6  │[Illyrio, Belwas, Daenerys, Robert, Sansa, Bran, Jojen]     │<br>      │6  │[Illyrio, Belwas, Daenerys, Robert, Stannis, Davos, Shireen]│<br>      │6  │[Illyrio, Belwas, Daenerys, Robert, Sansa, Bran, Luwin]     │<br>我们能看到网络中有许多长度为6的路径。</p>
+<h5 id="最短路径"><a href="#最短路径" class="headerlink" title="最短路径"></a>最短路径</h5><p>作者使用Cypher 的shortestPath函数找到图中任意两个角色之间的最短路径。让我们找出凯特琳·史塔克（Catelyn Stark ）和卓戈·卡奥（Kahl Drogo）之间的最短路径：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">// Shortest path <span class="keyword">from</span> Catelyn Stark to Khal Drogo</div><div class="line">MATCH (catelyn:Character &#123;name: <span class="string">"Catelyn"</span>&#125;), (drogo:Character &#123;name: <span class="string">"Drogo"</span>&#125;)</div><div class="line">MATCH p=shortestPath((catelyn)-[INTERACTS*]-(drogo))</div><div class="line">RETURN p</div></pre></td></tr></table></figure></p>
+<p><img src="http://img1.ph.126.net/hM5i7QenCvEwrv6FxkjpRA==/6631649407350368299.jpg" alt="此处输入图片的描述"></p>
+<p>图3</p>
+<h5 id="所有最短路径"><a href="#所有最短路径" class="headerlink" title="所有最短路径"></a>所有最短路径</h5><p>联结凯特琳·史塔克（Catelyn Stark ）和卓戈·卡奥（Kahl Drogo）之间的最短路径可能还有其它路径，我们可以使用Cypher的<em>allShortestPaths</em>函数来查找：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">// All shortest paths <span class="keyword">from</span> Catelyn Stark to Khal Drogo</div><div class="line">MATCH (catelyn:Character &#123;name: <span class="string">"Catelyn"</span>&#125;), (drogo:Character &#123;name: <span class="string">"Drogo"</span>&#125;)</div><div class="line">MATCH p=allShortestPaths((catelyn)-[INTERACTS*]-(drogo))</div><div class="line">RETURN p</div></pre></td></tr></table></figure>
+<p><img src="http://img1.ph.126.net/P_R0YArgypcQJ9qK34-FlA==/6631481182071320497.jpg" alt="此处输入图片的描述"></p>
+<p>图4</p>
+<h5 id="关键节点"><a href="#关键节点" class="headerlink" title="关键节点"></a>关键节点</h5><p>在网络中，如果一个节点位于其它两个节点所有的最短路径上，即称为关键节点。下面我们找出网络中所有的关键节点：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">// Find all pivotal nodes <span class="keyword">in</span> network</div><div class="line">MATCH (a:Character), (b:Character)</div><div class="line">MATCH p=allShortestPaths((a)-[:INTERACTS*]-(b)) WITH collect(p) AS paths, a, b</div><div class="line">MATCH (c:Character) WHERE all(x IN paths WHERE c IN nodes(x)) AND NOT c IN [a,b]</div><div class="line">RETURN a.name, b.name, c.name AS PivotalNode SKIP <span class="number">490</span> LIMIT <span class="number">10</span></div></pre></td></tr></table></figure>
+<pre><code>│a.name │b.name │PivotalNode│
+</code></pre><p>—|—|—|<br>                          │Aegon  │Thoros │Daenerys   │<br>                          │Aegon  │Thoros │Robert     │<br>                          │Drogo  │Ramsay │Robb       │<br>                          │Styr   │Daario │Daenerys   │<br>                          │Styr   │Daario │Jon        │<br>                          │Styr   │Daario │Robert     │<br>                          │Qhorin │Podrick│Jon        │<br>                          │Qhorin │Podrick│Sansa      │<br>                          │Orell  │Theon  │Jon        │<br>                          │Illyrio│Bronn  │Belwas     │</p>
+<p>从结果表格中我们可以看出有趣的结果：罗柏·史塔克（Robb）是卓戈·卡奥（Drogo）和拉姆塞·波顿（Ramsay）的关键节点。这意味着，所有联结卓戈·卡奥（Drogo）和拉姆塞·波顿（Ramsay）的最短路径都要经过罗柏·史塔克（Robb）。我们可以通过可视化卓戈·卡奥（Drogo）和拉姆塞·波顿（Ramsay）之间的所有最短路径来验证：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">MATCH (a:Character &#123;name: <span class="string">"Drogo"</span>&#125;), (b:Character &#123;name: <span class="string">"Ramsay"</span>&#125;)</div><div class="line">MATCH p=allShortestPaths((a)-[:INTERACTS*]-(b))</div><div class="line">RETURN p</div></pre></td></tr></table></figure></p>
+<p><img src="http://img0.ph.126.net/CV_gvGLBdVUxJttOCdRgdQ==/6631809936048025407.jpg" alt="此处输入图片的描述"></p>
+<p>图5</p>
+<h4 id="节点中心度"><a href="#节点中心度" class="headerlink" title="节点中心度"></a>节点中心度</h4><p><a href="https://en.wikipedia.org/wiki/Centrality" target="_blank" rel="external">节点中心度</a>给出网络中节点的重要性的相对度量。有许多不同的方式来度量中心度，每种方式都代表不同类型的“重要性”。</p>
+<h5 id="度中心性-Degree-Centrality"><a href="#度中心性-Degree-Centrality" class="headerlink" title="度中心性(Degree Centrality)"></a>度中心性(Degree Centrality)</h5><p>度中心性是最简单度量，即为某个节点在网络中的联结数。在《权力的游戏》的图中，某个角色的度中心性是指该角色接触的其他角色数。作者使用Cypher计算度中心性：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">MATCH (c:Character)-[:INTERACTS]-()</div><div class="line">RETURN c.name AS character, count(*) AS degree ORDER BY degree DESC</div></pre></td></tr></table></figure></p>
+<pre><code>│character│degree│
+</code></pre><p>—|—|<br>                              │Tyrion   │36    │<br>                              │Jon      │26    │<br>                              │Sansa    │26    │<br>                              │Robb     │25    │<br>                              │Jaime    │24    │<br>                              │Tywin    │22    │<br>                              │Cersei   │20    │<br>                              │Arya     │19    │<br>                              │Joffrey  │18    │<br>                              │Robert   │18    │<br>从上面可以发现，在《权力的游戏》网络中提利昂·兰尼斯特（Tyrion）和最多的角色有接触。鉴于他的心计，我们觉得这是有道理的。</p>
+<h5 id="加权度中心性（Weighted-Degree-Centrality）"><a href="#加权度中心性（Weighted-Degree-Centrality）" class="headerlink" title="加权度中心性（Weighted Degree Centrality）"></a>加权度中心性（Weighted Degree Centrality）</h5><p>作者存储一对角色接触的次数作为<em>INTERACTS</em>关系的<em>weight</em>属性。对该角色的<em>INTERACTS</em>关系的所有<em>weight</em>相加得到加权度中心性。作者使用Cypher计算所有角色的这个度量：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">MATCH (c:Character)-[r:INTERACTS]-()</div><div class="line">RETURN c.name AS character, sum(r.weight) AS weightedDegree ORDER BY weightedDegree DESC</div></pre></td></tr></table></figure></p>
+<pre><code>│character│weightedDegree│
+</code></pre><p>—|—|<br>                        │Tyrion   │551           │<br>                        │Jon      │442           │<br>                        │Sansa    │383           │<br>                        │Jaime    │372           │<br>                        │Bran     │344           │<br>                        │Robb     │342           │<br>                        │Samwell  │282           │<br>                        │Arya     │269           │<br>                        │Joffrey  │255           │<br>                        │Daenerys │232           │</p>
+<h5 id="介数中心性（Betweenness-Centrality）"><a href="#介数中心性（Betweenness-Centrality）" class="headerlink" title="介数中心性（Betweenness Centrality）"></a>介数中心性（Betweenness Centrality）</h5><p><a href="https://en.wikipedia.org/wiki/Betweenness_centrality" target="_blank" rel="external">介数中心性</a>：在网络中，一个节点的介数中心性是指其它两个节点的所有最短路径都经过这个节点，则这些所有最短路径数即为此节点的介数中心性。介数中心性是一种重要的度量，因为它可以鉴别出网络中的“信息中间人”或者网络聚类后的联结点。<br><img src="http://img0.ph.126.net/NVe2tFIgH-cRJVLeAn3cGQ==/6631645009303857231.png" alt="此处输入图片的描述"></p>
+<p>图6中红色节点是具有高的介数中心性，网络聚类的联结点。</p>
+<p>为了计算介数中心性，作者使用<a href="https://github.com/neo4j-contrib/neo4j-apoc-procedures" target="_blank" rel="external">Neo4j 3.x或者apoc库</a>。安装apoc后能用Cypher调用其170+的程序：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">MATCH (c:Character)</div><div class="line">WITH collect(c) AS characters</div><div class="line">CALL apoc.algo.betweenness([<span class="string">'INTERACTS'</span>], characters, <span class="string">'BOTH'</span>) YIELD node, score</div><div class="line">SET node.betweenness = score</div><div class="line">RETURN node.name AS name, score ORDER BY score DESC</div></pre></td></tr></table></figure></p>
+<pre><code>│name    │score             │
+</code></pre><p>—|—|<br>                        │Jon     │1279.7533534055322│<br>                        │Robert  │1165.6025171231624│<br>                        │Tyrion  │1101.3849724234349│<br>                        │Daenerys│874.8372110508583 │<br>                        │Robb    │706.5572832464792 │<br>                        │Sansa   │705.1985623519137 │<br>                        │Stannis │571.5247305125714 │<br>                        │Jaime   │556.1852522889822 │<br>                        │Arya    │443.01358430043337│<br>                        │Tywin   │364.7212195528086 │</p>
+<h5 id="紧度中心性（Closeness-centrality）"><a href="#紧度中心性（Closeness-centrality）" class="headerlink" title="紧度中心性（Closeness centrality）"></a>紧度中心性（Closeness centrality）</h5><p><a href="https://en.wikipedia.org/wiki/Centrality#Closeness_centrality" target="_blank" rel="external">紧度中心性</a>是指到网络中所有其他角色的平均距离的倒数。在图中，具有高紧度中心性的节点在聚类社区之间被高度联结，但在社区之外不一定是高度联结的。<br><img src="http://img1.ph.126.net/vJy1k9fWFZRryZLBHkG1MA==/6631732970234066134.png" alt="此处输入图片的描述"></p>
+<p>图7 ：网络中具有高紧度中心性的节点被其它节点高度联结<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">MATCH (c:Character)</div><div class="line">WITH collect(c) AS characters</div><div class="line">CALL apoc.algo.closeness([<span class="string">'INTERACTS'</span>], characters, <span class="string">'BOTH'</span>) YIELD node, score</div><div class="line">RETURN node.name AS name, score ORDER BY score DESC</div></pre></td></tr></table></figure></p>
+<pre><code>│name   │score                │
+</code></pre><p>—|—|<br>                        │Tyrion │0.004830917874396135 │<br>                        │Sansa  │0.004807692307692308 │<br>                        │Robert │0.0047169811320754715│<br>                        │Robb   │0.004608294930875576 │<br>                        │Arya   │0.0045871559633027525│<br>                        │Jaime  │0.004524886877828055 │<br>                        │Stannis│0.004524886877828055 │<br>                        │Jon    │0.004524886877828055 │<br>                        │Tywin  │0.004424778761061947 │<br>                        │Eddard │0.004347826086956522 │</p>
+<h4 id="使用python-igraph"><a href="#使用python-igraph" class="headerlink" title="使用python-igraph"></a>使用python-igraph</h4><p>Neo4j与其它工具（比如，R和Python数据科学工具）完美结合。我们继续使用apoc运行 <a href="https://neo4j-contrib.github.io/neo4j-apoc-procedures/#_pagerank_algorithm" target="_blank" rel="external">PageRank</a>和<a href="https://neo4j-contrib.github.io/neo4j-apoc-procedures/#_graph_algorithms" target="_blank" rel="external">社区发现</a>（community detection）算法。这里接着使用<a href="http://igraph.org/python/" target="_blank" rel="external">python-igraph</a>计算分析。Python-igraph移植自R的igraph图形分析库。 使用<em>pip install python-igraph</em>安装它。</p>
+<h5 id="从Neo4j构建一个igraph实例"><a href="#从Neo4j构建一个igraph实例" class="headerlink" title="从Neo4j构建一个igraph实例"></a>从Neo4j构建一个igraph实例</h5><p>为了在《权力的游戏》的数据的图分析中使用igraph，首先需要从Neo4j拉取数据，用Python建立igraph实例。作者使用 Neo4j 的Python驱动库<a href="http://py2neo.org/" target="_blank" rel="external">py2neo</a>。我们能直接传入Py2neo查询结果对象到igraph的<em>TupleList</em>构造器，创建igraph实例：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">from</span> py2neo <span class="keyword">import</span> Graph</div><div class="line"><span class="keyword">from</span> igraph <span class="keyword">import</span> Graph <span class="keyword">as</span> IGraph</div><div class="line">graph = Graph()</div><div class="line"></div><div class="line">query = <span class="string">'''</span></div><div class="line">MATCH (c1:Character)-[r:INTERACTS]-&gt;(c2:Character)</div><div class="line">RETURN c1.name, c2.name, r.weight AS weight</div><div class="line">'''</div><div class="line"></div><div class="line">ig = IGraph.TupleList(graph.run(query), weights=<span class="keyword">True</span>)</div></pre></td></tr></table></figure></p>
+<p>现在有了igraph对象，可以运行igraph实现的各种图算法来。</p>
+<h5 id="PageRank"><a href="#PageRank" class="headerlink" title="PageRank"></a>PageRank</h5><p>作者使用igraph运行的第一个算法是PageRank。PageRank算法源自Google的网页排名。它是一种特征向量中心性(<a href="https://en.wikipedia.org/wiki/Centrality#Eigenvector_centrality" target="_blank" rel="external">eigenvector centrality</a>)算法。</p>
+<p>在igraph实例中运行PageRank算法，然后把结果写回Neo4j，在角色节点创建一个pagerank属性存储igraph计算的值：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">pg = ig.pagerank()</div><div class="line">pgvs = []</div><div class="line"><span class="keyword">for</span> p <span class="keyword">in</span> zip(ig.vs, pg):</div><div class="line">    print(p)</div><div class="line">    pgvs.append(&#123;<span class="string">"name"</span>: p[<span class="number">0</span>][<span class="string">"name"</span>], <span class="string">"pg"</span>: p[<span class="number">1</span>]&#125;)</div><div class="line">pgvs</div><div class="line"></div><div class="line">write_clusters_query = <span class="string">'''</span></div><div class="line">UNWIND &#123;nodes&#125; AS n</div><div class="line">MATCH (c:Character) WHERE c.name = n.name</div><div class="line">SET c.pagerank = n.pg</div><div class="line">'''</div><div class="line"></div><div class="line">graph.run(write_clusters_query, nodes=pgvs)</div></pre></td></tr></table></figure></p>
+<p>现在可以在Neo4j的图中查询最高PageRank值的节点：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">MATCH (n:Character)</div><div class="line">RETURN n.name AS name, n.pagerank AS pagerank ORDER BY pagerank DESC LIMIT <span class="number">10</span></div></pre></td></tr></table></figure>
+<pre><code>│name    │pagerank            │
+</code></pre><p>—|—|<br>                        │Tyrion  │0.042884981999963316│<br>                        │Jon     │0.03582869669163558 │<br>                        │Robb    │0.03017114665594764 │<br>                        │Sansa   │0.030009716660108578│<br>                        │Daenerys│0.02881425425830273 │<br>                        │Jaime   │0.028727587587471206│<br>                        │Tywin   │0.02570016262642541 │<br>                        │Robert  │0.022292016521362864│<br>                        │Cersei  │0.022287327589773507│<br>                        │Arya    │0.022050209663844467│</p>
+<h5 id="社区发现（Community-detection）"><a href="#社区发现（Community-detection）" class="headerlink" title="社区发现（Community detection）"></a>社区发现（Community detection）</h5><p><img src="http://img0.ph.126.net/pNb2DRMcw-bj4O7C61rC_w==/6631491077675968998.png" alt="此处输入图片的描述"></p>
+<p>图8</p>
+<p>社区发现算法用来找出图中的社区聚类。作者使用igraph实现的<a href="http://arxiv.org/abs/physics/0512106" target="_blank" rel="external">随机游走算法</a>（ walktrap）来找到在社区中频繁有接触的角色社区，在社区之外角色不怎么接触。</p>
+<p>在igraph中运行随机游走的社区发现算法，然后把社区发现的结果导入Neo4j，其中每个角色所属的社区用一个整数来表示：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">clusters = IGraph.community_walktrap(ig, weights=<span class="string">"weight"</span>).as_clustering()</div><div class="line"></div><div class="line">nodes = [&#123;<span class="string">"name"</span>: node[<span class="string">"name"</span>]&#125; <span class="keyword">for</span> node <span class="keyword">in</span> ig.vs]</div><div class="line"><span class="keyword">for</span> node <span class="keyword">in</span> nodes:</div><div class="line">    idx = ig.vs.find(name=node[<span class="string">"name"</span>]).index</div><div class="line">    node[<span class="string">"community"</span>] = clusters.membership[idx]</div><div class="line"></div><div class="line">write_clusters_query = <span class="string">'''</span></div><div class="line">UNWIND &#123;nodes&#125; AS n</div><div class="line">MATCH (c:Character) WHERE c.name = n.name</div><div class="line">SET c.community = toInt(n.community)</div><div class="line">'''</div><div class="line"></div><div class="line">graph.run(write_clusters_query, nodes=nodes)</div></pre></td></tr></table></figure></p>
+<p>我们能在Neo4j中查询有多少个社区以及每个社区的成员数：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">MATCH (c:Character)</div><div class="line">WITH c.community AS cluster, collect(c.name) AS  members</div><div class="line">RETURN cluster, members ORDER BY cluster ASC</div></pre></td></tr></table></figure>
+<p>  │cluster│members                                                                    │<br>—|—|<br>  │0      │[Aemon, Alliser, Craster, Eddison, Gilly, Janos, Jon, Mance, Rattleshirt, Samwell, Val, Ygritte, Grenn, Karl, Bowen, Dalla, Orell, Qhorin, Styr]      │<br>  │1      │[Aerys, Amory, Balon, Brienne, Bronn, Cersei, Gregor, Jaime, Joffrey, Jon Arryn, Kevan, Loras, Lysa, Meryn, Myrcella, Oberyn, Podrick, Renly, Robert, Robert Arryn, Sansa, Shae, Tommen, Tyrion, Tywin, Varys, Walton, Petyr, Elia, Ilyn, Pycelle, Qyburn, Margaery, Olenna, Marillion, Ellaria, Mace, Chataya, Doran] │<br>  │2      │[Arya, Beric, Eddard, Gendry, Sandor, Anguy, Thoros]                       │<br>  │3      │[Brynden, Catelyn, Edmure, Hoster, Lothar, Rickard, Robb, Roose, Walder, Jeyne, Roslin, Ramsay]                                                       │<br>  │4      │[Bran, Hodor, Jojen, Luwin, Meera, Rickon, Nan, Theon]                     │<br>  │5      │[Belwas, Daario, Daenerys, Irri, Jorah, Missandei, Rhaegar, Viserys, Barristan, Illyrio, Drogo, Aegon, Kraznys, Rakharo, Worm]                        │<br>  │6      │[Davos, Melisandre, Shireen, Stannis, Cressen, Salladhor]                  │<br>  │7      │[Lancel]                                                                   │</p>
+<h5 id="角色“大合影”"><a href="#角色“大合影”" class="headerlink" title="角色“大合影”"></a>角色“大合影”</h5><p>《权力的游戏》的权力图。节点的大小正比于介数中心性，颜色表示社区（由随机游走算法获得），边的厚度正比于两节点接触的次数。<br>现在已经计算好这些图的分析数据，让我们对其进行可视化，让数据看起来更有意义。</p>
+<p>Neo4j自带浏览器可以对Cypher查询的结果进行很好的可视化，但如果我们想把可视化好的图嵌入到其它应用中，可以使用Javascript可视化库<a href="http://visjs.org/" target="_blank" rel="external">Vis.js</a>。从Neo4j拉取数据，用Vis.js的<a href="https://github.com/johnymontana/neovis.js" target="_blank" rel="external">neovis.js</a>构建可视化图。Neovis.js提供简单的API配置，例如：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line">var config = &#123;</div><div class="line">  container_id: <span class="string">"viz"</span>,</div><div class="line">  server_url: <span class="string">"localhost"</span>,</div><div class="line">  labels: &#123;</div><div class="line">    <span class="string">"Character"</span>: <span class="string">"name"</span></div><div class="line">  &#125;,</div><div class="line">  label_size: &#123;</div><div class="line">    <span class="string">"Character"</span>: <span class="string">"betweenness"</span></div><div class="line">  &#125;,</div><div class="line">  relationships: &#123;</div><div class="line">    <span class="string">"INTERACTS"</span>: null</div><div class="line">  &#125;,</div><div class="line">  relationship_thickness: &#123;</div><div class="line">    <span class="string">"INTERACTS"</span>: <span class="string">"weight"</span></div><div class="line">  &#125;,</div><div class="line">  cluster_labels: &#123;</div><div class="line">    <span class="string">"Character"</span>: <span class="string">"community"</span></div><div class="line">  &#125;</div><div class="line">&#125;;</div><div class="line"></div><div class="line">var viz = new NeoVis(config);</div><div class="line">viz.render();</div></pre></td></tr></table></figure></p>
+<p>其中：</p>
+<ul>
+<li>节点带有标签Character，属性name；</li>
+<li>节点的大小正比于betweenness属性；</li>
+<li>可视化中包括INTERACTS关系；</li>
+<li>关系的厚度正比于weight属性；</li>
+<li>节点的颜色是根据网络中社区community属性决定；</li>
+<li>从本地服务器localhost拉取Neo4j的数据；</li>
+<li>在一个id为viz的DOM元素中展示可视化。</li>
+</ul>
+<p>译者介绍：侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。<br>英文原文：<a href="http://www.lyonwj.com/2016/06/26/graph-of-thrones-neo4j-social-network-analysis/" target="_blank" rel="external">Analyzing the Graph of Thrones</a></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/08/11/first-contact-with-tensorflow-1/" itemprop="url">
+                  深度学习快速实践：TensorFlow
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-08-11T23:08:27+08:00" content="2016-08-11">
+              2016-08-11
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p><em>写在之前</em>：本书是翻译自&lt;<a href="http://www.jorditorres.org/first-contact-with-tensorflow/" target="_blank" rel="external">first contact with tensorflow</a>&gt;，已获原作者授权。</p>
+<p>作者写这本书的目的是为了快速实践深度学习。因此，读者应该有基本的机器学习知识和必要的数据知识。本书将采用主流的机器学习算法来进行tensorflow训练。</p>
+<p>第一章将简短介绍TensorFlow代码和编程模型。</p>
+<h4 id="Tensorflow基本概念"><a href="#Tensorflow基本概念" class="headerlink" title="Tensorflow基本概念"></a>Tensorflow基本概念</h4><p>本章将简短介绍TensorFlow代码和编程模型。学完本章后，期待读者会TensorFlow的package安装方法。</p>
+<h5 id="Tensorflow开源包"><a href="#Tensorflow开源包" class="headerlink" title="Tensorflow开源包"></a>Tensorflow开源包</h5><p>TensorFlow源于Google大脑团队的机器学习和深度神经网络研究。这个系统能够解决更广泛的机器学习问题。</p>
+<p>TensorFlow使用计算图来表示一个计算任务。图中的节点代表数学运算，也可以表示数据的输入、输出和读写等操作；图中的边表示多维数组(Tensors)，节点之间的某种联系。</p>
+<p>TensorFlow使用计算图来构建计算过程，用符号来表示计算操作。这使得TensorFlow可以同时运用Linux 64位操作系统的CPU 和GPU 性能，TensorFlow也可以在移动端Android 或者iOS 上执行。</p>
+<p>TensorFlow的可视化模块TensorBoard可监控算法的运行状态并显示。</p>
+<h5 id="TensorFlow-Serving"><a href="#TensorFlow-Serving" class="headerlink" title="TensorFlow Serving"></a>TensorFlow Serving</h5><p>Google最近开源了<a href="https://tensorflow.github.io/serving" target="_blank" rel="external">TensorFlow Serving</a>，TensorFlow Serving可以帮助机器学习开发者将他们的TensorFlow机器学习模型（可以扩展到其它各类型的机器学习模型）加载到产品中。TensorFlow Serving采用C++编写，并已开源到github。</p>
+<h4 id="TensorFlow和TensorFlow-Serving到底有啥区别呢？"><a href="#TensorFlow和TensorFlow-Serving到底有啥区别呢？" class="headerlink" title="TensorFlow和TensorFlow Serving到底有啥区别呢？"></a>TensorFlow和TensorFlow Serving到底有啥区别呢？</h4><p>TensorFlow项目主要是基于各种机器学习算法构建模型，并为某些特定类型的数据输入做适应学习，而TensorFlow Serving则专注于让这些模型能够加入到产品环境中。开发者使用TensorFlow构建模型，然后TensorFlow Serving基于客户端输入的数据使用前面TensorFlow训练好的模型进行预测。 </p>
+<p>个人认为TensorFlow Serving是将tensorflow训练出来的模型更好的应用于生产环境中，通过它的API等支持的方式来方便对外提供稳定可靠的服务。TensorFlow Serving的意义就在于能够很方便的将深度学习生产化，解决了模型无法提供服务的弊端，并且用的是C++语言，性能上应该不错。这样以后深度学习方向的创业公司都能很方便的将产品商业化，保证7*24小时的可靠服务。</p>
+<p>典型的pipeline：输入待训练的数据到学习者(Learner)中，输出训练模型。稍后模型验证之后发布到TensorFlow Serving系统。<br><img src="http://img2.ph.126.net/T1ezwNp0SFMKVJgWCZYEsg==/6631737368281209959.png" alt="image"><br>对于生产环境来说，启动模型，随着时间不断迭代模型，新的训练数据出现需要训练优化模型，这些都是常态。现在有了TensorFlow Serving就可以在不停止服务的情况下更新模型和数据，Google内部许多pipelines一直在运行。</p>
+<p>客户端和服务端之间的通信采用的是RPC协议实现，其为Google开源的一个高性能RPC框架。</p>
+<h4 id="安装TensorFlow"><a href="#安装TensorFlow" class="headerlink" title="安装TensorFlow"></a>安装TensorFlow</h4><p>是时候开始练手了，你需要一遍看书一边在电脑上操作。</p>
+<p>TensorFlow提供Python API（也可以用C / C ++），所以你得安装Python 2.7（具体咋安装自行Google）。</p>
+<p>一般来讲，使用Python工作时最好用virtualenv虚拟环境。Virtualenv可以在一台机器不同的项目间保持Python依赖隔离。使用virtualenv安装TensorFlow不会覆盖已有的Python版本，这样做也能使排查安装问题变得更容易。</p>
+<p>首先安装必备软件：<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># Ubuntu/Linux 64-bit</span></div><div class="line">$ sudo apt-get install python-pip python-dev python-virtualenv </div><div class="line"></div><div class="line"><span class="comment"># Mac OS X </span></div><div class="line">$ sudo easy_install pip</div><div class="line">$ sudo pip install --upgrade virtualenv</div></pre></td></tr></table></figure></p>
+<p>建立virtualenv环境. 为了将环境建在 ~/tensorflow 目录下, 执行:<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ virtualenv --system-site-packages ~/tensorflow</div></pre></td></tr></table></figure></p>
+<p>接下来激活virtualenv:<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ <span class="built_in">source</span> ~/tensorflow/bin/activate <span class="comment">#  with bash </span></div><div class="line">$ <span class="built_in">source</span> ~/tensorflow/bin/activate.csh <span class="comment">#  with csh</span></div><div class="line">(tensorflow)$</div></pre></td></tr></table></figure></p>
+<p>Once the virtualenv is activated, you can use pip to install TensorFlow inside it:<br>激活virtualenv后即可使用pip在virtualenv内安装TensorFlow：<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># Ubuntu/Linux 64-bit, CPU only:</span></div><div class="line">(tensorflow)$ sudo pip install --upgrade https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.7.1-cp27-none-linux_x86_64.whl </div><div class="line"></div><div class="line"><span class="comment"># Mac OS X, CPU only:</span></div><div class="line">(tensorflow)$ sudo easy_install --upgrade six</div><div class="line">(tensorflow)$ sudo pip install --upgrade https://storage.googleapis.com/tensorflow/mac/tensorflow-0.7.1-cp27-none-any.whl</div></pre></td></tr></table></figure></p>
+<p>你可访问官方文档来确认所安装的版本。</p>
+<p>如果你要在GPU上跑你的代码，你需要访问官方文档来看看是否满足指定的要求。运行Tensorflow GPU需要安装额外的软件。</p>
+<p>当你使用完后可执行如下命令关闭虚拟环境：<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">(tensorflow)$ deactivate</div></pre></td></tr></table></figure></p>
+<p>其它安装TensorFlow的方法请访问官方网站获取信息。</p>
+<h4 id="TensorFlow的-“Hello-World”"><a href="#TensorFlow的-“Hello-World”" class="headerlink" title="TensorFlow的 “Hello World”"></a>TensorFlow的 “Hello World”</h4><p>你可以使用任何文本编辑器编写python代码，然后保存为扩展名“.py”的文件(eg test.py)。用python命令行即可执行test.py。</p>
+<p>为了快速的熟悉TensorFlow编程，下面从一段简单的代码开始：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> tensorflow <span class="keyword">as</span> tf</div><div class="line">  </div><div class="line"> a = tf.placeholder(<span class="string">"float"</span>)</div><div class="line"> b = tf.placeholder(<span class="string">"float"</span>)</div><div class="line">  </div><div class="line"> y = tf.mul(a, b)</div><div class="line">  </div><div class="line"> sess = tf.Session()</div><div class="line">  </div><div class="line"> <span class="keyword">print</span> sess.run(y, feed_dict=&#123;a: <span class="number">3</span>, b: <span class="number">3</span>&#125;)</div></pre></td></tr></table></figure>
+<p>在上面的代码中，导入Python模块<em>tensorflow</em>。然后定义符号变量，也称为占位符。在后面程序执行中会操作这些变量。我们把这些变量作为参数，TensorFlow的乘法函数<em>tf.mul</em>会调用。数学函数<em>tf.mul</em>会操作tensor，这时的动态大小、多维数组。</p>
+<p>TensorFlow的算术操作如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">tf.add，tf.sub，tf.mul，tf.div，tf.mod，tf.abs，tf.neg，tf.sign，tf.inv，tf.square，tf.round，tf.sqrt，tf.pow，tf.exp，tf.log，tf.maximum，tf.minimum，tf.cos，tf.sin</div></pre></td></tr></table></figure></p>
+<p>TensorFlow也为程序员提供一些函数来进行数学操作，列表如下：<br>|操作    |描述|<br>—|—|<br>tf.diag|    给定对角线上的值，返回对角tensor|<br>tf.transpose|    转置|<br>tf.matmul|    tensor乘法，即矩阵乘法|<br>tf.matrix_determinant    |方阵的行列式|<br>tf.matrix_inverse|    方阵的逆矩阵|</p>
+<p>接下来，创建一个会话。事实上，直到这步还没有执行TensorFlow代码。程序通过<em>Session()</em>创建一个会话与Tensorflow库交互；直到调用<em>run()</em>方法才会创建会话，并运行指定的代码。在本例中，<em>run()</em>方法调用变量值和<em>feed_dict</em>参数，表达式运行完成退出会显示结果<em>9</em> 。</p>
+<p>本例比较简单，仅仅为了展示TensorFlow完整的过程。然而，我们更感兴趣的是灵活的结构化代码，插入操作来构建计算图。比如，类似于Python编程中的IPython。为了达到这个目的，TensorFlow提供了<em>tf.InteractiveSession()</em>类。</p>
+<p>编程模型的理解已经超出了本书的范围，但为了继续接下来的章节，我们仅仅需要知道计算结构包含所有的操作信息和数据。</p>
+<p>上面的计算图描述的是数学计算。节点（node）代表数学操作，但是它们也可以代表数据项的点，输出结果或者读写持久化的变量。边（edge）描述的是输入和输出的节点之间的关系。</p>
+<p>TensorFlow 将图形定义转换成分布式执行的操作, 以充分利用可用的计算资源(如 CPU 或 GPU). 一般你不需要显式指定使用 CPU 还是 GPU, TensorFlow 能自动检测. 如果检测到 GPU, TensorFlow 会尽可能地利用找到的第一个 GPU 来执行操作.</p>
+<p>并行计算能让代价大的算法计算加速执行，TensorFlow也在实现上对复杂操作进行了有效的改进。大部分核相关的操作都是设备相关的实现，比如GPU。下面是一些重要的操作/<a href="http://download.tensorflow.org/paper/whitepaper2015.pdf" target="_blank" rel="external">核</a>：</p>
+<table>
+<thead>
+<tr>
+<th>操作分组</th>
+<th>操作</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Maths</td>
+<td>Add, Sub, Mul, Div, Exp, Log, Greater, Less, Equal</td>
+<td></td>
+</tr>
+<tr>
+<td>Array</td>
+<td>Concat, Slice, Split, Constant, Rank, Shape, Shuffle</td>
+<td></td>
+</tr>
+<tr>
+<td>Matrix</td>
+<td>MatMul, MatrixInverse, MatrixDeterminant</td>
+<td></td>
+</tr>
+<tr>
+<td>Neuronal Network</td>
+<td>SoftMax, Sigmoid, ReLU, Convolution2D, MaxPool</td>
+<td></td>
+</tr>
+<tr>
+<td>Checkpointing</td>
+<td>Save, Restore</td>
+<td></td>
+</tr>
+<tr>
+<td>Queues and syncronizations</td>
+<td>Enqueue, Dequeue, MutexAcquire, MutexRelease</td>
+<td></td>
+</tr>
+<tr>
+<td>Flow control</td>
+<td>Merge, Switch, Enter, Leave, NextIteration</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h4 id="TensorBoard-可视化学习"><a href="#TensorBoard-可视化学习" class="headerlink" title="TensorBoard:可视化学习"></a>TensorBoard:可视化学习</h4><p>为了更方便TensorFlow 程序的理解，TensorFlow 包括从函数、调试与优化等方面进行了可视化，并发布了一套叫做<em>TensorBoard</em> 的可视化工具。TensorBoard 从不同统计数据来展现图计算过程的详细信息和参数。</p>
+<p>TensorBoard模块的数据展示是在TensorFlow执行和汇总数据存储的过程。在TensorFlow的<a href="https://www.tensorflow.org/versions/master/api_docs/python/train.html#summary-operations" target="_blank" rel="external">文档</a>，你可以找到更详细的Python API的解释。</p>
+<p>输入下面的指令来启动TensorBoard，包括跟踪（也可以成为序列化）的路径参数：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">(tensorflow)$ tensorboard --logdir=&amp;lt;trace file&amp;gt;</div></pre></td></tr></table></figure>
+<p>TensorBoard 开始运行，你可以通过在浏览器中输入<a href="http://localhost:6006" target="_blank" rel="external">http://localhost:6006</a> 来查看。TensorBoard可视化工具的详细使用已超出本书的范围，若想了解更多，可参见<a href="https://www.tensorflow.org/versions/master/how_tos/graph_viz/index.html" target="_blank" rel="external">文档</a>。</p>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/08/11/netflix-billing-migration-to-aws-part-ii/" itemprop="url">
+                  Netflix支付生态系统迁移到AWS的实践（part II）
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-08-11T23:01:25+08:00" content="2016-08-11">
+              2016-08-11
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>本文是Netflix支付生态系统迁移到AWS的第二部分，主要讲解具体的支付应用和数据存储的技术细节。支付系统迁移的概览见第一部分《<a href="http://mp.weixin.qq.com/s?__biz=MzI0MDIxMDM0MQ==&amp;mid=2247483691&amp;idx=1&amp;sn=b25e50ccbe2de3a0b0154bf1a3d39d5f#wechat_redirect" target="_blank" rel="external">Netflix支付生态系统迁移到AWS的实践（part I）</a>》。</p>
+<p>随着Netflix全球各地的业务启动，带来了系统数据上的不断增长，进而意识到越早迁移到AWS云服务对Netflix越有利。因为现有对系统将不能继续扩展。</p>
+<p>毋庸置疑，迁移如此高度复杂、敏感的应用和数据库并不能干扰线上的业务，是一项艰巨的任务。</p>
+<h4 id="Billing的职责和挑战"><a href="#Billing的职责和挑战" class="headerlink" title="Billing的职责和挑战"></a>Billing的职责和挑战</h4><ul>
+<li>Billing team保障Netflix公司财务数据。每天生成订阅费，礼品卡，积分，退款等数据，汇报给财务和会计部门。数据处理严格遵循SLAs，并保证处理管道无延迟；</li>
+<li>Billing对数据丢失零容忍；</li>
+<li>大部分情况下，支付数据是结构化存储成关系模型，并确保数据库操作是事务性的。换句话说，需要保证操作都具有ACID。但是，也有些场景支持跨区域低延迟的访问；</li>
+<li>Billing集成DVD业务，但两者的架构不同，增加了集成的难度；</li>
+<li>Billing team需要为Netflix客户服务中心提供数据支持，回答Netflix会员的支付问题。同时为客户支持提供数据预览。</li>
+</ul>
+<p>现有支付系统的架构如下：</p>
+<p><img src="http://img1.ph.126.net/SD6yZeeeDWNGD3GQ57-LVQ==/6631627417118515504.jpg" alt="image"></p>
+<ul>
+<li>数据中心有2个Oracle数据库：一个存储用户订阅信息，另外一个存储是付费数据；</li>
+<li>基于REST 的多个应用：从<em>www.netflix.com</em>到客户支持应用的服务调用；</li>
+<li>3个批量应用：<ul>
+<li>Subscription Renewal</li>
+<li>Order &amp; Payment Processor</li>
+<li>Revenue Reporting</li>
+</ul>
+</li>
+<li>Billing Proxy应用（AWS云服务）：从Netflix应用路由调用到数据中心；</li>
+<li>Weblogic队列：进程间的通信。</li>
+</ul>
+<p>迁移支付系统的目标是把所有这些入AWS云服务。</p>
+<h4 id="迁移步骤"><a href="#迁移步骤" class="headerlink" title="迁移步骤"></a>迁移步骤</h4><p>整个过程分三步走：</p>
+<ul>
+<li>Act I：新国家地区的支付数据直接上云，并把数据同步回数据中心以供批量作业工作；</li>
+<li>Act II：面向用户的数据持久化到Cassandra，保证数据最终一致性，不需要保障操作的ACID；</li>
+<li>Act III：最后迁移SQL数据库到AWS云服务。</li>
+</ul>
+<h4 id="Act-I-–-转发新国家的支付数据到AWS云服务，并同步数据到数据中心（DC）"><a href="#Act-I-–-转发新国家的支付数据到AWS云服务，并同步数据到数据中心（DC）" class="headerlink" title="Act I – 转发新国家的支付数据到AWS云服务，并同步数据到数据中心（DC）"></a>Act I – 转发新国家的支付数据到AWS云服务，并同步数据到数据中心（DC）</h4><p>Netflix新增加6个国家地区，并把部分国家的支付数据放在云上。这意味着面向用户的数据和应用将在云服务中，但同时也需要同步数据回数据中心。这些新增加的国家的用户数据在云服务上服务，同时批处理仍然运行在数据中心。关于Netflix数据中心可以见Part I。</p>
+<p>所有的API都是基于云服务用Spring Boot 和Spring 集成开发的应用。Spring Boot提供了框架，使得作者能够快速的开发新应用，并把注意力更多的聚焦在业务逻辑上。Spring 集成一次编写、可重用。新增6个国家的会员数据的API调用可在AWS的任意区域处理，数据存储在Cassandra数据库。这使得即使整个AWS区域宕机，这些国家的支付数据仍可使用，这就是云服务的魅力所在。</p>
+<p>Netflix在AWS云服务多个区域的EC2实例上发布应用。他们为云服务代理应用增加一个转发层，把新加的国家的用户支付调用转发到云服务上新的支付API，而老国家地区的支付调用还是继续到数据中心的老支付API。他们从AWS云服务区域之一直接连接到数据中心的Oracle数据库，然后开发一个应用通过SQS来同步其它三个区域的Cassandra数据到这个区域。</p>
+<p>Netflix从数据中心迁移Subscription Renewal 应用到AWS云服务，所以他们不能把负载放在数据中心。对于新增的国家区域，他们写爬虫每天去Cassandra爬取会员数据，并追上会员付费数据。行迭代方法在新增的国家使用，但对于其它国家的数据，特别是美国数据量太大，不容易迁移到云服务。不过这事还得继续，只能试试水。</p>
+<p>Netflix选择Cassandra作为数据存储是因为它可以写入到AWS任意区域并快速复制写入其它区域。作者设计数据模型如图所示：</p>
+<p><img src="http://img2.ph.126.net/ssutzQuxjYEwZRvOo1mk8w==/6631637312723169746.jpg" alt="image"></p>
+<p>Act I步骤实施后，支付系统架构如下：</p>
+<p><img src="http://img0.ph.126.net/SVhGq6SY7mxbiJRfYtUlBA==/6631715378048744964.jpg" alt="image"></p>
+<h4 id="Act-II-–-迁移所有应用和已有国家的数据到AWS云服务"><a href="#Act-II-–-迁移所有应用和已有国家的数据到AWS云服务" class="headerlink" title="Act II – 迁移所有应用和已有国家的数据到AWS云服务"></a>Act II – 迁移所有应用和已有国家的数据到AWS云服务</h4><p>步骤Act I成功完成后，Netflix支付团队开始迁移其它应用到AWS云服务上，此时Oracle数据库未迁移。大部分业务逻辑是批量应用，而且已经成熟的运行了好多年。此次借着迁移的机会把原有代码进行了重构。</p>
+<p>Netflix开发<a href="http://techblog.netflix.com/2012/02/aegisthus-bulk-data-pipeline-out-of.html" target="_blank" rel="external">Aegisthus</a>从Cassandra SSTable来拉取数据，并转换成JSON格式的行。Pig脚本按天跑mapreduce来处理海量数据集。Sqoop作业从Cassandra 和Oracle 拉取数据写入Hive。为了验证海量数据的迁移，Netflix开发一个comparator tool来比较验证迁移前后的数据。</p>
+<p>各项准备工作做好之后，Netflix支付团队首先拿会员数少的国家“开刀”，迁移的步骤大概如下：</p>
+<ul>
+<li>迁移时禁用non-GET的API。（这不会影响会员，但会造成支付的更新和订阅的延迟）；</li>
+<li>使用Sqoop job从Oracle 获取数据，写入S3 和Hive；</li>
+<li>用Pig转换数据写入Cassandra格式；</li>
+<li>插入所有的会员记录到Cassandra；</li>
+<li>启用non-GET的API。</li>
+</ul>
+<p>在验证迁移后的数据之后，开始迁移下一个国家，最后迁移的是美国，因为美国的会员量最大。</p>
+<p>步骤Act II完成之后，支付系统的架构变为：<br><img src="http://img2.ph.126.net/Zc7n4KTT67ESd5qgofsnHQ==/6631669198560380669.jpg" alt="image"></p>
+<h4 id="Act-III-–-和数据中心Say-“Good-bye”！"><a href="#Act-III-–-和数据中心Say-“Good-bye”！" class="headerlink" title="Act III  – 和数据中心Say “Good bye”！"></a>Act III  – 和数据中心Say “Good bye”！</h4><p>最后开始迁移剩下的Oracle数据库。考虑到Oracle高度的关系型，如果迁移到NoSQL的数据，将会比较麻烦。在支付团队忙于前两步时，云数据库工程师迁移Oracle数据库到EC2的MySQL实例。所以在迁移第三步时，MySQL数据库已准备好。接下来，对前期的代码做了部分兼容的优化。</p>
+<p>现在的数据库架构包括一个MySQL Master数据库，一个容灾 DB （从MySQL Master复制，如果Master挂掉即可启用为Master），Slave数据库（用来做应用的访问）。</p>
+<p>整个支付系统迁移完之后，架构图如下：</p>
+<p><img src="http://img2.ph.126.net/98bWcjCGKNQpn6bzFZvrhg==/6631590033723176969.jpg" alt="image"></p>
+<h4 id="在路上"><a href="#在路上" class="headerlink" title="在路上"></a>在路上</h4><p>随着支付系统迁移到AWS云服务的完成，Netflix流式架构已全部运行在云端。Netflix可以按需扩展任意Netflix服务，基于用户量来做预测性扩容，使用<a href="http://www.spinnaker.io/" target="_blank" rel="external">Spinnaker</a>单点发布和Netflix各应用的持续发布。</p>
+<h4 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h4><p>[1] <a href="http://techblog.netflix.com/2016/07/netflix-billing-migration-to-aws-part-ii.html" target="_blank" rel="external">http://techblog.netflix.com/2016/07/netflix-billing-migration-to-aws-part-ii.html</a></p>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2016/08/09/tensorflow-not-just-deep-learning/" itemprop="url">
                   TensorFlow——岂止于深度学习
                 </a>
@@ -890,7 +1416,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">5</span>
+              <span class="site-state-item-count">8</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>

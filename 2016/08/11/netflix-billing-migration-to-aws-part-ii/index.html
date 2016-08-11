@@ -1,0 +1,659 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="神机喵算" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="本文是Netflix支付生态系统迁移到AWS的第二部分，主要讲解具体的支付应用和数据存储的技术细节。支付系统迁移的概览见第一部分《Netflix支付生态系统迁移到AWS的实践（part I）》。
+随着Netflix全球各地的业务启动，带来了系统数据上的不断增长，进而意识到越早迁移到AWS云服务对Netflix越有利。因为现有对系统将不能继续扩展。
+毋庸置疑，迁移如此高度复杂、敏感的应用和数据库并不">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Netflix支付生态系统迁移到AWS的实践（part II）">
+<meta property="og:url" content="http://yoursite.com/2016/08/11/netflix-billing-migration-to-aws-part-ii/index.html">
+<meta property="og:site_name" content="神机喵算">
+<meta property="og:description" content="本文是Netflix支付生态系统迁移到AWS的第二部分，主要讲解具体的支付应用和数据存储的技术细节。支付系统迁移的概览见第一部分《Netflix支付生态系统迁移到AWS的实践（part I）》。
+随着Netflix全球各地的业务启动，带来了系统数据上的不断增长，进而意识到越早迁移到AWS云服务对Netflix越有利。因为现有对系统将不能继续扩展。
+毋庸置疑，迁移如此高度复杂、敏感的应用和数据库并不">
+<meta property="og:image" content="http://img1.ph.126.net/SD6yZeeeDWNGD3GQ57-LVQ==/6631627417118515504.jpg">
+<meta property="og:image" content="http://img2.ph.126.net/ssutzQuxjYEwZRvOo1mk8w==/6631637312723169746.jpg">
+<meta property="og:image" content="http://img0.ph.126.net/SVhGq6SY7mxbiJRfYtUlBA==/6631715378048744964.jpg">
+<meta property="og:image" content="http://img2.ph.126.net/Zc7n4KTT67ESd5qgofsnHQ==/6631669198560380669.jpg">
+<meta property="og:image" content="http://img2.ph.126.net/98bWcjCGKNQpn6bzFZvrhg==/6631590033723176969.jpg">
+<meta property="og:image" content="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg">
+<meta property="og:updated_time" content="2016-08-11T15:01:25.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Netflix支付生态系统迁移到AWS的实践（part II）">
+<meta name="twitter:description" content="本文是Netflix支付生态系统迁移到AWS的第二部分，主要讲解具体的支付应用和数据存储的技术细节。支付系统迁移的概览见第一部分《Netflix支付生态系统迁移到AWS的实践（part I）》。
+随着Netflix全球各地的业务启动，带来了系统数据上的不断增长，进而意识到越早迁移到AWS云服务对Netflix越有利。因为现有对系统将不能继续扩展。
+毋庸置疑，迁移如此高度复杂、敏感的应用和数据库并不">
+<meta name="twitter:image" content="http://img1.ph.126.net/SD6yZeeeDWNGD3GQ57-LVQ==/6631627417118515504.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/08/11/netflix-billing-migration-to-aws-part-ii/"/>
+
+  <title> Netflix支付生态系统迁移到AWS的实践（part II） | 神机喵算 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">神机喵算</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Netflix支付生态系统迁移到AWS的实践（part II）
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-08-11T23:01:25+08:00" content="2016-08-11">
+              2016-08-11
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>本文是Netflix支付生态系统迁移到AWS的第二部分，主要讲解具体的支付应用和数据存储的技术细节。支付系统迁移的概览见第一部分《<a href="http://mp.weixin.qq.com/s?__biz=MzI0MDIxMDM0MQ==&amp;mid=2247483691&amp;idx=1&amp;sn=b25e50ccbe2de3a0b0154bf1a3d39d5f#wechat_redirect" target="_blank" rel="external">Netflix支付生态系统迁移到AWS的实践（part I）</a>》。</p>
+<p>随着Netflix全球各地的业务启动，带来了系统数据上的不断增长，进而意识到越早迁移到AWS云服务对Netflix越有利。因为现有对系统将不能继续扩展。</p>
+<p>毋庸置疑，迁移如此高度复杂、敏感的应用和数据库并不能干扰线上的业务，是一项艰巨的任务。</p>
+<h4 id="Billing的职责和挑战"><a href="#Billing的职责和挑战" class="headerlink" title="Billing的职责和挑战"></a>Billing的职责和挑战</h4><ul>
+<li>Billing team保障Netflix公司财务数据。每天生成订阅费，礼品卡，积分，退款等数据，汇报给财务和会计部门。数据处理严格遵循SLAs，并保证处理管道无延迟；</li>
+<li>Billing对数据丢失零容忍；</li>
+<li>大部分情况下，支付数据是结构化存储成关系模型，并确保数据库操作是事务性的。换句话说，需要保证操作都具有ACID。但是，也有些场景支持跨区域低延迟的访问；</li>
+<li>Billing集成DVD业务，但两者的架构不同，增加了集成的难度；</li>
+<li>Billing team需要为Netflix客户服务中心提供数据支持，回答Netflix会员的支付问题。同时为客户支持提供数据预览。</li>
+</ul>
+<p>现有支付系统的架构如下：</p>
+<p><img src="http://img1.ph.126.net/SD6yZeeeDWNGD3GQ57-LVQ==/6631627417118515504.jpg" alt="image"></p>
+<ul>
+<li>数据中心有2个Oracle数据库：一个存储用户订阅信息，另外一个存储是付费数据；</li>
+<li>基于REST 的多个应用：从<em>www.netflix.com</em>到客户支持应用的服务调用；</li>
+<li>3个批量应用：<ul>
+<li>Subscription Renewal</li>
+<li>Order &amp; Payment Processor</li>
+<li>Revenue Reporting</li>
+</ul>
+</li>
+<li>Billing Proxy应用（AWS云服务）：从Netflix应用路由调用到数据中心；</li>
+<li>Weblogic队列：进程间的通信。</li>
+</ul>
+<p>迁移支付系统的目标是把所有这些入AWS云服务。</p>
+<h4 id="迁移步骤"><a href="#迁移步骤" class="headerlink" title="迁移步骤"></a>迁移步骤</h4><p>整个过程分三步走：</p>
+<ul>
+<li>Act I：新国家地区的支付数据直接上云，并把数据同步回数据中心以供批量作业工作；</li>
+<li>Act II：面向用户的数据持久化到Cassandra，保证数据最终一致性，不需要保障操作的ACID；</li>
+<li>Act III：最后迁移SQL数据库到AWS云服务。</li>
+</ul>
+<h4 id="Act-I-–-转发新国家的支付数据到AWS云服务，并同步数据到数据中心（DC）"><a href="#Act-I-–-转发新国家的支付数据到AWS云服务，并同步数据到数据中心（DC）" class="headerlink" title="Act I – 转发新国家的支付数据到AWS云服务，并同步数据到数据中心（DC）"></a>Act I – 转发新国家的支付数据到AWS云服务，并同步数据到数据中心（DC）</h4><p>Netflix新增加6个国家地区，并把部分国家的支付数据放在云上。这意味着面向用户的数据和应用将在云服务中，但同时也需要同步数据回数据中心。这些新增加的国家的用户数据在云服务上服务，同时批处理仍然运行在数据中心。关于Netflix数据中心可以见Part I。</p>
+<p>所有的API都是基于云服务用Spring Boot 和Spring 集成开发的应用。Spring Boot提供了框架，使得作者能够快速的开发新应用，并把注意力更多的聚焦在业务逻辑上。Spring 集成一次编写、可重用。新增6个国家的会员数据的API调用可在AWS的任意区域处理，数据存储在Cassandra数据库。这使得即使整个AWS区域宕机，这些国家的支付数据仍可使用，这就是云服务的魅力所在。</p>
+<p>Netflix在AWS云服务多个区域的EC2实例上发布应用。他们为云服务代理应用增加一个转发层，把新加的国家的用户支付调用转发到云服务上新的支付API，而老国家地区的支付调用还是继续到数据中心的老支付API。他们从AWS云服务区域之一直接连接到数据中心的Oracle数据库，然后开发一个应用通过SQS来同步其它三个区域的Cassandra数据到这个区域。</p>
+<p>Netflix从数据中心迁移Subscription Renewal 应用到AWS云服务，所以他们不能把负载放在数据中心。对于新增的国家区域，他们写爬虫每天去Cassandra爬取会员数据，并追上会员付费数据。行迭代方法在新增的国家使用，但对于其它国家的数据，特别是美国数据量太大，不容易迁移到云服务。不过这事还得继续，只能试试水。</p>
+<p>Netflix选择Cassandra作为数据存储是因为它可以写入到AWS任意区域并快速复制写入其它区域。作者设计数据模型如图所示：</p>
+<p><img src="http://img2.ph.126.net/ssutzQuxjYEwZRvOo1mk8w==/6631637312723169746.jpg" alt="image"></p>
+<p>Act I步骤实施后，支付系统架构如下：</p>
+<p><img src="http://img0.ph.126.net/SVhGq6SY7mxbiJRfYtUlBA==/6631715378048744964.jpg" alt="image"></p>
+<h4 id="Act-II-–-迁移所有应用和已有国家的数据到AWS云服务"><a href="#Act-II-–-迁移所有应用和已有国家的数据到AWS云服务" class="headerlink" title="Act II – 迁移所有应用和已有国家的数据到AWS云服务"></a>Act II – 迁移所有应用和已有国家的数据到AWS云服务</h4><p>步骤Act I成功完成后，Netflix支付团队开始迁移其它应用到AWS云服务上，此时Oracle数据库未迁移。大部分业务逻辑是批量应用，而且已经成熟的运行了好多年。此次借着迁移的机会把原有代码进行了重构。</p>
+<p>Netflix开发<a href="http://techblog.netflix.com/2012/02/aegisthus-bulk-data-pipeline-out-of.html" target="_blank" rel="external">Aegisthus</a>从Cassandra SSTable来拉取数据，并转换成JSON格式的行。Pig脚本按天跑mapreduce来处理海量数据集。Sqoop作业从Cassandra 和Oracle 拉取数据写入Hive。为了验证海量数据的迁移，Netflix开发一个comparator tool来比较验证迁移前后的数据。</p>
+<p>各项准备工作做好之后，Netflix支付团队首先拿会员数少的国家“开刀”，迁移的步骤大概如下：</p>
+<ul>
+<li>迁移时禁用non-GET的API。（这不会影响会员，但会造成支付的更新和订阅的延迟）；</li>
+<li>使用Sqoop job从Oracle 获取数据，写入S3 和Hive；</li>
+<li>用Pig转换数据写入Cassandra格式；</li>
+<li>插入所有的会员记录到Cassandra；</li>
+<li>启用non-GET的API。</li>
+</ul>
+<p>在验证迁移后的数据之后，开始迁移下一个国家，最后迁移的是美国，因为美国的会员量最大。</p>
+<p>步骤Act II完成之后，支付系统的架构变为：<br><img src="http://img2.ph.126.net/Zc7n4KTT67ESd5qgofsnHQ==/6631669198560380669.jpg" alt="image"></p>
+<h4 id="Act-III-–-和数据中心Say-“Good-bye”！"><a href="#Act-III-–-和数据中心Say-“Good-bye”！" class="headerlink" title="Act III  – 和数据中心Say “Good bye”！"></a>Act III  – 和数据中心Say “Good bye”！</h4><p>最后开始迁移剩下的Oracle数据库。考虑到Oracle高度的关系型，如果迁移到NoSQL的数据，将会比较麻烦。在支付团队忙于前两步时，云数据库工程师迁移Oracle数据库到EC2的MySQL实例。所以在迁移第三步时，MySQL数据库已准备好。接下来，对前期的代码做了部分兼容的优化。</p>
+<p>现在的数据库架构包括一个MySQL Master数据库，一个容灾 DB （从MySQL Master复制，如果Master挂掉即可启用为Master），Slave数据库（用来做应用的访问）。</p>
+<p>整个支付系统迁移完之后，架构图如下：</p>
+<p><img src="http://img2.ph.126.net/98bWcjCGKNQpn6bzFZvrhg==/6631590033723176969.jpg" alt="image"></p>
+<h4 id="在路上"><a href="#在路上" class="headerlink" title="在路上"></a>在路上</h4><p>随着支付系统迁移到AWS云服务的完成，Netflix流式架构已全部运行在云端。Netflix可以按需扩展任意Netflix服务，基于用户量来做预测性扩容，使用<a href="http://www.spinnaker.io/" target="_blank" rel="external">Spinnaker</a>单点发布和Netflix各应用的持续发布。</p>
+<h4 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h4><p>[1] <a href="http://techblog.netflix.com/2016/07/netflix-billing-migration-to-aws-part-ii.html" target="_blank" rel="external">http://techblog.netflix.com/2016/07/netflix-billing-migration-to-aws-part-ii.html</a></p>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/08/09/tensorflow-not-just-deep-learning/" rel="next" title="TensorFlow——岂止于深度学习">
+                <i class="fa fa-chevron-left"></i> TensorFlow——岂止于深度学习
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/08/11/first-contact-with-tensorflow-1/" rel="prev" title="深度学习快速实践：TensorFlow">
+                深度学习快速实践：TensorFlow <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="http://img0.ph.126.net/3vPAbMoh_6fH3-g_I0zo-w==/6631748363397501906.jpg"
+               alt="侠天" />
+          <p class="site-author-name" itemprop="name">侠天</p>
+          <p class="site-description motion-element" itemprop="description">侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">8</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/1333564335" target="_blank" title="微博">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  微博
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://www.infoq.com/cn/author/%E4%BE%A0%E5%A4%A9" target="_blank" title="InfoQ">
+                  
+                    <i class="fa fa-fw fa-infoq"></i>
+                  
+                  InfoQ
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#Billing的职责和挑战"><span class="nav-number">1.</span> <span class="nav-text">Billing的职责和挑战</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#迁移步骤"><span class="nav-number">2.</span> <span class="nav-text">迁移步骤</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Act-I-–-转发新国家的支付数据到AWS云服务，并同步数据到数据中心（DC）"><span class="nav-number">3.</span> <span class="nav-text">Act I – 转发新国家的支付数据到AWS云服务，并同步数据到数据中心（DC）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Act-II-–-迁移所有应用和已有国家的数据到AWS云服务"><span class="nav-number">4.</span> <span class="nav-text">Act II – 迁移所有应用和已有国家的数据到AWS云服务</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Act-III-–-和数据中心Say-“Good-bye”！"><span class="nav-number">5.</span> <span class="nav-text">Act III  – 和数据中心Say “Good bye”！</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#在路上"><span class="nav-number">6.</span> <span class="nav-text">在路上</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#参考"><span class="nav-number">7.</span> <span class="nav-text">参考</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">侠天</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+  </script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+    });
+  </script>
+  <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+  
+
+  
+
+</body>
+</html>
