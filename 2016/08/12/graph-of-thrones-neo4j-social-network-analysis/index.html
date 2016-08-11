@@ -100,7 +100,7 @@
 <meta property="og:image" content="http://img0.ph.126.net/NVe2tFIgH-cRJVLeAn3cGQ==/6631645009303857231.png">
 <meta property="og:image" content="http://img1.ph.126.net/vJy1k9fWFZRryZLBHkG1MA==/6631732970234066134.png">
 <meta property="og:image" content="http://img0.ph.126.net/pNb2DRMcw-bj4O7C61rC_w==/6631491077675968998.png">
-<meta property="og:updated_time" content="2016-08-11T16:33:14.000Z">
+<meta property="og:updated_time" content="2016-08-11T16:36:55.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="基于社区发现算法和图分析Neo4j解读《权力的游戏》">
 <meta name="twitter:description" content="导读：几个月前，数学家 Andrew Beveridge和Jie Shan在数学杂志上发表《权力的网络》，主要分析畅销小说《冰与火之歌》第三部《冰雨的风暴》中人物关系，其已经拍成电视剧《权力的游戏》系列。他们在论文中介绍了如何通过文本分析和实体提取构建人物关系的网络。紧接着，使用社交网络分析算法对人物关系网络分析找出最重要的角色；应用社区发现算法来找到人物聚类。
@@ -260,7 +260,7 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-08-12T00:33:14+08:00" content="2016-08-12">
+            <time itemprop="dateCreated" datetime="2016-08-12T00:36:55+08:00" content="2016-08-12">
               2016-08-12
             </time>
           </span>
@@ -308,7 +308,19 @@ Aerys,Jaime,18
 <p>图2</p>
 <h4 id="人物网络分析"><a href="#人物网络分析" class="headerlink" title="人物网络分析"></a>人物网络分析</h4><p>作者使用Neo4j的图查询语言Cypher来做《权力的游戏》图分析，应用到了网络分析的一些工具，具体见<a href="https://www.cs.cornell.edu/home/kleinber/networks-book/" target="_blank" rel="external">《网络，人群和市场：关于高度连接的世界》</a>。</p>
 <h5 id="人物数量"><a href="#人物数量" class="headerlink" title="人物数量"></a>人物数量</h5><p>万事以简单开始。先看看上图上由有多少人物：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">MATCH (c:Character) RETURN count(c)</div></pre></td></tr></table></figure></p>
-<p>count(c)<br>—|—<br>107</p>
+<table>
+<thead>
+<tr>
+<th>count(c)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>107</td>
+<td></td>
+</tr>
+</tbody>
+</table>
 <h5 id="概要统计"><a href="#概要统计" class="headerlink" title="概要统计"></a>概要统计</h5><p>统计每个角色接触的其它角色的数目：<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">MATCH (c:Character)-[:INTERACTS]-&gt;()</div><div class="line">WITH c, count(*) AS num</div><div class="line">RETURN min(num) AS min, max(num) AS max, avg(num) AS avg_characters, stdev(num) AS stdev</div></pre></td></tr></table></figure></p>
 <table>
 <thead>
@@ -329,8 +341,33 @@ Aerys,Jaime,18
 </tbody>
 </table>
 <h5 id="图（网络）的直径"><a href="#图（网络）的直径" class="headerlink" title="图（网络）的直径"></a>图（网络）的直径</h5><p>网络的直径或者测底线或者最长最短路径：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">// Find maximum diameter of network</div><div class="line">// maximum shortest path between two nodes</div><div class="line">MATCH (a:Character), (b:Character) WHERE id(a) &gt; id(b)</div><div class="line">MATCH p=shortestPath((a)-[:INTERACTS*]-(b))</div><div class="line">RETURN length(p) AS len, extract(x IN nodes(p) | x.name) AS path</div><div class="line">ORDER BY len DESC LIMIT <span class="number">4</span></div></pre></td></tr></table></figure></p>
-<pre><code>len|path   
-</code></pre><p>—|—|<br>6  |[Illyrio, Belwas, Daenerys, Robert, Tywin, Oberyn, Amory]<br>6  |[Illyrio, Belwas, Daenerys, Robert, Sansa, Bran, Jojen]<br>6  |[Illyrio, Belwas, Daenerys, Robert, Stannis, Davos, Shireen]<br>6  |[Illyrio, Belwas, Daenerys, Robert, Sansa, Bran, Luwin]<br>我们能看到网络中有许多长度为6的路径。</p>
+<table>
+<thead>
+<tr>
+<th>len</th>
+<th>path   </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>6</td>
+<td>[Illyrio, Belwas, Daenerys, Robert, Tywin, Oberyn, Amory] </td>
+</tr>
+<tr>
+<td>6</td>
+<td>[Illyrio, Belwas, Daenerys, Robert, Sansa, Bran, Jojen]</td>
+</tr>
+<tr>
+<td>6</td>
+<td>[Illyrio, Belwas, Daenerys, Robert, Stannis, Davos, Shireen]</td>
+</tr>
+<tr>
+<td>6</td>
+<td>[Illyrio, Belwas, Daenerys, Robert, Sansa, Bran, Luwin]</td>
+</tr>
+</tbody>
+</table>
+<p>我们能看到网络中有许多长度为6的路径。</p>
 <h5 id="最短路径"><a href="#最短路径" class="headerlink" title="最短路径"></a>最短路径</h5><p>作者使用Cypher 的shortestPath函数找到图中任意两个角色之间的最短路径。让我们找出凯特琳·史塔克（Catelyn Stark ）和卓戈·卡奥（Kahl Drogo）之间的最短路径：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">// Shortest path <span class="keyword">from</span> Catelyn Stark to Khal Drogo</div><div class="line">MATCH (catelyn:Character &#123;name: <span class="string">"Catelyn"</span>&#125;), (drogo:Character &#123;name: <span class="string">"Drogo"</span>&#125;)</div><div class="line">MATCH p=shortestPath((catelyn)-[INTERACTS*]-(drogo))</div><div class="line">RETURN p</div></pre></td></tr></table></figure></p>
 <p><img src="http://img1.ph.126.net/hM5i7QenCvEwrv6FxkjpRA==/6631649407350368299.jpg" alt="此处输入图片的描述"></p>
 <p>图3</p>
