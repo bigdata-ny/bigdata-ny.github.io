@@ -238,6 +238,120 @@
             
               
                 
+                <a class="post-title-link" href="/2016/08/15/spark-two-series-part-1/" itemprop="url">
+                  【Spark 2.0系列】：Spark Session API和Dataset API
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-08-15T12:57:22+08:00" content="2016-08-15">
+              2016-08-15
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h5 id="Dataset：Spark新的抽象层"><a href="#Dataset：Spark新的抽象层" class="headerlink" title="Dataset：Spark新的抽象层"></a>Dataset：Spark新的抽象层</h5><p>Spark最原始的抽象基础是RDD（分布式弹性数据集），但是从Spark 2.0 开始，Dataset将成为Spark新的抽象层。所有的Spark开发者将使用Dataset API和Dataframe（Dataset子集）API编写代码，同时RDD API也还是可以用的，不过已降为low-level的API。</p>
+<p>Dataframe API 在Spark 1.3时被引入，Dataset是Dataframe的超集。Dataset API和Dataframe API的使用带给Spark更好的性能和灵活性。Spark Streaming也将使用Dataset代替RDD。</p>
+<h5 id="Spark-Session：Spark-2-0入口"><a href="#Spark-Session：Spark-2-0入口" class="headerlink" title="Spark Session：Spark 2.0入口"></a>Spark Session：Spark 2.0入口</h5><p>在Spark早期版本，<em>spark context</em>是Spark的入口，RDD API通过<em>context</em> API创建。相应地，<em>streaming</em>由<em>StreamingContext</em>创建；<em>SQL</em>由<em>sqlContext</em>创建；<em>hive</em>由<em>HiveContext</em>创建。而到了Spark 2.0，DataSet和Dataframe API由<em>Spark Session</em>创建。</p>
+<p>SparkSession包括SQLContext，HiveContext和StreamingContext的功能。Spark session实际起计算的还是spark context。</p>
+<p>下面直接看代码吧。</p>
+<h4 id="创建SparkSession"><a href="#创建SparkSession" class="headerlink" title="创建SparkSession"></a>创建SparkSession</h4><p>使用工厂模式创建SparkSession。下面是创建SparkSession的代码：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> sparkSession = <span class="type">SparkSession</span>.builder.</div><div class="line">      master(<span class="string">"local"</span>)</div><div class="line">      .appName(<span class="string">"spark session example"</span>)</div><div class="line">      .getOrCreate()</div></pre></td></tr></table></figure>
+<p>上面的代码类似于创建<em>SparkContext</em>和<em>SQLContext</em>。如果你需要创建<em>hive context</em>，你可以使用下面的代码创建SparkSession，并支持Hive。</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> sparkSession = <span class="type">SparkSession</span>.builder.</div><div class="line">      master(<span class="string">"local"</span>)</div><div class="line">      .appName(<span class="string">"spark session example"</span>)</div><div class="line">      .enableHiveSupport()</div><div class="line">      .getOrCreate()</div></pre></td></tr></table></figure>
+<p><em>enableHiveSupport</em>开启Hive支持后就可以像<em>HiveContext</em>一样使用。</p>
+<p>创建Spark Session后，可以来读取数据了。</p>
+<h4 id="使用Spark-Session读取数据"><a href="#使用Spark-Session读取数据" class="headerlink" title="使用Spark Session读取数据"></a>使用<em>Spark Session</em>读取数据</h4><p>使用<em>Spark Session</em>读取CSV数据：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> df = sparkSession.read.option(<span class="string">"header"</span>,<span class="string">"true"</span>).</div><div class="line">    csv(<span class="string">"src/main/resources/sales.csv"</span>)</div></pre></td></tr></table></figure>
+<p>上面的代码与SQLContext类似，你可以复用原有SQLContext的代码。</p>
+<h4 id="WordCount"><a href="#WordCount" class="headerlink" title="WordCount"></a>WordCount</h4><p>下面来个完整的WordCount例子：<br><figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">#create <span class="type">SparkSession</span></div><div class="line"><span class="keyword">val</span> sparkSession = <span class="type">SparkSession</span>.builder.</div><div class="line">      master(<span class="string">"local"</span>)</div><div class="line">      .appName(<span class="string">"example"</span>)</div><div class="line">      .getOrCreate()</div><div class="line"></div><div class="line">#read data and convert to <span class="type">Dataset</span></div><div class="line"><span class="keyword">import</span> sparkSession.implicits._</div><div class="line"></div><div class="line"><span class="keyword">val</span> data = sparkSession.read.text(<span class="string">"src/main/resources/data.txt"</span>).as[<span class="type">String</span>]</div><div class="line"></div><div class="line">#split and group by word</div><div class="line"><span class="keyword">val</span> words = data.flatMap(value =&gt; value.split(<span class="string">"\\s+"</span>))</div><div class="line"><span class="keyword">val</span> groupedWords = words.groupByKey(_.toLowerCase)</div><div class="line"></div><div class="line">#count</div><div class="line"><span class="keyword">val</span> counts = groupedWords.count()</div><div class="line"></div><div class="line">#print results</div><div class="line">counts.show()</div></pre></td></tr></table></figure></p>
+<p>代码较简单，就不做解释了。</p>
+<h4 id="话外音"><a href="#话外音" class="headerlink" title="话外音"></a>话外音</h4><p>SQLContext和HiveContext在Spark 2.0中会继续使用，因为Spark是向后兼容的。但很明显，Spark官方文档建议以后使用SparkSession作为入口。</p>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2016/08/12/graph-of-thrones-neo4j-social-network-analysis/" itemprop="url">
                   基于社区发现算法和图分析Neo4j解读《权力的游戏》
                 </a>
@@ -1517,7 +1631,7 @@ Aerys,Jaime,18
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">8</span>
+              <span class="site-state-item-count">9</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>

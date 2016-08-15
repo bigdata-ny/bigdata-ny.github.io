@@ -84,20 +84,20 @@
 
 
 
-<meta name="description" content="摘要：Apache Spark 2.0 正式发布，下面来深度解读一下。主要从Apache Spark 2.0的Easier、Faster和Smarter三方面来体现。
-Easier: ANSI SQL and Streamlined APIs除了Spark一贯“引以为傲”的简单易用API外，Spark 2.0主要聚焦在两方面：(1) standard SQL support；(2) DataFra">
+<meta name="description" content="Dataset：Spark新的抽象层Spark最原始的抽象基础是RDD（分布式弹性数据集），但是从Spark 2.0 开始，Dataset将成为Spark新的抽象层。所有的Spark开发者将使用Dataset API和Dataframe（Dataset子集）API编写代码，同时RDD API也还是可以用的，不过已降为low-level的API。
+Dataframe API 在Spark 1.3时被">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Apache Spark 2.0 正式发布：Easier、Faster、Smarter">
-<meta property="og:url" content="http://yoursite.com/2016/07/30/introducing-apache-spark-2-0/index.html">
+<meta property="og:title" content="【Spark 2.0系列】：Spark Session API和Dataset API">
+<meta property="og:url" content="http://yoursite.com/2016/08/15/spark-two-series-part-1/index.html">
 <meta property="og:site_name" content="神机喵算">
-<meta property="og:description" content="摘要：Apache Spark 2.0 正式发布，下面来深度解读一下。主要从Apache Spark 2.0的Easier、Faster和Smarter三方面来体现。
-Easier: ANSI SQL and Streamlined APIs除了Spark一贯“引以为傲”的简单易用API外，Spark 2.0主要聚焦在两方面：(1) standard SQL support；(2) DataFra">
+<meta property="og:description" content="Dataset：Spark新的抽象层Spark最原始的抽象基础是RDD（分布式弹性数据集），但是从Spark 2.0 开始，Dataset将成为Spark新的抽象层。所有的Spark开发者将使用Dataset API和Dataframe（Dataset子集）API编写代码，同时RDD API也还是可以用的，不过已降为low-level的API。
+Dataframe API 在Spark 1.3时被">
 <meta property="og:image" content="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg">
-<meta property="og:updated_time" content="2016-07-29T16:25:44.000Z">
+<meta property="og:updated_time" content="2016-08-15T04:57:22.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Apache Spark 2.0 正式发布：Easier、Faster、Smarter">
-<meta name="twitter:description" content="摘要：Apache Spark 2.0 正式发布，下面来深度解读一下。主要从Apache Spark 2.0的Easier、Faster和Smarter三方面来体现。
-Easier: ANSI SQL and Streamlined APIs除了Spark一贯“引以为傲”的简单易用API外，Spark 2.0主要聚焦在两方面：(1) standard SQL support；(2) DataFra">
+<meta name="twitter:title" content="【Spark 2.0系列】：Spark Session API和Dataset API">
+<meta name="twitter:description" content="Dataset：Spark新的抽象层Spark最原始的抽象基础是RDD（分布式弹性数据集），但是从Spark 2.0 开始，Dataset将成为Spark新的抽象层。所有的Spark开发者将使用Dataset API和Dataframe（Dataset子集）API编写代码，同时RDD API也还是可以用的，不过已降为low-level的API。
+Dataframe API 在Spark 1.3时被">
 <meta name="twitter:image" content="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg">
 
 
@@ -119,9 +119,9 @@ Easier: ANSI SQL and Streamlined APIs除了Spark一贯“引以为傲”的简�
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2016/07/30/introducing-apache-spark-2-0/"/>
+  <link rel="canonical" href="http://yoursite.com/2016/08/15/spark-two-series-part-1/"/>
 
-  <title> Apache Spark 2.0 正式发布：Easier、Faster、Smarter | 神机喵算 </title>
+  <title> 【Spark 2.0系列】：Spark Session API和Dataset API | 神机喵算 </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -241,7 +241,7 @@ Easier: ANSI SQL and Streamlined APIs除了Spark一贯“引以为傲”的简�
             
             
               
-                Apache Spark 2.0 正式发布：Easier、Faster、Smarter
+                【Spark 2.0系列】：Spark Session API和Dataset API
               
             
           </h1>
@@ -253,8 +253,8 @@ Easier: ANSI SQL and Streamlined APIs除了Spark一贯“引以为傲”的简�
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-07-30T00:25:44+08:00" content="2016-07-30">
-              2016-07-30
+            <time itemprop="dateCreated" datetime="2016-08-15T12:57:22+08:00" content="2016-08-15">
+              2016-08-15
             </time>
           </span>
 
@@ -281,28 +281,23 @@ Easier: ANSI SQL and Streamlined APIs除了Spark一贯“引以为傲”的简�
       
 
       
-        <p><em>摘要</em>：Apache Spark 2.0 正式发布，下面来深度解读一下。主要从Apache Spark 2.0的Easier、Faster和Smarter三方面来体现。</p>
-<h4 id="Easier-ANSI-SQL-and-Streamlined-APIs"><a href="#Easier-ANSI-SQL-and-Streamlined-APIs" class="headerlink" title="Easier: ANSI SQL and Streamlined APIs"></a>Easier: ANSI SQL and Streamlined APIs</h4><p>除了Spark一贯“引以为傲”的简单易用API外，Spark 2.0主要聚焦在两方面：<br>(1) standard SQL support；<br>(2) DataFrame/Dataset API的统一。</p>
-<p>在SQL方面，扩展了Spark的SQL支持，引入ANSI SQL解析器和子查询。Spark 2.0 可执行所有99 TPC-DS查询（支持SQL:2003）。</p>
-<p>在API编程方面，主要是提供了简化的Spark APIs：</p>
-<ul>
-<li>DataFrames和Datasets的API统一，支持Scala/Java，关于RDD、DataFrames和Datasets三种API的详细解析见《<a href="http://mp.weixin.qq.com/s?__biz=MzI0MDIxMDM0MQ==&amp;mid=2247483705&amp;idx=1&amp;sn=5e836945a9951e0cbfd2e3f3dfed4f82&amp;scene=21#wechat_redirect" target="_blank" rel="external">Apache Spark 2.0三种API的传说：RDD，DataFrame和Dataset</a>》；</li>
-<li>SparkSession：SparkSession在Spark 2.0中是替代SQLContext和HiveContext的，作为新的入口点。老的SQLContext和HiveContext继续保留，味了向后兼容；</li>
-<li>更简单、更高效的Accumulator API；</li>
-<li>基于DataFrame的Machine Learning API作为主要的ML API；</li>
-<li>机器学习管道的持久化，详细解析见《<a href="http://mp.weixin.qq.com/s?__biz=MzI0MDIxMDM0MQ==&amp;mid=2247483651&amp;idx=1&amp;sn=f500ab53b594428ac00d3fe26cf558df&amp;scene=21#wechat_redirect" target="_blank" rel="external">Apache Spark 2.0预览： 机器学习模型持久化</a>》；</li>
-<li>R语言支持Distributed algorithm。</li>
-</ul>
-<h4 id="Faster-Apache-Spark-as-a-Compiler"><a href="#Faster-Apache-Spark-as-a-Compiler" class="headerlink" title="Faster: Apache Spark as a Compiler"></a>Faster: Apache Spark as a Compiler</h4><p>重新思考Spark的物理执行层时，发现大部分CPU时间花费在毫无意义的工作上了，比如，虚拟函数的调用或者读/写中间数据到CPU cache或者内存，着在其它现代数据引擎中都存在（Spark或者MPP数据库）。所以得想办法减少CPU时间浪费。</p>
-<p>Spark 2.0 使用第二代Tungsten engine。Tungsten engine应用现代编译器原理和MPP数据库技术到Spark。主要得方法是“whole-stage code generation”。具体分析见我在InfoQ上的文章。</p>
-<h4 id="Smarter-Structured-Streaming"><a href="#Smarter-Structured-Streaming" class="headerlink" title="Smarter: Structured Streaming"></a>Smarter: Structured Streaming</h4><p>Spark Streaming在Spark 2.0之前仅仅是个streaming engine。但广大使用者需要的是离线处理和实时处理深度结合的系统，并能处理业务逻辑的变化，和外部数据存储交互。</p>
-<p>对比之前的streaming系统，Structured Streaming有三方面的优化：</p>
-<ul>
-<li>和批处理job作业的API整合：开发者简单的用DataFrame / Dataset API写完批处理计算，Spark会以Streaming形式自动的进行增量计算;</li>
-<li>和存储系统交互中保持事务性：Structured Streaming会在跨引擎和存储系统中处理fault tolerance和consistency;</li>
-<li>和Spark其它组件紧密集成： Structured Streaming处理完的数据可直接放入Spark SQL和MLlib等处理。</li>
-</ul>
-<h4 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h4><p>以上即为Apache Spark 2.0的解读，主要在用户的易用性和性能上做了优化。</p>
+        <h5 id="Dataset：Spark新的抽象层"><a href="#Dataset：Spark新的抽象层" class="headerlink" title="Dataset：Spark新的抽象层"></a>Dataset：Spark新的抽象层</h5><p>Spark最原始的抽象基础是RDD（分布式弹性数据集），但是从Spark 2.0 开始，Dataset将成为Spark新的抽象层。所有的Spark开发者将使用Dataset API和Dataframe（Dataset子集）API编写代码，同时RDD API也还是可以用的，不过已降为low-level的API。</p>
+<p>Dataframe API 在Spark 1.3时被引入，Dataset是Dataframe的超集。Dataset API和Dataframe API的使用带给Spark更好的性能和灵活性。Spark Streaming也将使用Dataset代替RDD。</p>
+<h5 id="Spark-Session：Spark-2-0入口"><a href="#Spark-Session：Spark-2-0入口" class="headerlink" title="Spark Session：Spark 2.0入口"></a>Spark Session：Spark 2.0入口</h5><p>在Spark早期版本，<em>spark context</em>是Spark的入口，RDD API通过<em>context</em> API创建。相应地，<em>streaming</em>由<em>StreamingContext</em>创建；<em>SQL</em>由<em>sqlContext</em>创建；<em>hive</em>由<em>HiveContext</em>创建。而到了Spark 2.0，DataSet和Dataframe API由<em>Spark Session</em>创建。</p>
+<p>SparkSession包括SQLContext，HiveContext和StreamingContext的功能。Spark session实际起计算的还是spark context。</p>
+<p>下面直接看代码吧。</p>
+<h4 id="创建SparkSession"><a href="#创建SparkSession" class="headerlink" title="创建SparkSession"></a>创建SparkSession</h4><p>使用工厂模式创建SparkSession。下面是创建SparkSession的代码：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> sparkSession = <span class="type">SparkSession</span>.builder.</div><div class="line">      master(<span class="string">"local"</span>)</div><div class="line">      .appName(<span class="string">"spark session example"</span>)</div><div class="line">      .getOrCreate()</div></pre></td></tr></table></figure>
+<p>上面的代码类似于创建<em>SparkContext</em>和<em>SQLContext</em>。如果你需要创建<em>hive context</em>，你可以使用下面的代码创建SparkSession，并支持Hive。</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> sparkSession = <span class="type">SparkSession</span>.builder.</div><div class="line">      master(<span class="string">"local"</span>)</div><div class="line">      .appName(<span class="string">"spark session example"</span>)</div><div class="line">      .enableHiveSupport()</div><div class="line">      .getOrCreate()</div></pre></td></tr></table></figure>
+<p><em>enableHiveSupport</em>开启Hive支持后就可以像<em>HiveContext</em>一样使用。</p>
+<p>创建Spark Session后，可以来读取数据了。</p>
+<h4 id="使用Spark-Session读取数据"><a href="#使用Spark-Session读取数据" class="headerlink" title="使用Spark Session读取数据"></a>使用<em>Spark Session</em>读取数据</h4><p>使用<em>Spark Session</em>读取CSV数据：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> df = sparkSession.read.option(<span class="string">"header"</span>,<span class="string">"true"</span>).</div><div class="line">    csv(<span class="string">"src/main/resources/sales.csv"</span>)</div></pre></td></tr></table></figure>
+<p>上面的代码与SQLContext类似，你可以复用原有SQLContext的代码。</p>
+<h4 id="WordCount"><a href="#WordCount" class="headerlink" title="WordCount"></a>WordCount</h4><p>下面来个完整的WordCount例子：<br><figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">#create <span class="type">SparkSession</span></div><div class="line"><span class="keyword">val</span> sparkSession = <span class="type">SparkSession</span>.builder.</div><div class="line">      master(<span class="string">"local"</span>)</div><div class="line">      .appName(<span class="string">"example"</span>)</div><div class="line">      .getOrCreate()</div><div class="line"></div><div class="line">#read data and convert to <span class="type">Dataset</span></div><div class="line"><span class="keyword">import</span> sparkSession.implicits._</div><div class="line"></div><div class="line"><span class="keyword">val</span> data = sparkSession.read.text(<span class="string">"src/main/resources/data.txt"</span>).as[<span class="type">String</span>]</div><div class="line"></div><div class="line">#split and group by word</div><div class="line"><span class="keyword">val</span> words = data.flatMap(value =&gt; value.split(<span class="string">"\\s+"</span>))</div><div class="line"><span class="keyword">val</span> groupedWords = words.groupByKey(_.toLowerCase)</div><div class="line"></div><div class="line">#count</div><div class="line"><span class="keyword">val</span> counts = groupedWords.count()</div><div class="line"></div><div class="line">#print results</div><div class="line">counts.show()</div></pre></td></tr></table></figure></p>
+<p>代码较简单，就不做解释了。</p>
+<h4 id="话外音"><a href="#话外音" class="headerlink" title="话外音"></a>话外音</h4><p>SQLContext和HiveContext在Spark 2.0中会继续使用，因为Spark是向后兼容的。但很明显，Spark官方文档建议以后使用SparkSession作为入口。</p>
 <hr>
 <p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
 <p>若发现以上文章有任何不妥，请联系我。</p>
@@ -332,17 +327,13 @@ Easier: ANSI SQL and Streamlined APIs除了Spark一贯“引以为傲”的简�
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/07/23/first-blog/" rel="next" title="Hello 小小妮">
-                <i class="fa fa-chevron-left"></i> Hello 小小妮
+              <a href="/2016/08/12/graph-of-thrones-neo4j-social-network-analysis/" rel="next" title="基于社区发现算法和图分析Neo4j解读《权力的游戏》">
+                <i class="fa fa-chevron-left"></i> 基于社区发现算法和图分析Neo4j解读《权力的游戏》
               </a>
             
           </div>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2016/07/31/building-machine-learning-estimator-in-tensorflow/" rel="prev" title="【机器学习】在TensorFlow中构建自定义Estimator：深度解析TensorFlow组件Estimator">
-                【机器学习】在TensorFlow中构建自定义Estimator：深度解析TensorFlow组件Estimator <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -462,7 +453,7 @@ Easier: ANSI SQL and Streamlined APIs除了Spark一贯“引以为傲”的简�
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#Easier-ANSI-SQL-and-Streamlined-APIs"><span class="nav-number">1.</span> <span class="nav-text">Easier: ANSI SQL and Streamlined APIs</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Faster-Apache-Spark-as-a-Compiler"><span class="nav-number">2.</span> <span class="nav-text">Faster: Apache Spark as a Compiler</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Smarter-Structured-Streaming"><span class="nav-number">3.</span> <span class="nav-text">Smarter: Structured Streaming</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#结论"><span class="nav-number">4.</span> <span class="nav-text">结论</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#Dataset：Spark新的抽象层"><span class="nav-number">1.</span> <span class="nav-text">Dataset：Spark新的抽象层</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Spark-Session：Spark-2-0入口"><span class="nav-number">2.</span> <span class="nav-text">Spark Session：Spark 2.0入口</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#创建SparkSession"><span class="nav-number"></span> <span class="nav-text">创建SparkSession</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#使用Spark-Session读取数据"><span class="nav-number"></span> <span class="nav-text">使用Spark Session读取数据</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#WordCount"><span class="nav-number"></span> <span class="nav-text">WordCount</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#话外音"><span class="nav-number"></span> <span class="nav-text">话外音</span></a></div>
             
           </div>
         </section>
