@@ -85,13 +85,13 @@
 
 
 <meta name="description" content="导读：本文详细讲述Twitter数据平台的架构演化：分析数据的数据发现和消费。
-####介绍 Twitter数据平台维护数据系统来支持和管理各种业务的数据生产和消费，包括，公用报表指标（比如，月活跃或者天活跃），个性化推荐，A/B测试，广告营销等。 Twitter数据平台运维着一些全球最大的Hadoop集群，其中有几个集群超过1万个节点，存储着数百PB级数据集，每天有超过10万个日常job作业处理">
+介绍 Twitter数据平台维护数据系统来支持和管理各种业务的数据生产和消费，包括，公用报表指标（比如，月活跃或者天活跃），个性化推荐，A/B测试，广告营销等。 Twitter数据平台运维着一些全球最大的Hadoop集群，其中有几个集群超过1万个节点，存储着数百PB级数据集，每天有超过10万个日常job作业处理数十PB">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Twitter数据平台的架构演化：分析数据的数据发现和消费">
 <meta property="og:url" content="http://yoursite.com/2016/08/21/tiwtter_discover_and_consume_data/index.html">
 <meta property="og:site_name" content="神机喵算">
 <meta property="og:description" content="导读：本文详细讲述Twitter数据平台的架构演化：分析数据的数据发现和消费。
-####介绍 Twitter数据平台维护数据系统来支持和管理各种业务的数据生产和消费，包括，公用报表指标（比如，月活跃或者天活跃），个性化推荐，A/B测试，广告营销等。 Twitter数据平台运维着一些全球最大的Hadoop集群，其中有几个集群超过1万个节点，存储着数百PB级数据集，每天有超过10万个日常job作业处理">
+介绍 Twitter数据平台维护数据系统来支持和管理各种业务的数据生产和消费，包括，公用报表指标（比如，月活跃或者天活跃），个性化推荐，A/B测试，广告营销等。 Twitter数据平台运维着一些全球最大的Hadoop集群，其中有几个集群超过1万个节点，存储着数百PB级数据集，每天有超过10万个日常job作业处理数十PB">
 <meta property="og:image" content="http://img1.ph.126.net/FEKRG1rW3QV61GWGt6PdKg==/6631557048373689499.jpg">
 <meta property="og:image" content="http://img2.ph.126.net/rDzMYLctfac6cUUkbZjHQA==/6631478983048121372.jpg">
 <meta property="og:image" content="http://img2.ph.126.net/JzYMozxQTLRtmOK7x8j26A==/6631502072792305004.jpg">
@@ -99,11 +99,11 @@
 <meta property="og:image" content="http://img0.ph.126.net/q0EO2PDu337DcBl_QLCtuQ==/6631602128350431009.jpg">
 <meta property="og:image" content="http://img0.ph.126.net/gKCb7V9eheRIf62pZGTdHQ==/6631780249234131459.png">
 <meta property="og:image" content="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg">
-<meta property="og:updated_time" content="2016-08-21T11:27:17.000Z">
+<meta property="og:updated_time" content="2016-08-21T11:42:48.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Twitter数据平台的架构演化：分析数据的数据发现和消费">
 <meta name="twitter:description" content="导读：本文详细讲述Twitter数据平台的架构演化：分析数据的数据发现和消费。
-####介绍 Twitter数据平台维护数据系统来支持和管理各种业务的数据生产和消费，包括，公用报表指标（比如，月活跃或者天活跃），个性化推荐，A/B测试，广告营销等。 Twitter数据平台运维着一些全球最大的Hadoop集群，其中有几个集群超过1万个节点，存储着数百PB级数据集，每天有超过10万个日常job作业处理">
+介绍 Twitter数据平台维护数据系统来支持和管理各种业务的数据生产和消费，包括，公用报表指标（比如，月活跃或者天活跃），个性化推荐，A/B测试，广告营销等。 Twitter数据平台运维着一些全球最大的Hadoop集群，其中有几个集群超过1万个节点，存储着数百PB级数据集，每天有超过10万个日常job作业处理数十PB">
 <meta name="twitter:image" content="http://img1.ph.126.net/FEKRG1rW3QV61GWGt6PdKg==/6631557048373689499.jpg">
 
 
@@ -259,7 +259,7 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-08-21T19:27:17+08:00" content="2016-08-21">
+            <time itemprop="dateCreated" datetime="2016-08-21T19:42:48+08:00" content="2016-08-21">
               2016-08-21
             </time>
           </span>
@@ -288,7 +288,7 @@
 
       
         <p><em>导读</em>：本文详细讲述Twitter数据平台的架构演化：分析数据的数据发现和消费。</p>
-<p>####介绍<br> Twitter数据平台维护数据系统来支持和管理各种业务的数据生产和消费，包括，公用报表指标（比如，月活跃或者天活跃），个性化推荐，A/B测试，广告营销等。 Twitter数据平台运维着一些全球最大的Hadoop集群，其中有几个集群超过1万个节点，存储着数百PB级数据集，每天有超过10万个日常job作业处理数十PB级数据量。<a href="http://github.com/twitter/scalding" target="_blank" rel="external">Scalding</a>用来在HDFS上进行数据清洗（ETL：Extract，Transform和Load），数据科学家和数据分析师使用<a href="https://github.com/prestodb/presto" target="_blank" rel="external">Presto</a>进行交互式查询。MySQL或者Vertica用来作普通的数据集聚合，然后Tableau仪表板展示。<a href="https://blog.twitter.com/2014/manhattan-our-real-time-multi-tenant-distributed-database-for-twitter-scale" target="_blank" rel="external">Manhattan</a>是Twitter的分布式数据库，其为实时服务服务。</p>
+<h4 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h4><p> Twitter数据平台维护数据系统来支持和管理各种业务的数据生产和消费，包括，公用报表指标（比如，月活跃或者天活跃），个性化推荐，A/B测试，广告营销等。 Twitter数据平台运维着一些全球最大的Hadoop集群，其中有几个集群超过1万个节点，存储着数百PB级数据集，每天有超过10万个日常job作业处理数十PB级数据量。<a href="http://github.com/twitter/scalding" target="_blank" rel="external">Scalding</a>用来在HDFS上进行数据清洗（ETL：Extract，Transform和Load），数据科学家和数据分析师使用<a href="https://github.com/prestodb/presto" target="_blank" rel="external">Presto</a>进行交互式查询。MySQL或者Vertica用来作普通的数据集聚合，然后Tableau仪表板展示。<a href="https://blog.twitter.com/2014/manhattan-our-real-time-multi-tenant-distributed-database-for-twitter-scale" target="_blank" rel="external">Manhattan</a>是Twitter的分布式数据库，其为实时服务服务。</p>
 <p>Twitter数据平台团队从刚开始的单个数据分析组，其仅仅拥有核心的数据集，到成百上千的员工（团队）产生和消费这些数据集。这意味着：数据源发现，数据源的完成链（例如，这些数据源是如何产生和消费的）的获取，不考虑数据源的格式、位置和工具的数据集消费和它们整个生命周期内的一致性管理，将成为一个比较现实的问题。</p>
 <p>为了满足这些需求，数据平台团队开发出数据访问层（Data Access Layer (DAL)）：</p>
 <ul>
@@ -298,18 +298,18 @@
 <li>数据消费：各种客户端（比如，Scalding，Presto，Hive等等）是如何交互地使用数据平台的各数据集？</li>
 </ul>
 <p>本文中将讨论DAL更高层次的设计和使用，DAL是如何符合整个大数据平台生态，以及分析一些实践和经验教训。</p>
-<p>####DAL架构设计<br>为了让数据抽象，DAL有一个逻辑数据集和物理数据集的概念。逻辑数据集代表着数据集要独立于存储类型、存储位置、存储格式和存储副本之外。一个逻辑数据集可以物化到多个存储位置，甚至可以存储到不同的存储系统上，比如，HDFS或者Vertica。物理数据集是和物理存储位置（比如，HDFS namenode，像Vertica或MySQL这样的数据库等）关联的，所有的分片（物理数据块）在物理存储上。根据它们的类型，分片可以是分区或者快照。消费的数据集的元数据（Metadata）存储在物理数据集层。<br>这种抽象的好处：<br>a）：跨多种物理实现，分组聚合相同的逻辑数据集，更易数据集发现；<br>b）：提供消费数据集所需要的所有信息，包括数据集存储格式，数据集存储位置，以及调用的客户端（比如，Scalding或者Presto）。DAL数据集附加元数据，使得数据发现和数据消费更容易（如下所示）。因为所有的数据访问都通过DAL层，我们使用DAL层获取所有数据集的生产和消费的完整链。（其实跟阿里内部的数据地图差不多的意义）。</p>
+<h4 id="DAL架构设计"><a href="#DAL架构设计" class="headerlink" title="DAL架构设计"></a>DAL架构设计</h4><p>为了让数据抽象，DAL有一个逻辑数据集和物理数据集的概念。逻辑数据集代表着数据集要独立于存储类型、存储位置、存储格式和存储副本之外。一个逻辑数据集可以物化到多个存储位置，甚至可以存储到不同的存储系统上，比如，HDFS或者Vertica。物理数据集是和物理存储位置（比如，HDFS namenode，像Vertica或MySQL这样的数据库等）关联的，所有的分片（物理数据块）在物理存储上。根据它们的类型，分片可以是分区或者快照。消费的数据集的元数据（Metadata）存储在物理数据集层。<br>这种抽象的好处：<br>a）：跨多种物理实现，分组聚合相同的逻辑数据集，更易数据集发现；<br>b）：提供消费数据集所需要的所有信息，包括数据集存储格式，数据集存储位置，以及调用的客户端（比如，Scalding或者Presto）。DAL数据集附加元数据，使得数据发现和数据消费更容易（如下所示）。因为所有的数据访问都通过DAL层，我们使用DAL层获取所有数据集的生产和消费的完整链。（其实跟阿里内部的数据地图差不多的意义）。</p>
 <p>下面的架构图显示DAL层是如何配合数据平台的架构：<br><img src="http://img1.ph.126.net/FEKRG1rW3QV61GWGt6PdKg==/6631557048373689499.jpg" alt="此处输入图片的描述"></p>
 <p>在技术栈的底层，核心基础设施包括Hadoop集群和数据库（比如，Vertica，MySQL和Manhattan）。核心数据服务层包括数据访问层（DAL），checkpoit作业状态和依赖的应用状态管理服务，以及job作业延迟报警服务。建立在核心数据服务层之上的是数据生命周期管理，包括数据复制服务和数据删除服务，数据复制服务会管理跨Hadoop集群的数据复制；数据删除服务会根据数据过期策略来删除数据。数据处理工具包括前面提到的Scalding和Presto，也包括自建的ETL工具来实现不同后端（比如，HDFS，Vertica或者MySQL）间的数据转换。</p>
 <p>数据展示的UI（外界称为EagleEye）通过核心数据服务层聚合元数据（Metadata），也作为Twitter数据入口的控制。EagleEye用来发现数据集和应用，以及展示它们之间依赖的关系图。</p>
-<p>####如何发现和消费数据集？<br>像前面涉及到的，DAL数据集带有额外的元数据，可以轻松做到数据发现和消费。Twitter数据平台团队使用下面的数据资源管理来发现和消费数据集。</p>
-<p>#####发现一个数据集<br>数据平台提供的数据资源管理中 “Discover Data Sources”模块能发现使用过的数据集，或者搜索感兴趣的数据集。数据资源管理通过DAL层搜索这个数据集。<br><img src="http://img2.ph.126.net/rDzMYLctfac6cUUkbZjHQA==/6631478983048121372.jpg" alt="此处输入图片的描述"></p>
-<p>#####数据集的预览信息<br>如果数据资源管理找到了我们想查询的数据集，它将展示给使用者预览信息。如下图，数据集在HDFS上被找到，数据资源管理中可以看到数据拥有者的描述，以及通过一定的启发式计算数据集的整体健康状态。我们也能预览的元数据字段有数据集的拥有者，数据集的访问频率，代表数据schema的thrift类，HDFS上的物理位置。<br><img src="http://img2.ph.126.net/JzYMozxQTLRtmOK7x8j26A==/6631502072792305004.jpg" alt="此处输入图片的描述"></p>
+<h4 id="如何发现和消费数据集？"><a href="#如何发现和消费数据集？" class="headerlink" title="如何发现和消费数据集？"></a>如何发现和消费数据集？</h4><p>像前面涉及到的，DAL数据集带有额外的元数据，可以轻松做到数据发现和消费。Twitter数据平台团队使用下面的数据资源管理来发现和消费数据集。</p>
+<h5 id="发现一个数据集"><a href="#发现一个数据集" class="headerlink" title="发现一个数据集"></a>发现一个数据集</h5><p>数据平台提供的数据资源管理中 “Discover Data Sources”模块能发现使用过的数据集，或者搜索感兴趣的数据集。数据资源管理通过DAL层搜索这个数据集。<br><img src="http://img2.ph.126.net/rDzMYLctfac6cUUkbZjHQA==/6631478983048121372.jpg" alt="此处输入图片的描述"></p>
+<h5 id="数据集的预览信息"><a href="#数据集的预览信息" class="headerlink" title="数据集的预览信息"></a>数据集的预览信息</h5><p>如果数据资源管理找到了我们想查询的数据集，它将展示给使用者预览信息。如下图，数据集在HDFS上被找到，数据资源管理中可以看到数据拥有者的描述，以及通过一定的启发式计算数据集的整体健康状态。我们也能预览的元数据字段有数据集的拥有者，数据集的访问频率，代表数据schema的thrift类，HDFS上的物理位置。<br><img src="http://img2.ph.126.net/JzYMozxQTLRtmOK7x8j26A==/6631502072792305004.jpg" alt="此处输入图片的描述"></p>
 <p>我们也可以检验数据集的schema，包括用户对特殊字段添加的评论。类似的，schema也可以让其它系统（Vertica或者MySQL）发现。<br><img src="http://img0.ph.126.net/tPUwFyvntZgM4T4hmJr4GA==/6631754960466694542.jpg" alt="此处输入图片的描述"></p>
 <p>接下来给个例子，下面给出的代码截图是使用Scalding的例子。注意到，对读者来说，数据存储格式和位置都经过抽象。当通过Scalding运行下面的代码，时间范围提供给DAL，DAL提供数据分片的位置和格式。DAL的Scalding客户端接收刚才的信息，以Hadoop的合适的split数目来构造合适的Cascading Tap。</p>
 <p><img src="http://img0.ph.126.net/q0EO2PDu337DcBl_QLCtuQ==/6631602128350431009.jpg" alt="此处输入图片的描述"></p>
-<p>#####数据集的完整链和依赖<br>数据集资源管理也可以查看生产和消费数据集的作业和作业的完整链。从图中可以看出，有一个job作业产生数据集（图中红框），同时有好几个job作业在消费这个数据集。红框中的数据的生成依赖HDFS上的好几个数据集。并且，如果其中的某个job作业生成数据集延迟了，将会发出告警。<br><img src="http://img0.ph.126.net/gKCb7V9eheRIf62pZGTdHQ==/6631780249234131459.png" alt="此处输入图片的描述"></p>
-<p>####实践 &amp; 经验教训<br>在这样Twitter体量的公司，想简化数据集跨所有数据格式和存储系统进行消费是很难的。也有一些像<a href="https://cwiki.apache.org/confluence/display/Hive/Design#Design-Metastore" target="_blank" rel="external">Hive Metastore</a>这样开源的工具可以解决数据抽象，但其只有一部分功能。其它功能，比如数据集的审计和依赖链，管理数据集过期和复制和数据更易消费，也是很重要。</p>
+<h5 id="数据集的完整链和依赖"><a href="#数据集的完整链和依赖" class="headerlink" title="数据集的完整链和依赖"></a>数据集的完整链和依赖</h5><p>数据集资源管理也可以查看生产和消费数据集的作业和作业的完整链。从图中可以看出，有一个job作业产生数据集（图中红框），同时有好几个job作业在消费这个数据集。红框中的数据的生成依赖HDFS上的好几个数据集。并且，如果其中的某个job作业生成数据集延迟了，将会发出告警。<br><img src="http://img0.ph.126.net/gKCb7V9eheRIf62pZGTdHQ==/6631780249234131459.png" alt="此处输入图片的描述"></p>
+<h4 id="实践-amp-经验教训"><a href="#实践-amp-经验教训" class="headerlink" title="实践 &amp; 经验教训"></a>实践 &amp; 经验教训</h4><p>在这样Twitter体量的公司，想简化数据集跨所有数据格式和存储系统进行消费是很难的。也有一些像<a href="https://cwiki.apache.org/confluence/display/Hive/Design#Design-Metastore" target="_blank" rel="external">Hive Metastore</a>这样开源的工具可以解决数据抽象，但其只有一部分功能。其它功能，比如数据集的审计和依赖链，管理数据集过期和复制和数据更易消费，也是很重要。</p>
 <p>在实现DAL时做出了设计上的选择：把DAL设计成一个抽象和消费层，而不是仅仅聚焦在数据发现和审计。这么做的目的是为了让DAL成为数据集真实的来源，这将帮助我们透明的转换数据格式（比如，从lzo压缩的Thrift转换到Parquet格式），帮助我们使用相同的元数据从各种工具中产生和消费数据（比如，Scalding和Presto），帮助我们进行job作业角色的迁移（因为job作业的所有者和团队角色的不断演化，发生的相当频繁），让数据集的过期管理和复制管理在同一个地方完成。</p>
 <p>在DAL刚开始实现阶段，Twitter团队把DAL作为一种library，并且DAL可以直接喝后端数据库会话。这是相当脆弱的，有这么几个原因：安全很弱，因为证书不得不分发到各个客户端；每个客户端都直接连接到数据库是相当困难的；由于客户端的重新发布对所有用户来说，更新是非常缓慢的。数据平台团队移除了这个模块，构建了服务层。</p>
 <p>数据平台团队开发DAL涉及到成千上万的job作业需要重新部署依赖（例如，从HDFS到DAL），这个过程中却有正在线上运行的产品。需要严密和严谨的工作而不中断这些job作业。如果仅仅在意数据依赖链和审计，那这个实现将是相当的简单和安全，因为作者可以通过异步或者离线处理。迁移是困难的，耗时的，做好的做法是增量式迁移。但作者知道元数据服务是每个数据平台都需要的，所以，强烈推荐首先要做的是构建一个数据平台基础。</p>
@@ -342,17 +342,13 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/08/21/spark-two-series-part-2/" rel="next" title="Spark 2.0系列】：Catalog和自定义Optimizer">
-                <i class="fa fa-chevron-left"></i> Spark 2.0系列】：Catalog和自定义Optimizer
+              <a href="/2016/08/21/airbnb_repair_tools/" rel="next" title="Airbnb开源ReAir工具，提供PB级数据仓库的迁移和备份">
+                <i class="fa fa-chevron-left"></i> Airbnb开源ReAir工具，提供PB级数据仓库的迁移和备份
               </a>
             
           </div>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2016/08/21/airbnb_repair_tools/" rel="prev" title="Airbnb开源ReAir工具，提供PB级数据仓库的迁移和备份">
-                Airbnb开源ReAir工具，提供PB级数据仓库的迁移和备份 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -420,7 +416,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">12</span>
+              <span class="site-state-item-count">13</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -472,7 +468,7 @@
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#参考"><span class="nav-number">1.</span> <span class="nav-text">参考</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#介绍"><span class="nav-number">1.</span> <span class="nav-text">介绍</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#DAL架构设计"><span class="nav-number">2.</span> <span class="nav-text">DAL架构设计</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#如何发现和消费数据集？"><span class="nav-number">3.</span> <span class="nav-text">如何发现和消费数据集？</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#发现一个数据集"><span class="nav-number">3.1.</span> <span class="nav-text">发现一个数据集</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#数据集的预览信息"><span class="nav-number">3.2.</span> <span class="nav-text">数据集的预览信息</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#数据集的完整链和依赖"><span class="nav-number">3.3.</span> <span class="nav-text">数据集的完整链和依赖</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#实践-amp-经验教训"><span class="nav-number">4.</span> <span class="nav-text">实践 & 经验教训</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#参考"><span class="nav-number">5.</span> <span class="nav-text">参考</span></a></li></ol></div>
             
           </div>
         </section>
