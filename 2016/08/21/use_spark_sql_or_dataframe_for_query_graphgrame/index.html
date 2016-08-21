@@ -84,16 +84,24 @@
 
 
 
-<meta name="description" content="主题you’re my world!">
+<meta name="description" content="GraphFrame发布GraphFrame基于Spark SQL的DataFrame，继承了DataFrame扩展性和高性能。并且可以提供支持Scala、Java和Python等语言的统一API。
+什么是GraphFrameGraphFrame是类似于Spark的GraphX库，支持图处理。但GraphFrame建立在Spark DataFrame之上，具有以下重要的优势：支持Scala ，Ja">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Hello 小小妮">
-<meta property="og:url" content="http://yoursite.com/2016/07/23/first-blog/index.html">
+<meta property="og:title" content="基于Spark DataFrame的图数据库GraphFrame：用Spark SQL查询Graph">
+<meta property="og:url" content="http://yoursite.com/2016/08/21/use_spark_sql_or_dataframe_for_query_graphgrame/index.html">
 <meta property="og:site_name" content="神机喵算">
-<meta property="og:description" content="主题you’re my world!">
-<meta property="og:updated_time" content="2016-07-22T16:12:01.000Z">
+<meta property="og:description" content="GraphFrame发布GraphFrame基于Spark SQL的DataFrame，继承了DataFrame扩展性和高性能。并且可以提供支持Scala、Java和Python等语言的统一API。
+什么是GraphFrameGraphFrame是类似于Spark的GraphX库，支持图处理。但GraphFrame建立在Spark DataFrame之上，具有以下重要的优势：支持Scala ，Ja">
+<meta property="og:image" content="http://img0.ph.126.net/7NaiyaPFpW3oxa26wNb0SQ==/4856287773289568868.jpg">
+<meta property="og:image" content="http://img0.ph.126.net/VHcML9Lw9s0HThseBKZFIQ==/6631272274867367835.png">
+<meta property="og:image" content="http://img2.ph.126.net/QX3apWm32f7AHBbYV8-kXA==/6631388823099920156.png">
+<meta property="og:image" content="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg">
+<meta property="og:updated_time" content="2016-08-21T11:52:22.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Hello 小小妮">
-<meta name="twitter:description" content="主题you’re my world!">
+<meta name="twitter:title" content="基于Spark DataFrame的图数据库GraphFrame：用Spark SQL查询Graph">
+<meta name="twitter:description" content="GraphFrame发布GraphFrame基于Spark SQL的DataFrame，继承了DataFrame扩展性和高性能。并且可以提供支持Scala、Java和Python等语言的统一API。
+什么是GraphFrameGraphFrame是类似于Spark的GraphX库，支持图处理。但GraphFrame建立在Spark DataFrame之上，具有以下重要的优势：支持Scala ，Ja">
+<meta name="twitter:image" content="http://img0.ph.126.net/7NaiyaPFpW3oxa26wNb0SQ==/4856287773289568868.jpg">
 
 
 
@@ -114,9 +122,9 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2016/07/23/first-blog/"/>
+  <link rel="canonical" href="http://yoursite.com/2016/08/21/use_spark_sql_or_dataframe_for_query_graphgrame/"/>
 
-  <title> Hello 小小妮 | 神机喵算 </title>
+  <title> 基于Spark DataFrame的图数据库GraphFrame：用Spark SQL查询Graph | 神机喵算 </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -236,7 +244,7 @@
             
             
               
-                Hello 小小妮
+                基于Spark DataFrame的图数据库GraphFrame：用Spark SQL查询Graph
               
             
           </h1>
@@ -248,8 +256,8 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-07-23T00:12:01+08:00" content="2016-07-23">
-              2016-07-23
+            <time itemprop="dateCreated" datetime="2016-08-21T19:52:22+08:00" content="2016-08-21">
+              2016-08-21
             </time>
           </span>
 
@@ -276,7 +284,17 @@
       
 
       
-        <h3 id="主题"><a href="#主题" class="headerlink" title="主题"></a>主题</h3><p>you’re my world!</p>
+        <h3 id="GraphFrame发布"><a href="#GraphFrame发布" class="headerlink" title="GraphFrame发布"></a><strong>GraphFrame发布</strong></h3><p>GraphFrame基于Spark SQL的DataFrame，继承了DataFrame扩展性和高性能。并且可以提供支持Scala、Java和Python等语言的统一API。</p>
+<h3 id="什么是GraphFrame"><a href="#什么是GraphFrame" class="headerlink" title="什么是GraphFrame"></a><strong>什么是GraphFrame</strong></h3><p>GraphFrame是类似于Spark的GraphX库，支持图处理。但GraphFrame建立在Spark DataFrame之上，具有以下重要的优势：<br>支持Scala ，Java 和Python API：GraphFrame提供统一的三种编程语言APIs，而GraphX的所有算法支持Python和Java<br>方便、简单的图查询：GraphFrame允许用户使用Spark SQL和DataFrame的API查询<br>支持导出和导入图：GraphFrame支持DataFrame数据源，使得可以读取和写入多种格式的图，比如，Parquet、JSON和CSV格式。</p>
+<h3 id="社交网络的列子"><a href="#社交网络的列子" class="headerlink" title="社交网络的列子"></a><strong>社交网络的列子</strong></h3><p>社交网络中的人是以关系来互相连接的，我们能把这个网络看成一幅图，其中人看成顶点，人与人之间的关系看作是边，如图1所示：<br><img src="http://img0.ph.126.net/7NaiyaPFpW3oxa26wNb0SQ==/4856287773289568868.jpg" alt="此处输入图片的描述"><br>图1<br>在社交网络上，每个人可能由年龄和名字，每个人之间的关系也有不同类型。如表1和表2<br>表1<br><img src="http://img0.ph.126.net/VHcML9Lw9s0HThseBKZFIQ==/6631272274867367835.png" alt="此处输入图片的描述"></p>
+<p>表2<br><img src="http://img2.ph.126.net/QX3apWm32f7AHBbYV8-kXA==/6631388823099920156.png" alt="此处输入图片的描述"></p>
+<h3 id="图查询示列"><a href="#图查询示列" class="headerlink" title="图查询示列"></a><strong>图查询示列</strong></h3><p>由于GraphFrame的顶点和边存储为DataFrame，可以用DataFrame或SQL来很简单的查询图。<br>比如，查询有多少年龄大于35的人？<br>g.vertices.filtr(“age &gt; 35”)<br>比如，有多少人至少被2个人关注？<br>g.inDegrees.filter(“inDegree &gt;=2”)</p>
+<p>GraphFrames支持所有GraphX的算法，包括PageRank、Shortest Paths、Connected components、Strongly Connected components、Triangle count 和Label Propagation Algorithm（LPA）</p>
+<p>GraphFrame和GraphX之间可以无损的来回转换。<br>val gx: Graph[Row, Row] = g.toGraphX()<br>val g2: GraphFrame = GraphFrame.fromGraphX(gx)<br>更相信的GraphFrame API文档见<a href="http://graphframes.github.io/api/scala/index.html#org.graphframes.GraphFrames" target="_blank" rel="external">这里</a>。</p>
+<h3 id="参考"><a href="#参考" class="headerlink" title="参考:"></a><em>参考</em>:</h3><hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"><br>~</p>
 
       
     </div>
@@ -302,12 +320,16 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
+              <a href="/2016/08/21/tiwtter_discover_and_consume_data/" rel="next" title="Twitter数据平台的架构演化：分析数据的数据发现和消费">
+                <i class="fa fa-chevron-left"></i> Twitter数据平台的架构演化：分析数据的数据发现和消费
+              </a>
+            
           </div>
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2016/07/30/introducing-apache-spark-2-0/" rel="prev" title="Apache Spark 2.0 正式发布：Easier、Faster、Smarter">
-                Apache Spark 2.0 正式发布：Easier、Faster、Smarter <i class="fa fa-chevron-right"></i>
+              <a href="/2016/08/21/spark_and_redis_connector/" rel="prev" title="Spark借助Redis提升45倍处理效率！">
+                Spark借助Redis提升45倍处理效率！ <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -428,7 +450,7 @@
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#主题"><span class="nav-number">1.</span> <span class="nav-text">主题</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#GraphFrame发布"><span class="nav-number">1.</span> <span class="nav-text">GraphFrame发布</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#什么是GraphFrame"><span class="nav-number">2.</span> <span class="nav-text">什么是GraphFrame</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#社交网络的列子"><span class="nav-number">3.</span> <span class="nav-text">社交网络的列子</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#图查询示列"><span class="nav-number">4.</span> <span class="nav-text">图查询示列</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参考"><span class="nav-number">5.</span> <span class="nav-text">参考:</span></a></li></ol></div>
             
           </div>
         </section>
