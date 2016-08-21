@@ -1,0 +1,615 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="神机喵算" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="Airbnb开源ReAir工具，提供PB级数据仓库的迁移和备份标签（空格分隔）： ReAir Airbnb Hadoop
+摘要：本篇讲述Airbnb的开源ReAir工具，提供PB级数据仓库的迁移和备份。
+Airbnb大数据平台架构成为Airbnb公司提升产品决策的关键部分。其Hive数据仓库从2013年中旬的350 TB暴增到11 PB （2015年末统计的数据）。随着公司的成长，数据仓库的可靠性">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Airbnb开源ReAir工具，提供PB级数据仓库的迁移和备份">
+<meta property="og:url" content="http://yoursite.com/2016/08/21/airbnb_repair_tools/index.html">
+<meta property="og:site_name" content="神机喵算">
+<meta property="og:description" content="Airbnb开源ReAir工具，提供PB级数据仓库的迁移和备份标签（空格分隔）： ReAir Airbnb Hadoop
+摘要：本篇讲述Airbnb的开源ReAir工具，提供PB级数据仓库的迁移和备份。
+Airbnb大数据平台架构成为Airbnb公司提升产品决策的关键部分。其Hive数据仓库从2013年中旬的350 TB暴增到11 PB （2015年末统计的数据）。随着公司的成长，数据仓库的可靠性">
+<meta property="og:image" content="http://img1.ph.126.net/-svfsAdr08aw8WdKBzFDVg==/6598244045136349852.jpg">
+<meta property="og:image" content="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg">
+<meta property="og:updated_time" content="2016-08-21T11:32:49.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Airbnb开源ReAir工具，提供PB级数据仓库的迁移和备份">
+<meta name="twitter:description" content="Airbnb开源ReAir工具，提供PB级数据仓库的迁移和备份标签（空格分隔）： ReAir Airbnb Hadoop
+摘要：本篇讲述Airbnb的开源ReAir工具，提供PB级数据仓库的迁移和备份。
+Airbnb大数据平台架构成为Airbnb公司提升产品决策的关键部分。其Hive数据仓库从2013年中旬的350 TB暴增到11 PB （2015年末统计的数据）。随着公司的成长，数据仓库的可靠性">
+<meta name="twitter:image" content="http://img1.ph.126.net/-svfsAdr08aw8WdKBzFDVg==/6598244045136349852.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/08/21/airbnb_repair_tools/"/>
+
+  <title> Airbnb开源ReAir工具，提供PB级数据仓库的迁移和备份 | 神机喵算 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">神机喵算</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Airbnb开源ReAir工具，提供PB级数据仓库的迁移和备份
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-08-21T19:32:49+08:00" content="2016-08-21">
+              2016-08-21
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="Airbnb开源ReAir工具，提供PB级数据仓库的迁移和备份"><a href="#Airbnb开源ReAir工具，提供PB级数据仓库的迁移和备份" class="headerlink" title="Airbnb开源ReAir工具，提供PB级数据仓库的迁移和备份"></a>Airbnb开源ReAir工具，提供PB级数据仓库的迁移和备份</h1><p>标签（空格分隔）： ReAir Airbnb Hadoop</p>
+<p>摘要：本篇讲述Airbnb的开源ReAir工具，提供PB级数据仓库的迁移和备份。</p>
+<p><a href="http://www.infoq.com/cn/articles/Airbnb-Hadoop-Hive" target="_blank" rel="external">Airbnb大数据平台架构</a>成为Airbnb公司提升产品决策的关键部分。其Hive数据仓库从2013年中旬的350 TB暴增到11 PB （2015年末统计的数据）。随着公司的成长，数据仓库的可靠性需求日益剧增。我们寻求迁移数据仓库，但现有的迁移工具要么在大数据仓库时有问题，要么就是有很明显的操作负荷，所以Airbnb开发了<a href="https://github.com/airbnb/reair" target="_blank" rel="external">ReAir</a>解决这种状况。这篇文章将详细介绍ReAir是如何工作的以及它是怎样轻松的实现PB级数据仓库的备份。</p>
+<p>####背景<br>最开始Airbnb所有数据存放在单个HDFS／HIve数据仓库。单个命名空间简单、易管理，然而产品复杂后之后即席查询就影响其可靠性。因此，我们把数据仓库分成了两个：一个数据仓库是支持关键产品的任务；另一个是专为即席查询用的。分离这么大的数据仓库将面临两个问题：我们如何容易的迁移庞大的数据仓库？；分离完之后，我们又该怎么保持数据的同步？为了解决这些问题，Airbnb开发ReAir项目并开源给社区。</p>
+<p>ReAir对基于Hive元数据的数据仓库进行备份非常有效，可以实现PB级别的集群扩展。使用ReAir极其简单，你只要连接Hive的metastore Thrift服务，通过MapReduce进行数据复制。ReAir可以兼容Hive和Hadoop的各种版本，并支持单机模式操作——只有Hadoop和Hive是必须要有，MySQL DB是用来进行增量复制。由于ReAir同时处理数据和元数据，所以，只要复制任务一完成就可以进行表和分区的查询。</p>
+<p>在没有ReAir的时候，迁移Hive数据仓库最典型的用法是启动一个DistCp，并且通过数据库操作手动管理元数据。这种方法既费力又容易出错，甚至会引起脏数据导致数据不一致，有时复制不断变化的数据仓库目录时也会出现问题。另外其它的迁移方法要求指定Hive版本，当我们需要从旧版本的Hive数据仓库迁移就变得异常困难。</p>
+<p>ReAir工具包含两种迁移工具：批量迁移和增量式迁移。批量式迁移工具允许你一次复制指定的一系列表，它适合对一个集群的迁移。相对应的，增量式迁移工具可以跟踪数据仓库的变化，并复制生成的对象或者修改的对象。增量式迁移工具适合保持集群间数据的同步，它可以实现秒级数据同步。两种方式更详细的对比请见下面部分。</p>
+<p>####批量迁移<br>批量式迁移一般用来备份整个数据仓库。复制的速度和吞吐量取决于reducer的数量和吞吐量，在Airbnb公司，使用500个reducer复制2.2 PB数据仅仅用了24小时。</p>
+<p>启动批量迁移的过程非常简单：用户允许shell命令启动一系列MR 任务。其执行协议是从源数据仓库复制Hive表和分区等实体到目的数据仓库。批量式复制过程是占有带宽的，它会探测源数据仓库和目的数据仓库，并只复制两者之间的不同文件。同时元数据也仅仅更新变化过的。这些策略可以保证ReAir工作的高效率。</p>
+<p>批量式迁移也有一些挑战。最明显的一个是，产品数据仓库中实体（Hive表和分区）的大小不同，但是迁移的延迟并不能依赖于最大的一个实体。例如，一般的Hive表不到100个分区，然后最大的表有超过10万个分区。为了保证正常的延迟，需要并行运行迁移工作。</p>
+<p>为了解决负载均衡的问题，批量式迁移运行一系列MR任务。批量迁移中两个最昂贵的操作是文件复制和元数据更新，所以这些步骤都是在shuffle阶段分布式进行。每个任务都会打印运行日志数据存储在HDFS，通过日志数据能清晰的看到任务的完成情况。</p>
+<p><img src="http://img1.ph.126.net/-svfsAdr08aw8WdKBzFDVg==/6598244045136349852.jpg" alt="此处输入图片的描述"></p>
+<p>第一个MR任务从HDFS读取实体标识符并shuffle后均匀的发到reducer。reducer先验证各实体，再对要复制的HDFS目录和实体进行映射；第二个MR任务扫描第一个MR产生的文件目录，并在对应的目录下创建文件。对文件名称进行hash shuffle后发到reducer，一旦shuffle之后reducer执行复制操作；第三个MR任务处理Hive元数据的提交逻辑。</p>
+<p>三阶段MR任务计划的扩展性和负载均衡都很好：复制1百万实体的2.2 PB数据消耗大改24小时；同步20 TB 数据量的更新仅花了一个小时。阶段1和阶段3的瓶颈在于Hive元数据MySQL数据库；而阶段2的瓶颈在于网络带宽。</p>
+<p>对于我们的迁移，需要开发定制化的文件复制MR来处理HDFS上的数据。然而，对比DistCp这样通用化的工具，在测试ReAir过程中也发现了一些问题：<br>在复制百万个文件或者整个数据仓库时，MR任务初始化比较慢；<br>错误率较高，并且需要定制错误处理；<br>却少易用的日志分析功能。</p>
+<p>为了解决这些问题，我们开发了两个MR任务来处理通用HDFS数据复制。第一个任务采用一个启发式的、文件夹遍历的多线程进行一系列分隔。一旦有足够的文件夹，mapper遍历这些文件夹生成文件列表来复制。文件名经过shuffle发送到reducer来决定是否有必要复制。第二个MR任务读取文件列表来复制，并通过一个shuffle进行分布式复制工作。</p>
+<p>####增量式迁移<br>在两个集群的情况下，我们需要在两个集群之间共享数据。例如，日志数据需要每天在生产集群聚会，但同时即席查询的用户也需要这些数据。批量式复制任务对于这种需求显得太重，这时需要两个数据仓库间可以按小时进行更新。即席查询集群的用户需要尽快同步生产集群的数据，因此有必要找到一个尽可能快的方法来更新新的内容。虽然<a href="https://cwiki.apache.org/confluence/display/Hive/Replication" target="_blank" rel="external">有一些开源项目</a>能解决这个问题，但由于Hive版本依赖等问题并不是很理想，后来我们开发增量式复制工具来保证即席查询集群和生产集群的数据同步。</p>
+<p>增量式复制工具设计到实体（Hive表和分区）的记录变化，一旦发生变化尽快复制变化量。为了记录源集群上的变化，我们使用了Hive的钩子机制（hook函数）把查询成功的实体写入MySQL数据库。采用这种方法，我们可以跟踪生产集群的所有变化。HDFS上的变化或者元数据的更新都能触发复制。</p>
+<p>一旦有了数据库里的变化的记录，我们需要一种方法来复制这些变化到即席查询集群。这个执行机制是通过一个Java服务实现，读取变化的日志中实体，并转化成一系列的行为集合。比如，在源集群成功创建一个表，会在目标集群上翻译成“复制表”的行为。Java进程将调用元数据，并启动MR任务执行。</p>
+<p>由于源集群上的变化是序列化到日志里，它将在目的集群中以相同的顺序进行执行。但是，实际情况是，单独的复制一个表或者分区花费几秒钟或者几分钟实在太慢，后面改成多线程并行复制。为了处理并发，所有的行为基于并发限制形成DAG。通常限制都是对于同一个表，比如，在复制分区之前要建立好表。通过并发执行，复制的延迟降低到最小。</p>
+<p>用增量式复制可以实现快速、可靠的复制。两个数据仓库之间的同步复制可以实现容灾恢复——如果一个集群宕机，另外一个集群还可以正常提供服务。对比批量式复制，增量式复制对数据仓库体量巨大但改变的数据量比较小的情况更有效率。当前在Airbnb，每天的数据量增长不到2 TB，所以增量式复制比较有意义。<br>使用批量式迁移和增量式迁移，可以快速的迁移两个集群。我们希望这些工具对社区也一样有用。</p>
+<h4 id="参考"><a href="#参考" class="headerlink" title="参考:"></a><em>参考</em>:</h4><hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/08/21/tiwtter_discover_and_consume_data/" rel="next" title="Twitter数据平台的架构演化：分析数据的数据发现和消费">
+                <i class="fa fa-chevron-left"></i> Twitter数据平台的架构演化：分析数据的数据发现和消费
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="http://img0.ph.126.net/3vPAbMoh_6fH3-g_I0zo-w==/6631748363397501906.jpg"
+               alt="侠天" />
+          <p class="site-author-name" itemprop="name">侠天</p>
+          <p class="site-description motion-element" itemprop="description">侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">12</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/1333564335" target="_blank" title="微博">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  微博
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://www.infoq.com/cn/author/%E4%BE%A0%E5%A4%A9" target="_blank" title="InfoQ">
+                  
+                    <i class="fa fa-fw fa-infoq"></i>
+                  
+                  InfoQ
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Airbnb开源ReAir工具，提供PB级数据仓库的迁移和备份"><span class="nav-number">1.</span> <span class="nav-text">Airbnb开源ReAir工具，提供PB级数据仓库的迁移和备份</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#参考"><span class="nav-number">1.0.0.1.</span> <span class="nav-text">参考:</span></a></li></ol></li></ol></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">侠天</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+  </script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+    });
+  </script>
+  <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,693 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="神机喵算" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="Catalog和自定义OptimizerSpark 2.0系列第一篇见Spark 2.0系列】：Spark Session API和Dataset API，本文将讲解Spark 2.0 的Catalog 和Custom Optimizer。
+首先，先了解下RDD 和Dataset 在开发中使用对比。
+RDD 和Dataset 使用对比Dataset API 是RDD 和DataFrame API">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spark 2.0系列】：Catalog和自定义Optimizer">
+<meta property="og:url" content="http://yoursite.com/2016/08/21/spark-two-series-part-2/index.html">
+<meta property="og:site_name" content="神机喵算">
+<meta property="og:description" content="Catalog和自定义OptimizerSpark 2.0系列第一篇见Spark 2.0系列】：Spark Session API和Dataset API，本文将讲解Spark 2.0 的Catalog 和Custom Optimizer。
+首先，先了解下RDD 和Dataset 在开发中使用对比。
+RDD 和Dataset 使用对比Dataset API 是RDD 和DataFrame API">
+<meta property="og:image" content="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg">
+<meta property="og:updated_time" content="2016-08-21T11:18:21.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spark 2.0系列】：Catalog和自定义Optimizer">
+<meta name="twitter:description" content="Catalog和自定义OptimizerSpark 2.0系列第一篇见Spark 2.0系列】：Spark Session API和Dataset API，本文将讲解Spark 2.0 的Catalog 和Custom Optimizer。
+首先，先了解下RDD 和Dataset 在开发中使用对比。
+RDD 和Dataset 使用对比Dataset API 是RDD 和DataFrame API">
+<meta name="twitter:image" content="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/08/21/spark-two-series-part-2/"/>
+
+  <title> Spark 2.0系列】：Catalog和自定义Optimizer | 神机喵算 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">神机喵算</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Spark 2.0系列】：Catalog和自定义Optimizer
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-08-21T19:18:21+08:00" content="2016-08-21">
+              2016-08-21
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h4 id="Catalog和自定义Optimizer"><a href="#Catalog和自定义Optimizer" class="headerlink" title="Catalog和自定义Optimizer"></a>Catalog和自定义Optimizer</h4><p>Spark 2.0系列第一篇见<a href="http://mp.weixin.qq.com/s?__biz=MzI0MDIxMDM0MQ==&amp;mid=2247483729&amp;idx=1&amp;sn=22c40fd932ba7ffc3684a45e1861dd27#wechat_redirect" target="_blank" rel="external">Spark 2.0系列】：Spark Session API和Dataset API</a>，本文将讲解Spark 2.0 的Catalog 和Custom Optimizer。</p>
+<p>首先，先了解下RDD 和Dataset 在开发中使用对比。</p>
+<h5 id="RDD-和Dataset-使用对比"><a href="#RDD-和Dataset-使用对比" class="headerlink" title="RDD 和Dataset 使用对比"></a>RDD 和Dataset 使用对比</h5><p>Dataset API 是RDD 和DataFrame API 的统一，但大部分Dataset API 与RDD API使用方法看起来是相似的（其实实现方法是不同的）。所以RDD代码很容易转换成Dataset API。下面直接上代码：</p>
+<h6 id="WordCount"><a href="#WordCount" class="headerlink" title="WordCount"></a>WordCount</h6><ul>
+<li>RDD</li>
+</ul>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> rdd = sparkContext.textFile(<span class="string">"src/main/resources/data.txt"</span>)</div><div class="line">  </div><div class="line"><span class="keyword">val</span> wordsRDD = rdd.flatMap(value =&gt; value.split(<span class="string">"\\s+"</span>))</div><div class="line"><span class="keyword">val</span> wordsPair = wordsRDD.map(word =&gt; (word,<span class="number">1</span>))</div><div class="line"><span class="keyword">val</span> wordCount = wordsPair.reduceByKey(_+_)</div></pre></td></tr></table></figure>
+<ul>
+<li>Dataset</li>
+</ul>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> ds = sparkSession.read.text(<span class="string">"src/main/resources/data.txt"</span>)</div><div class="line"></div><div class="line"><span class="keyword">import</span> sparkSession.implicits._</div><div class="line"><span class="keyword">val</span> wordsDs = ds.flatMap(value =&gt; value.split(<span class="string">"\\s+"</span>))</div><div class="line"><span class="keyword">val</span> wordsPairDs = wordsDs.groupByKey(value =&gt; value)</div><div class="line"><span class="keyword">val</span> wordCountDs = wordsPairDs.count()</div></pre></td></tr></table></figure>
+<h6 id="其它"><a href="#其它" class="headerlink" title="其它"></a>其它</h6><table>
+<thead>
+<tr>
+<th></th>
+<th>RDD</th>
+<th>Dataset</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Caching</td>
+<td>rdd.cache()</td>
+<td>ds.cache()</td>
+</tr>
+<tr>
+<td>Filter</td>
+<td>val filteredRDD = wordsRDD.filter(value =&gt; value ==”hello”)</td>
+<td>val filteredDS = wordsDs.filter(value =&gt; value ==”hello”)</td>
+</tr>
+<tr>
+<td>Map Partition</td>
+<td>val mapPartitionsRDD = rdd.mapPartitions(iterator =&gt; List(iterator.count(value =&gt; true)).iterator)</td>
+<td>val mapPartitionsDs = ds.mapPartitions(iterator =&gt; List(iterator.count(value =&gt; true)).iterator)</td>
+</tr>
+<tr>
+<td>reduceByKey</td>
+<td>val reduceCountByRDD = wordsPair.reduceByKey(<em>+</em>)</td>
+<td>val reduceCountByDs = wordsPairDs.mapGroups((key,values) =&gt;(key,values.length))</td>
+</tr>
+</tbody>
+</table>
+<h6 id="Dataset-和RDD-相互转换"><a href="#Dataset-和RDD-相互转换" class="headerlink" title="Dataset 和RDD 相互转换"></a>Dataset 和RDD 相互转换</h6><ul>
+<li>RDD</li>
+</ul>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> dsToRDD = ds.rdd</div></pre></td></tr></table></figure>
+<ul>
+<li>Dataset</li>
+</ul>
+<p>RDD 转换成Dataframe稍麻烦，需要指定schema。</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> rddStringToRowRDD = rdd.map(value =&gt; <span class="type">Row</span>(value))</div><div class="line"><span class="keyword">val</span> dfschema = <span class="type">StructType</span>(<span class="type">Array</span>(<span class="type">StructField</span>(<span class="string">"value"</span>,<span class="type">StringType</span>)))</div><div class="line"><span class="keyword">val</span> rddToDF = sparkSession.createDataFrame(rddStringToRowRDD,dfschema)</div><div class="line"><span class="keyword">val</span> rDDToDataSet = rddToDF.as[<span class="type">String</span>]</div></pre></td></tr></table></figure>
+<h5 id="Catalog-API"><a href="#Catalog-API" class="headerlink" title="Catalog API"></a>Catalog API</h5><p>DataSet 和Dataframe API 支持结构化数据分析，而结构化数据重要的是管理metadata。这里的metadata包括temporary metadata（临时表）；registered udfs；permanent metadata（Hive metadata或HCatalog）。</p>
+<p>早期Spark版本并未提供标准的API访问metadata，开发者需要使用类似<em>show tables</em>的查询来查询metadata；而Spark 2.0 在Spark SQL中提供标准API 调用catalog来访问metadata。</p>
+<h6 id="访问Catalog"><a href="#访问Catalog" class="headerlink" title="访问Catalog"></a>访问Catalog</h6><p>建立SparkSession，然后调用Catalog：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> catalog = sparkSession.catalog</div></pre></td></tr></table></figure>
+<h6 id="查询数据库"><a href="#查询数据库" class="headerlink" title="查询数据库"></a>查询数据库</h6><figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">catalog.listDatabases().select(<span class="string">"name"</span>).show()</div></pre></td></tr></table></figure>
+<p><em>listDatabases</em>可查询所有数据库。在Hive中，Catalog可以访问Hive metadata中的数据库。<em>listDatabases</em>返回一个dataset，所以你可以使用适用于dataset的所有操作去处理metadata。</p>
+<h6 id="用createTempView-注册Dataframe"><a href="#用createTempView-注册Dataframe" class="headerlink" title="用createTempView 注册Dataframe"></a>用createTempView 注册Dataframe</h6><p>早期版本Spark用<em>registerTempTable</em>注册dataframe，而Spark 2.0 用<em>createTempView</em>替代。</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">df.createTempView(<span class="string">"sales"</span>)</div></pre></td></tr></table></figure>
+<p>一旦注册视图，即可使用<em>listTables</em>访问所有表。</p>
+<h6 id="查询表"><a href="#查询表" class="headerlink" title="查询表"></a>查询表</h6><figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">catalog.listTables().select(<span class="string">"name"</span>).show()</div></pre></td></tr></table></figure>
+<h6 id="检查表缓存"><a href="#检查表缓存" class="headerlink" title="检查表缓存"></a>检查表缓存</h6><p>通过Catalog可检查表是否缓存。访问频繁的表缓存起来是非常有用的。</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">catalog.isCached(<span class="string">"sales"</span>)</div></pre></td></tr></table></figure>
+<p>默认表是不缓存的，所以你会得到false。</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">df.cache()</div><div class="line">catalog.isCached(<span class="string">"sales"</span>)</div></pre></td></tr></table></figure>
+<p>现在将会打印true。</p>
+<h6 id="删除视图"><a href="#删除视图" class="headerlink" title="删除视图"></a>删除视图</h6><figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">catalog.dropTempView(<span class="string">"sales"</span>)</div></pre></td></tr></table></figure>
+<h6 id="查询注册函数"><a href="#查询注册函数" class="headerlink" title="查询注册函数"></a>查询注册函数</h6><figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">catalog.listFunctions().</div><div class="line">select(<span class="string">"name"</span>,<span class="string">"description"</span>,<span class="string">"className"</span>,<span class="string">"isTemporary"</span>).show(<span class="number">100</span>)</div></pre></td></tr></table></figure>
+<p>Catalog不仅能查询表，也可以访问UDF。上面代码会显示Spark Session中所有的注册函数（包括内建函数）。</p>
+<h5 id="自定义-Optimizer"><a href="#自定义-Optimizer" class="headerlink" title="自定义 Optimizer"></a>自定义 Optimizer</h5><h6 id="Catalyst-optimizer"><a href="#Catalyst-optimizer" class="headerlink" title="Catalyst optimizer"></a>Catalyst optimizer</h6><p>Spark SQL使用Catalyst优化所有的查询，优化之后的查询比直接操作RDD速度要快。Catalyst是基于rule的，每个rule都有一个特定optimization，比如，<em>ConstantFolding</em> rule用来移除常数表达式，具体可直接看Spark SQL源代码。</p>
+<p>在早期版本Spark中，如果想自定义optimization，需要开发者修改Spark源代码。操作起来麻烦，而且要求开发者能读懂源码。在Spark 2.0中，已提供API自定义optimization。</p>
+<h6 id="访问Optimized-plan"><a href="#访问Optimized-plan" class="headerlink" title="访问Optimized plan"></a>访问Optimized plan</h6><p>在开始编写自定义optimization之前，先来看看如何访问optimized plan：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> df = sparkSession.read.option(<span class="string">"header"</span>,<span class="string">"true"</span>).csv(<span class="string">"src/main/resources/data.csv"</span>)</div><div class="line"><span class="keyword">val</span> multipliedDF = df.selectExpr(<span class="string">"amountPaid * 1"</span>)</div><div class="line">println(multipliedDF.queryExecution.optimizedPlan.numberedTreeString)</div></pre></td></tr></table></figure>
+<p>上面的代码是加载一个csv文件，并对某一行所有值乘以1。<em>queryExecution</em> 可访问查询相关的所有执行信息。 <em>queryExecution</em> 的<em>optimizedPlan</em>对象可以访问dataframe的optimized plan。</p>
+<p>Spark中的执行计划以tree表示，所以用<em>numberedTreeString</em>打印optimized plan。打印结果如下：</p>
+<blockquote>
+<p>00 Project [(cast(amountPaid#3 as double) <em> 1.0) AS (amountPaid </em> 1)#5]<br>01 +- Relation[transactionId#0,customerId#1,itemId#2,amountPaid#3] csv</p>
+</blockquote>
+<p>所有执行计划是由底向上读取：</p>
+<ul>
+<li>01 Relation - 从csv 文件建立一个dataframe</li>
+<li>00 Project - 投影操作</li>
+</ul>
+<h6 id="编写自定义optimizer-rule"><a href="#编写自定义optimizer-rule" class="headerlink" title="编写自定义optimizer rule"></a>编写自定义optimizer rule</h6><p>从上面的执行计划可以清晰的看到：对一列的每个值乘以1 这里并没有优化。我们知道，乘以1 这个操作应该返回的是值本身，所以可以利用这个特点来增加只能点的optimizer。代码如下：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">object</span> <span class="title">MultiplyOptimizationRule</span> <span class="keyword">extends</span> <span class="title">Rule</span>[<span class="type">LogicalPlan</span>] </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">apply</span></span>(plan: <span class="type">LogicalPlan</span>): <span class="type">LogicalPlan</span> = plan transformAllExpressions &#123;</div><div class="line">      <span class="keyword">case</span> <span class="type">Multiply</span>(left,right) <span class="keyword">if</span> right.isInstanceOf[<span class="type">Literal</span>] &amp;&amp;</div><div class="line">        right.asInstanceOf[<span class="type">Literal</span>].value.asInstanceOf[<span class="type">Double</span>] == <span class="number">1.0</span> =&gt;</div><div class="line">        println(<span class="string">"optimization of one applied"</span>)</div><div class="line">        left</div><div class="line">    &#125;</div><div class="line">  &#125;</div></pre></td></tr></table></figure>
+<p>这里MultiplyOptimizationRule扩展自Rule类，采用Scala的模式匹配编写。检测右操作数是否是 1，如果是1 则直接返回左节点。</p>
+<p>把MultiplyOptimizationRule加入进optimizer：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sparkSession.experimental.extraOptimizations = <span class="type">Seq</span>(<span class="type">MultiplyOptimizationRule</span>)</div></pre></td></tr></table></figure>
+<p>你可以使用<em>extraOptimizations</em>将定义好的Rule加入 catalyst。</p>
+<p>下面实际使用看看效果：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> multipliedDFWithOptimization = df.selectExpr(<span class="string">"amountPaid * 1"</span>)</div><div class="line">println(<span class="string">"after optimization"</span>)</div><div class="line">println(multipliedDFWithOptimization.queryExecution.</div><div class="line">optimizedPlan.numberedTreeString)</div></pre></td></tr></table></figure>
+<p>我们看到打印结果：</p>
+<blockquote>
+<p>00 Project [cast(amountPaid#3 as double) AS (amountPaid * 1)#7]<br>01 +- Relation[transactionId#0,customerId#1,itemId#2,amountPaid#3] csv</p>
+</blockquote>
+<p>说明自定义Optimizer已生效。</p>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/08/15/spark-two-series-part-1/" rel="next" title="【Spark 2.0系列】：Spark Session API和Dataset API">
+                <i class="fa fa-chevron-left"></i> 【Spark 2.0系列】：Spark Session API和Dataset API
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/08/21/tiwtter_discover_and_consume_data/" rel="prev" title="Twitter数据平台的架构演化：分析数据的数据发现和消费">
+                Twitter数据平台的架构演化：分析数据的数据发现和消费 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="http://img0.ph.126.net/3vPAbMoh_6fH3-g_I0zo-w==/6631748363397501906.jpg"
+               alt="侠天" />
+          <p class="site-author-name" itemprop="name">侠天</p>
+          <p class="site-description motion-element" itemprop="description">侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">12</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/1333564335" target="_blank" title="微博">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  微博
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://www.infoq.com/cn/author/%E4%BE%A0%E5%A4%A9" target="_blank" title="InfoQ">
+                  
+                    <i class="fa fa-fw fa-infoq"></i>
+                  
+                  InfoQ
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#Catalog和自定义Optimizer"><span class="nav-number">1.</span> <span class="nav-text">Catalog和自定义Optimizer</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#RDD-和Dataset-使用对比"><span class="nav-number">1.1.</span> <span class="nav-text">RDD 和Dataset 使用对比</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#WordCount"><span class="nav-number">1.1.1.</span> <span class="nav-text">WordCount</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#其它"><span class="nav-number">1.1.2.</span> <span class="nav-text">其它</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Dataset-和RDD-相互转换"><span class="nav-number">1.1.3.</span> <span class="nav-text">Dataset 和RDD 相互转换</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Catalog-API"><span class="nav-number">1.2.</span> <span class="nav-text">Catalog API</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#访问Catalog"><span class="nav-number">1.2.1.</span> <span class="nav-text">访问Catalog</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#查询数据库"><span class="nav-number">1.2.2.</span> <span class="nav-text">查询数据库</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#用createTempView-注册Dataframe"><span class="nav-number">1.2.3.</span> <span class="nav-text">用createTempView 注册Dataframe</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#查询表"><span class="nav-number">1.2.4.</span> <span class="nav-text">查询表</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#检查表缓存"><span class="nav-number">1.2.5.</span> <span class="nav-text">检查表缓存</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#删除视图"><span class="nav-number">1.2.6.</span> <span class="nav-text">删除视图</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#查询注册函数"><span class="nav-number">1.2.7.</span> <span class="nav-text">查询注册函数</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#自定义-Optimizer"><span class="nav-number">1.3.</span> <span class="nav-text">自定义 Optimizer</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#Catalyst-optimizer"><span class="nav-number">1.3.1.</span> <span class="nav-text">Catalyst optimizer</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#访问Optimized-plan"><span class="nav-number">1.3.2.</span> <span class="nav-text">访问Optimized plan</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#编写自定义optimizer-rule"><span class="nav-number">1.3.3.</span> <span class="nav-text">编写自定义optimizer rule</span></a></li></ol></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">侠天</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+  </script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+    });
+  </script>
+  <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+  
+
+  
+
+</body>
+</html>
