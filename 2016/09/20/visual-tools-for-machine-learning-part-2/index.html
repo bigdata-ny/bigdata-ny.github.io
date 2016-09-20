@@ -1,0 +1,640 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="神机喵算" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="写在之前：有些概念跟平时你见过的机器学习文章描述的可能不太一样，但是它会给你一种“心里一颤“的感觉。
+机器学习的讨论经常会涉及到的问题是：什么机器学习模型才是最好的？是逻辑回归模型，随机森林模型，贝叶斯方法模型，支持向量机模型？抑或是神经网络模型？每个人似乎都有自己心中最爱！但这些讨论试图把机器学习的挑战缩减为单个问题，而这对机器学习的初学者带来了特别严重的误解。
+选择一个好的机器学习模型固然重要">
+<meta property="og:type" content="article">
+<meta property="og:title" content="机器学习模型选择如此简单">
+<meta property="og:url" content="http://yoursite.com/2016/09/20/visual-tools-for-machine-learning-part-2/index.html">
+<meta property="og:site_name" content="神机喵算">
+<meta property="og:description" content="写在之前：有些概念跟平时你见过的机器学习文章描述的可能不太一样，但是它会给你一种“心里一颤“的感觉。
+机器学习的讨论经常会涉及到的问题是：什么机器学习模型才是最好的？是逻辑回归模型，随机森林模型，贝叶斯方法模型，支持向量机模型？抑或是神经网络模型？每个人似乎都有自己心中最爱！但这些讨论试图把机器学习的挑战缩减为单个问题，而这对机器学习的初学者带来了特别严重的误解。
+选择一个好的机器学习模型固然重要">
+<meta property="og:image" content="http://scikit-learn.org/stable/_static/ml_map.png">
+<meta property="og:image" content="http://scikit-learn.org/stable/_images/plot_classifier_comparison_001.png">
+<meta property="og:image" content="http://scikit-learn.org/stable/_images/plot_cluster_comparison_001.png">
+<meta property="og:image" content="http://img1.ph.126.net/xsHUK3F6SKjQtXUHzDliYA==/6631651606375660672.png">
+<meta property="og:image" content="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg">
+<meta property="og:updated_time" content="2016-09-20T03:26:21.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="机器学习模型选择如此简单">
+<meta name="twitter:description" content="写在之前：有些概念跟平时你见过的机器学习文章描述的可能不太一样，但是它会给你一种“心里一颤“的感觉。
+机器学习的讨论经常会涉及到的问题是：什么机器学习模型才是最好的？是逻辑回归模型，随机森林模型，贝叶斯方法模型，支持向量机模型？抑或是神经网络模型？每个人似乎都有自己心中最爱！但这些讨论试图把机器学习的挑战缩减为单个问题，而这对机器学习的初学者带来了特别严重的误解。
+选择一个好的机器学习模型固然重要">
+<meta name="twitter:image" content="http://scikit-learn.org/stable/_static/ml_map.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/09/20/visual-tools-for-machine-learning-part-2/"/>
+
+  <title> 机器学习模型选择如此简单 | 神机喵算 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">神机喵算</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                机器学习模型选择如此简单
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-09-20T11:26:21+08:00" content="2016-09-20">
+              2016-09-20
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><em>写在之前：有些概念跟平时你见过的机器学习文章描述的可能不太一样，但是它会给你一种“心里一颤“的感觉</em>。</p>
+<p>机器学习的讨论经常会涉及到的问题是：什么机器学习模型才是最好的？是逻辑回归模型，随机森林模型，贝叶斯方法模型，支持向量机模型？抑或是神经网络模型？每个人似乎都有自己心中最爱！但这些讨论试图把机器学习的挑战缩减为单个问题，而这对机器学习的初学者带来了特别严重的误解。</p>
+<p>选择一个好的机器学习模型固然重要，但这远远不够。在缺乏领域知识，基本假设，数据选型和实际的应用的情况下，还是值得商榷的。关于机器学习模型评价这部分将留在下一篇文章阐述。</p>
+<p> feature engineering (FE)，algorithm selection (AS)，and parameter tuning (PT)；</p>
+<h5 id="模型选择"><a href="#模型选择" class="headerlink" title="模型选择"></a>模型选择</h5><p>能训练一个“合适”的模型和预测是相当依赖特征工程、参数调优和模型选择。模型选择是机器学习过程比较难的部分，复杂、迭代，经常不断的去“试错”和重复。</p>
+<h6 id="模型选择实战"><a href="#模型选择实战" class="headerlink" title="模型选择实战"></a>模型选择实战</h6><p>相信大家对Scikit-Learn“<a href="http://scikit-learn.org/stable/tutorial/machine_learning_map" target="_blank" rel="external">如何选择Estimator</a>”里的流程图非常熟悉了，不熟悉的点开链接读读。这个流程图是给初学者一个选择机器学习算法的最佳实践的参考手册。</p>
+<p><img src="http://scikit-learn.org/stable/_static/ml_map.png" alt="image"></p>
+<p>首先，看下我们的数据集（三个数据集参考上篇《<a href="http://mp.weixin.qq.com/s?__biz=MzI0MDIxMDM0MQ==&amp;mid=2247483684&amp;idx=1&amp;sn=428cf35632b2408e1dc7d36dff497c53&amp;scene=21#wechat_redirect" target="_blank" rel="external">可视化图表让机器学习“biu”的一样简单：特征分析</a>》）的样本数是否够50。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">print</span> len(occupancy) <span class="comment"># 8,143</span></div><div class="line"><span class="keyword">print</span> len(credit)    <span class="comment"># 30,000</span></div><div class="line"><span class="keyword">print</span> len(concrete)  <span class="comment"># 1,030</span></div></pre></td></tr></table></figure>
+<p>很显然这个条件是满足的。接着看下是否我们是否预测类别。对于房屋入住和信用卡数据集来说是判断类别；而混凝土数据集，缓凝土的抗压强度是连续数据，所以预测的是数量。因此，为前两个数据集选择分类器（classifier）；为后者选择回归模型（regressor）。</p>
+<p>因为我们的两个判断类别的数据集都小于100K，接着按图选择<em>sklearn.svm.LinearSVC</em>（其会将数据集映射到高维特征空间）；如果失败，就再选择<em>sklearn.neighbors.KNeighborsClassifier</em>（其会分配样本到它的K领域）。你应该还记得房屋入住数据集单位不统一，所以这里引入<em>scale</em>进行归一化：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> scale</div><div class="line"></div><div class="line"><span class="keyword">from</span> sklearn.svm <span class="keyword">import</span> LinearSVC</div><div class="line"><span class="keyword">from</span> sklearn.neighbors <span class="keyword">import</span> KNeighborsClassifier</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">classify</span><span class="params">(attributes, targets, model)</span>:</span></div><div class="line">    <span class="comment"># Split data into 'test' and 'train' for cross validation</span></div><div class="line">    splits = cv.train_test_split(attributes, targets, test_size=<span class="number">0.2</span>)</div><div class="line">    X_train, X_test, y_train, y_test = splits</div><div class="line"></div><div class="line">    model.fit(X_train, y_train)</div><div class="line">    y_true = y_test</div><div class="line">    y_pred = model.predict(X_test)</div><div class="line">    print(confusion_matrix(y_true, y_pred))</div><div class="line"></div><div class="line"><span class="comment"># Divide data frame into features and labels</span></div><div class="line">features = occupancy[[<span class="string">'temp'</span>, <span class="string">'humid'</span>, <span class="string">'light'</span>, <span class="string">'co2'</span>, <span class="string">'hratio'</span>]]</div><div class="line">labels   = occupancy[<span class="string">'occupied'</span>]</div><div class="line"></div><div class="line"><span class="comment"># Scale the features</span></div><div class="line">stdfeatures = scale(features)</div><div class="line"></div><div class="line">classify(stdfeatures, labels, LinearSVC())</div><div class="line">classify(stdfeatures, labels, KNeighborsClassifier())</div></pre></td></tr></table></figure>
+<p>对于信用卡数据集使用相同的<em>classify</em>，根据上篇的特征分析经验，我们这里需要先进行数据缺失处理。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">features = credit[[</div><div class="line">    <span class="string">'limit'</span>, <span class="string">'sex'</span>, <span class="string">'edu'</span>, <span class="string">'married'</span>, <span class="string">'age'</span>, <span class="string">'apr_delay'</span>, <span class="string">'may_delay'</span>,</div><div class="line">    <span class="string">'jun_delay'</span>, <span class="string">'jul_delay'</span>, <span class="string">'aug_delay'</span>, <span class="string">'sep_delay'</span>, <span class="string">'apr_bill'</span>, <span class="string">'may_bill'</span>,</div><div class="line">    <span class="string">'jun_bill'</span>, <span class="string">'jul_bill'</span>, <span class="string">'aug_bill'</span>, <span class="string">'sep_bill'</span>, <span class="string">'apr_pay'</span>, <span class="string">'may_pay'</span>,</div><div class="line">    <span class="string">'jun_pay'</span>, <span class="string">'jul_pay'</span>, <span class="string">'aug_pay'</span>, <span class="string">'sep_pay'</span></div><div class="line">]]</div><div class="line">labels   = credit[<span class="string">'default'</span>]</div><div class="line"></div><div class="line">stdfeatures = scale(features)</div><div class="line"></div><div class="line">classify(stdfeatures, labels, LinearSVC())</div><div class="line">classify(stdfeatures, labels, KNeighborsClassifier())</div></pre></td></tr></table></figure>
+<p>对于混凝土数据集，我们得决定是否所有的特征都重要，或者只有一部分重要。如果选择所有的特征都很重要，那根据流程图手册路线应该选择<em>sklearn.linear_model.RidgeRegression</em>或者<em>sklearn.svm.SVR</em>（有点类似LinearSVC classifier）；如果觉得只有部分特征重要，那就选择<em>sklearn.linear_model.Lasso</em>（其会在预测时舍弃部分特征）或者<em>sklearn.linear_model.ElasticNet</em>（其介入 Lasso方法和Ridge方法之间，L1和 L2惩罚的线性组合）。</p>
+<p>下面来试试看咯：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">from</span> sklearn.linear_model <span class="keyword">import</span> Ridge, Lasso, ElasticNet</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">regress</span><span class="params">(attributes, targets, model)</span>:</span></div><div class="line">    splits = cv.train_test_split(attributes, targets, test_size=<span class="number">0.2</span>)</div><div class="line">    X_train, X_test, y_train, y_test = splits</div><div class="line"></div><div class="line">    model.fit(X_train, y_train)</div><div class="line">    y_true = y_test</div><div class="line">    y_pred = model.predict(X_test)</div><div class="line">    print(<span class="string">'Mean squared error = &#123;:0.3f&#125;'</span>.format(mse(y_true, y_pred)))</div><div class="line">    print(<span class="string">'R2 score = &#123;:0.3f&#125;'</span>.format(r2_score(y_true, y_pred)))</div><div class="line"></div><div class="line">features = concrete[[</div><div class="line">    <span class="string">'cement'</span>, <span class="string">'slag'</span>, <span class="string">'ash'</span>, <span class="string">'water'</span>, <span class="string">'splast'</span>, <span class="string">'coarse'</span>, <span class="string">'fine'</span>, <span class="string">'age'</span></div><div class="line">]]</div><div class="line">labels   = concrete[<span class="string">'strength'</span>]</div><div class="line"></div><div class="line">regress(features, labels, Ridge())</div><div class="line">regress(features, labels, Lasso())</div><div class="line">regress(features, labels, ElasticNet())</div></pre></td></tr></table></figure>
+<p>正如上面代码展示的那样，Scikit-Learn API使得我们可以快速的发布我们需要的模型，这是Scikit-Learn一个强有力的魔力。</p>
+<h5 id="可视化模型"><a href="#可视化模型" class="headerlink" title="可视化模型"></a>可视化模型</h5><p>Scikit-Learn流程图非常有用是因为其提供了使用路径地图，但是它不能提供各种模型的函数。因而另外两幅图成为Scikit-Learn的权威：<a href="http://scikit-learn.org/stable/auto_examples/classification/plot_classifier_comparison.html" target="_blank" rel="external">分类器比较</a>和<a href="http://scikit-learn.org/stable/auto_examples/cluster/plot_cluster_comparison.html" target="_blank" rel="external">聚类比较</a>。</p>
+<p>多个小图形很容易比较出不同的数据集适合的聚类算法：</p>
+<p><img src="http://scikit-learn.org/stable/_images/plot_classifier_comparison_001.png" alt="image"></p>
+<p>类似的，分类器比较图很好的帮助我们对不同的数据集选择哪种合适的分类器：</p>
+<p><img src="http://scikit-learn.org/stable/_images/plot_cluster_comparison_001.png" alt="image"></p>
+<p>一般来说，这些图形仅仅是证明了各种模型对不同数据集的优化；但我相信大家都希望有一种可视化工具可以对同一个数据集使用不同的模型的情况进行比较。</p>
+<h5 id="模型簇"><a href="#模型簇" class="headerlink" title="模型簇"></a>模型簇</h5><p>首先给出“模型”这个词的定义，它包括三方面：</p>
+<ul>
+<li>模型簇：比如，linear model，nearest neighbors，SVM，Bayes等模型；</li>
+<li>模型形式：比如，sklearn.linear_model.Ridge()，sklearn.linear_model.Lasso()，sklearn.linear_model.ElasticNet等；</li>
+<li>拟合模型：比如，Ridge().fit(X_train, y_train)。</li>
+</ul>
+<p>模型簇是由特征空间决定的；模型形式是通过试验和统计检验来选择的；拟合模型是由参数调优和机器计算生成的。</p>
+<p>我们讨论的这些，模型形式的试验会在后续文章中讲到，这部分是我们期望能够得到回报的想象空间。模型形式是指出我们的特征是如何和模型簇相关。</p>
+<p>我喜欢的模型展示工具之一是Dr. Saed Sayad的可交互的“<a href="http://www.saedsayad.com/data_mining_map.htm" target="_blank" rel="external">数据挖掘地图</a>”。它比Scikit-Learn的流程图手册综合性更高，并且结合里模型簇和模型形式的概念。除了预测方法外，Sayad地图也包含了统计方法部分。</p>
+<p>这里给出一个普适的流程图，它旨在结合Sayad地图和 Scikit-Learn流程图。颜色和等级代表模型形式和模型簇：</p>
+<p><img src="http://img1.ph.126.net/xsHUK3F6SKjQtXUHzDliYA==/6631651606375660672.png" alt="image"></p>
+<h5 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h5><p>通过在同一个数据集上比较和对比不同模型的性能，我们能从模型簇中直观的选取模型形式。</p>
+<p>下期将会讲解拟合模型和调参的可视化工具。</p>
+<p><em>PS：这周深入的“研究”了下Flume，日志收集利器，但是对Hadoop版本的支持太低，填了不少坑……</em></p>
+<p><em>希望我写的对部分人有用，如果是这样，请让我知道，谢谢。</em></p>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/08/21/spark-two-series-part-2/" rel="next" title="【Spark 2.0系列】：Catalog和自定义Optimizer">
+                <i class="fa fa-chevron-left"></i> 【Spark 2.0系列】：Catalog和自定义Optimizer
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/09/20/streaming-process-data-access/" rel="prev" title="流式处理架构的“瓶颈”：数据访问（上）">
+                流式处理架构的“瓶颈”：数据访问（上） <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="http://img0.ph.126.net/3vPAbMoh_6fH3-g_I0zo-w==/6631748363397501906.jpg"
+               alt="侠天" />
+          <p class="site-author-name" itemprop="name">侠天</p>
+          <p class="site-description motion-element" itemprop="description">侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">17</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/1333564335" target="_blank" title="微博">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  微博
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://www.infoq.com/cn/author/%E4%BE%A0%E5%A4%A9" target="_blank" title="InfoQ">
+                  
+                    <i class="fa fa-fw fa-infoq"></i>
+                  
+                  InfoQ
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#模型选择"><span class="nav-number">1.</span> <span class="nav-text">模型选择</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#模型选择实战"><span class="nav-number">1.1.</span> <span class="nav-text">模型选择实战</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#可视化模型"><span class="nav-number">2.</span> <span class="nav-text">可视化模型</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#模型簇"><span class="nav-number">3.</span> <span class="nav-text">模型簇</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">侠天</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+  </script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+    });
+  </script>
+  <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+  
+
+  
+
+</body>
+</html>

@@ -84,20 +84,26 @@
 
 
 
-<meta name="description" content="摘要：Apache Spark 2.0 正式发布，下面来深度解读一下。主要从Apache Spark 2.0的Easier、Faster和Smarter三方面来体现。
-Easier: ANSI SQL and Streamlined APIs除了Spark一贯“引以为傲”的简单易用API外，Spark 2.0主要聚焦在两方面：(1) standard SQL support；(2) DataFra">
+<meta name="description" content="写在之前：这是用微软输入法打出来的一篇文章。
+背景在Linkedin，大体架构是：ApacheSamza作为流式处理框架，Apache Kafka作为持久化的订阅/发布消息中间件，Databus监控数据库的变化。
+数据访问（Data access）的两种模式为什么数据访问是规模化的挑战？我们处理的数据访问模式主要分两种：
+Read/write data：这里给出一个在Linkedin中使用read">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Apache Spark 2.0 正式发布：Easier、Faster、Smarter">
-<meta property="og:url" content="http://yoursite.com/2016/07/30/introducing-apache-spark-2-0/index.html">
+<meta property="og:title" content="流式处理架构的“瓶颈”：数据访问（上）">
+<meta property="og:url" content="http://yoursite.com/2016/09/20/streaming-process-data-access/index.html">
 <meta property="og:site_name" content="神机喵算">
-<meta property="og:description" content="摘要：Apache Spark 2.0 正式发布，下面来深度解读一下。主要从Apache Spark 2.0的Easier、Faster和Smarter三方面来体现。
-Easier: ANSI SQL and Streamlined APIs除了Spark一贯“引以为傲”的简单易用API外，Spark 2.0主要聚焦在两方面：(1) standard SQL support；(2) DataFra">
+<meta property="og:description" content="写在之前：这是用微软输入法打出来的一篇文章。
+背景在Linkedin，大体架构是：ApacheSamza作为流式处理框架，Apache Kafka作为持久化的订阅/发布消息中间件，Databus监控数据库的变化。
+数据访问（Data access）的两种模式为什么数据访问是规模化的挑战？我们处理的数据访问模式主要分两种：
+Read/write data：这里给出一个在Linkedin中使用read">
 <meta property="og:image" content="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg">
-<meta property="og:updated_time" content="2016-07-29T16:25:44.000Z">
+<meta property="og:updated_time" content="2016-09-20T03:31:42.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Apache Spark 2.0 正式发布：Easier、Faster、Smarter">
-<meta name="twitter:description" content="摘要：Apache Spark 2.0 正式发布，下面来深度解读一下。主要从Apache Spark 2.0的Easier、Faster和Smarter三方面来体现。
-Easier: ANSI SQL and Streamlined APIs除了Spark一贯“引以为傲”的简单易用API外，Spark 2.0主要聚焦在两方面：(1) standard SQL support；(2) DataFra">
+<meta name="twitter:title" content="流式处理架构的“瓶颈”：数据访问（上）">
+<meta name="twitter:description" content="写在之前：这是用微软输入法打出来的一篇文章。
+背景在Linkedin，大体架构是：ApacheSamza作为流式处理框架，Apache Kafka作为持久化的订阅/发布消息中间件，Databus监控数据库的变化。
+数据访问（Data access）的两种模式为什么数据访问是规模化的挑战？我们处理的数据访问模式主要分两种：
+Read/write data：这里给出一个在Linkedin中使用read">
 <meta name="twitter:image" content="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg">
 
 
@@ -119,9 +125,9 @@ Easier: ANSI SQL and Streamlined APIs除了Spark一贯“引以为傲”的简�
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2016/07/30/introducing-apache-spark-2-0/"/>
+  <link rel="canonical" href="http://yoursite.com/2016/09/20/streaming-process-data-access/"/>
 
-  <title> Apache Spark 2.0 正式发布：Easier、Faster、Smarter | 神机喵算 </title>
+  <title> 流式处理架构的“瓶颈”：数据访问（上） | 神机喵算 </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -241,7 +247,7 @@ Easier: ANSI SQL and Streamlined APIs除了Spark一贯“引以为傲”的简�
             
             
               
-                Apache Spark 2.0 正式发布：Easier、Faster、Smarter
+                流式处理架构的“瓶颈”：数据访问（上）
               
             
           </h1>
@@ -253,8 +259,8 @@ Easier: ANSI SQL and Streamlined APIs除了Spark一贯“引以为傲”的简�
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-07-30T00:25:44+08:00" content="2016-07-30">
-              2016-07-30
+            <time itemprop="dateCreated" datetime="2016-09-20T11:31:42+08:00" content="2016-09-20">
+              2016-09-20
             </time>
           </span>
 
@@ -281,28 +287,27 @@ Easier: ANSI SQL and Streamlined APIs除了Spark一贯“引以为傲”的简�
       
 
       
-        <p><em>摘要</em>：Apache Spark 2.0 正式发布，下面来深度解读一下。主要从Apache Spark 2.0的Easier、Faster和Smarter三方面来体现。</p>
-<h4 id="Easier-ANSI-SQL-and-Streamlined-APIs"><a href="#Easier-ANSI-SQL-and-Streamlined-APIs" class="headerlink" title="Easier: ANSI SQL and Streamlined APIs"></a>Easier: ANSI SQL and Streamlined APIs</h4><p>除了Spark一贯“引以为傲”的简单易用API外，Spark 2.0主要聚焦在两方面：<br>(1) standard SQL support；<br>(2) DataFrame/Dataset API的统一。</p>
-<p>在SQL方面，扩展了Spark的SQL支持，引入ANSI SQL解析器和子查询。Spark 2.0 可执行所有99 TPC-DS查询（支持SQL:2003）。</p>
-<p>在API编程方面，主要是提供了简化的Spark APIs：</p>
-<ul>
-<li>DataFrames和Datasets的API统一，支持Scala/Java，关于RDD、DataFrames和Datasets三种API的详细解析见《<a href="http://mp.weixin.qq.com/s?__biz=MzI0MDIxMDM0MQ==&amp;mid=2247483705&amp;idx=1&amp;sn=5e836945a9951e0cbfd2e3f3dfed4f82&amp;scene=21#wechat_redirect" target="_blank" rel="external">Apache Spark 2.0三种API的传说：RDD，DataFrame和Dataset</a>》；</li>
-<li>SparkSession：SparkSession在Spark 2.0中是替代SQLContext和HiveContext的，作为新的入口点。老的SQLContext和HiveContext继续保留，味了向后兼容；</li>
-<li>更简单、更高效的Accumulator API；</li>
-<li>基于DataFrame的Machine Learning API作为主要的ML API；</li>
-<li>机器学习管道的持久化，详细解析见《<a href="http://mp.weixin.qq.com/s?__biz=MzI0MDIxMDM0MQ==&amp;mid=2247483651&amp;idx=1&amp;sn=f500ab53b594428ac00d3fe26cf558df&amp;scene=21#wechat_redirect" target="_blank" rel="external">Apache Spark 2.0预览： 机器学习模型持久化</a>》；</li>
-<li>R语言支持Distributed algorithm。</li>
-</ul>
-<h4 id="Faster-Apache-Spark-as-a-Compiler"><a href="#Faster-Apache-Spark-as-a-Compiler" class="headerlink" title="Faster: Apache Spark as a Compiler"></a>Faster: Apache Spark as a Compiler</h4><p>重新思考Spark的物理执行层时，发现大部分CPU时间花费在毫无意义的工作上了，比如，虚拟函数的调用或者读/写中间数据到CPU cache或者内存，着在其它现代数据引擎中都存在（Spark或者MPP数据库）。所以得想办法减少CPU时间浪费。</p>
-<p>Spark 2.0 使用第二代Tungsten engine。Tungsten engine应用现代编译器原理和MPP数据库技术到Spark。主要得方法是“whole-stage code generation”。具体分析见我在InfoQ上的文章。</p>
-<h4 id="Smarter-Structured-Streaming"><a href="#Smarter-Structured-Streaming" class="headerlink" title="Smarter: Structured Streaming"></a>Smarter: Structured Streaming</h4><p>Spark Streaming在Spark 2.0之前仅仅是个streaming engine。但广大使用者需要的是离线处理和实时处理深度结合的系统，并能处理业务逻辑的变化，和外部数据存储交互。</p>
-<p>对比之前的streaming系统，Structured Streaming有三方面的优化：</p>
-<ul>
-<li>和批处理job作业的API整合：开发者简单的用DataFrame / Dataset API写完批处理计算，Spark会以Streaming形式自动的进行增量计算;</li>
-<li>和存储系统交互中保持事务性：Structured Streaming会在跨引擎和存储系统中处理fault tolerance和consistency;</li>
-<li>和Spark其它组件紧密集成： Structured Streaming处理完的数据可直接放入Spark SQL和MLlib等处理。</li>
-</ul>
-<h4 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h4><p>以上即为Apache Spark 2.0的解读，主要在用户的易用性和性能上做了优化。</p>
+        <p><em>写在之前：这是用微软输入法打出来的一篇文章。</em></p>
+<h5 id="背景"><a href="#背景" class="headerlink" title="背景"></a><em>背景</em></h5><p>在Linkedin，大体架构是：ApacheSamza作为流式处理框架，Apache Kafka作为持久化的订阅/发布消息中间件，Databus监控数据库的变化。</p>
+<h5 id="数据访问（Data-access）的两种模式"><a href="#数据访问（Data-access）的两种模式" class="headerlink" title="数据访问（Data access）的两种模式"></a><em>数据访问（Data access）的两种模式</em></h5><p>为什么数据访问是规模化的挑战？我们处理的数据访问模式主要分两种：</p>
+<p><em>Read/write data：</em><br>这里给出一个在Linkedin中使用read-write数据访问模式的场景。Linkedin许多应用需要推送信息给会员，不管通过email还是通知。为了保证更好的用户体验，尽量不多给会员发email。Linkedin开发一个基于Samza的ATC（Air Traffic Control ）应用来控制email和通知送达终端用户。ATC追踪每个会员收到的最后一封邮件的时间，以及所有新的邮件请求的时间。ATC维护着每个会员的状态信息（read/write）。</p>
+<p><em>Read-only data：</em><br>同样，给出一个只读数据访问的场景。Linkedin开发一个应用监听会员点击某条广告的事件的时间。这个应用会生成一个AdQuality事件，并高亮点击某些特定广告的会员特征。AdQuality事件会用来训练广告推荐机器学习模型。应用处理AdQuality事件会去查询点击广告的会员的画像。</p>
+<h5 id="数据访问的关键特征"><a href="#数据访问的关键特征" class="headerlink" title="数据访问的关键特征"></a><em>数据访问的关键特征</em></h5><p>除了以上描述的两种访问模式，以下两种数据访问的关键特征也将会极大地影响事件流式处理的架构。</p>
+<p><em>数据访问是否分区？</em><br>上面的场景，Kafka的topic是以MemberId分区的。输入事件已经按会员信息（MemberId）分区，那每个事件处理节点仅仅需要访问一个不变的会员数据集。后续我们会看到，如何对已经分区过的数据访问进行缓存优化。<br>另外一种场景，假设处理每个事件都需要查询Company库获取会员的更多信息，那每个事件处理节点就得查询可能的每个公司。这是访问未分区数据的例子。</p>
+<p><em>数据集的大小</em><br>后面会看到，访问一个5M数据集的解决方案跟访问一个5 TB数据集的方案完全不同。比如，你可以把5M数据集完整的存储到每个节点上，然而很显然你不可能对5 TB的数据集做同样的操作。</p>
+<h5 id="数据访问的解决方案"><a href="#数据访问的解决方案" class="headerlink" title="数据访问的解决方案"></a><em>数据访问的解决方案</em></h5><p>下面是展示的是两种常用的数据访问解决方案。</p>
+<p><em>远程存储</em>：这是开发应用的传统的方式。当一个应用处理一个事件，它会远程调用一个隔离的SQL或者No-SQL数据库。这种方法中，写操作总是采用远程调用，但是读数据可以通过本地缓存进行一定程度上的优化。LinkedIn有大量的应用采用这种方法。<br>另外一种模式，在远程数据库（比如，Oracle）前面前置一个远程缓存（比如，Couchbase）。远程缓存主要用来数据读操作，应用通过Databus之类的工具追踪数据库变化，并替代远程缓存。</p>
+<p><em>本地存储（嵌入式）</em>：这种方法是要求事件处理结果存储的位置和事件处理的地方在同一台机器上。极端的情况是所有数据存储访问都是本地，这样效率最高。<br>Samza天生就是支持嵌入式本地数据库，它支持把RocksDB嵌入你的事件处理器。它是通过Kafka log compacted topic做备份。</p>
+<p>也有其它框架，比如Microsoft ServiceFabric，它本身内建支持本地应用存储。ServiceFabric支持持久化数据到本地磁盘，并把备份持久化到其它处理器实例。ServiceFabric持久化会自动备份到Azure storage。</p>
+<h5 id="事件到达点-VS-事件处理点"><a href="#事件到达点-VS-事件处理点" class="headerlink" title="事件到达点 VS 事件处理点"></a><em>事件到达点 VS 事件处理点</em></h5><p>本地存储和远程存储的讨论是相对于事件处理的位置。在选择使用的框架时，事件到达的位置可能与事件处理的位置不在同一位置。</p>
+<p>像GoogleDataflow这类框架支持从未分区的输入源（GooglePub-Sub）读取数据。这种模型中，当事件到达时，处理器会先找出当前事件应该归哪个处理器处理，并转发到对应的实际处理器处理。</p>
+<p>而Samza、Spark Streaming和Flink之类的流处理框架《<a href="http://mp.weixin.qq.com/s?__biz=MzI0MDIxMDM0MQ==&amp;mid=2247483679&amp;idx=1&amp;sn=5e544ae789c8773f73b9e1d552e5f991#wechat_redirect" target="_blank" rel="external">实时流处理框架选型：就应该这样“拉出来遛遛”</a>》天然就支持事件的分区（Kafka，Kinesis等），因此不会再做一步转发处理。</p>
+<p>如果你的应用得瓶颈是网络带宽或者计算能力，那处理事件的节点和事件的到达在同一个节点不会出现转发，将会极大的提高性能。</p>
+<p>抛开在事件处理之前进行事件转发的情况，本文讨论的在事件处理过程中考虑数据访问这些依然对所有的事件处理框架适用。</p>
+<h5 id="在路上"><a href="#在路上" class="headerlink" title="在路上"></a><em>在路上</em></h5><p>海量流式处理没有一个完美的方案，大家可以根据公司的场景进行平衡取舍。</p>
+<p>本文主要讲了两种数据访问的模式，以及数据访问关键特征对架构的影响，并给出了相应的解决方案。最后讨论了事件到达和事件处理位置不同带来的解决方案不同。下期更精彩，敬请关注。</p>
+<p><em>PS：最近更新较少，说声抱歉了。这几周工作较忙，主要涉及到的知识点有：CDH集群、Hue、Zeppelin、Caravel for Hive、elasticsearch on hadoop/Hive、Gobblin、Neo4j等，可以后台留言交流。</em></p>
+<p><em>参考</em>：<br>[1] <a href="https://engineering.linkedin.com/blog/2016/08/stream-processing-hard-problems-part-ii--data-access" target="_blank" rel="external">https://engineering.linkedin.com/blog/2016/08/stream-processing-hard-problems-part-ii--data-access</a></p>
 <hr>
 <p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
 <p>若发现以上文章有任何不妥，请联系我。</p>
@@ -332,17 +337,13 @@ Easier: ANSI SQL and Streamlined APIs除了Spark一贯“引以为傲”的简�
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/07/23/first-blog/" rel="next" title="Hello 小小妮">
-                <i class="fa fa-chevron-left"></i> Hello 小小妮
+              <a href="/2016/09/20/visual-tools-for-machine-learning-part-2/" rel="next" title="机器学习模型选择如此简单">
+                <i class="fa fa-chevron-left"></i> 机器学习模型选择如此简单
               </a>
             
           </div>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2016/07/31/building-machine-learning-estimator-in-tensorflow/" rel="prev" title="【机器学习】在TensorFlow中构建自定义Estimator：深度解析TensorFlow组件Estimator">
-                【机器学习】在TensorFlow中构建自定义Estimator：深度解析TensorFlow组件Estimator <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -462,7 +463,7 @@ Easier: ANSI SQL and Streamlined APIs除了Spark一贯“引以为傲”的简�
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#Easier-ANSI-SQL-and-Streamlined-APIs"><span class="nav-number">1.</span> <span class="nav-text">Easier: ANSI SQL and Streamlined APIs</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Faster-Apache-Spark-as-a-Compiler"><span class="nav-number">2.</span> <span class="nav-text">Faster: Apache Spark as a Compiler</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Smarter-Structured-Streaming"><span class="nav-number">3.</span> <span class="nav-text">Smarter: Structured Streaming</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#结论"><span class="nav-number">4.</span> <span class="nav-text">结论</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#背景"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#数据访问（Data-access）的两种模式"><span class="nav-number">2.</span> <span class="nav-text">数据访问（Data access）的两种模式</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#数据访问的关键特征"><span class="nav-number">3.</span> <span class="nav-text">数据访问的关键特征</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#数据访问的解决方案"><span class="nav-number">4.</span> <span class="nav-text">数据访问的解决方案</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#事件到达点-VS-事件处理点"><span class="nav-number">5.</span> <span class="nav-text">事件到达点 VS 事件处理点</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#在路上"><span class="nav-number">6.</span> <span class="nav-text">在路上</span></a></li></ol></div>
             
           </div>
         </section>
