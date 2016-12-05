@@ -1,0 +1,665 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="神机喵算" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="写在之前：本文将讲述Kafka Cluster配置和优化。
+Kafka Cluster（相对于单个server）最大的优点：可扩展性和容错性。
+
+​                               Kafka集群简图
+Kafka Broker个数决定Kafka集群大小的因素有以下几点：
+
+磁盘容量：首先考虑的是所需保存的消息所占用的总磁盘容量和每个broker所能提供的磁盘空间。如果K">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kafka Cluster优化两三事">
+<meta property="og:url" content="http://yoursite.com/2016/12/05/kafka-cluster-optimize/index.html">
+<meta property="og:site_name" content="神机喵算">
+<meta property="og:description" content="写在之前：本文将讲述Kafka Cluster配置和优化。
+Kafka Cluster（相对于单个server）最大的优点：可扩展性和容错性。
+
+​                               Kafka集群简图
+Kafka Broker个数决定Kafka集群大小的因素有以下几点：
+
+磁盘容量：首先考虑的是所需保存的消息所占用的总磁盘容量和每个broker所能提供的磁盘空间。如果K">
+<meta property="og:image" content="http://img0.ph.126.net/InezSQTEYGXiSj-q7IAZ8Q==/6631959469629171084.png">
+<meta property="og:image" content="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg">
+<meta property="og:updated_time" content="2016-12-05T01:18:52.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Kafka Cluster优化两三事">
+<meta name="twitter:description" content="写在之前：本文将讲述Kafka Cluster配置和优化。
+Kafka Cluster（相对于单个server）最大的优点：可扩展性和容错性。
+
+​                               Kafka集群简图
+Kafka Broker个数决定Kafka集群大小的因素有以下几点：
+
+磁盘容量：首先考虑的是所需保存的消息所占用的总磁盘容量和每个broker所能提供的磁盘空间。如果K">
+<meta name="twitter:image" content="http://img0.ph.126.net/InezSQTEYGXiSj-q7IAZ8Q==/6631959469629171084.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/12/05/kafka-cluster-optimize/"/>
+
+  <title> Kafka Cluster优化两三事 | 神机喵算 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">神机喵算</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Kafka Cluster优化两三事
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-12-05T09:18:52+08:00" content="2016-12-05">
+              2016-12-05
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><em>写在之前</em>：本文将讲述Kafka Cluster配置和优化。</p>
+<p>Kafka Cluster（相对于单个server）最大的优点：可扩展性和容错性。</p>
+<p><img src="http://img0.ph.126.net/InezSQTEYGXiSj-q7IAZ8Q==/6631959469629171084.png" alt="image"></p>
+<p>​                               Kafka集群简图</p>
+<h6 id="Kafka-Broker个数"><a href="#Kafka-Broker个数" class="headerlink" title="Kafka Broker个数"></a>Kafka Broker个数</h6><p>决定Kafka集群大小的因素有以下几点：</p>
+<ul>
+<li>磁盘容量：首先考虑的是所需保存的消息所占用的总磁盘容量和每个broker所能提供的磁盘空间。如果Kafka集群需要保留 10 TB数据，单个broker能存储 2 TB，那么我们需要的最小Kafka集群大小 5 个broker。此外，如果启用副本参数，则对应的存储空间需至少增加一倍（取决于副本参数）。这意味着对应的Kafka集群至少需要 10 个broker。</li>
+<li>请求量：另外一个要考虑的是Kafka集群处理请求的能力。这主要取决于对Kafka client请求的网络处理能力，特别是，有多个consumer或者网路流量不稳定。如果，高峰时刻，单个broker的网络流量达到80%，这时是撑不住两个consumer的，除非有两个broker。再者，如果启用了副本参数，则需要考虑副本这个额外的consumer。也可以扩展多个broker来减少磁盘的吞吐量和系统内存。</li>
+</ul>
+<h6 id="Kafka-Broker配置"><a href="#Kafka-Broker配置" class="headerlink" title="Kafka Broker配置"></a>Kafka Broker配置</h6><p>同一个Kafka集群的所有broker机器必须满足以下两个参数：</p>
+<ul>
+<li>所有broker机器需配置相同的zookeeper连接参数（.connect）。这决定了Kafka集群存储的元数据位置；</li>
+<li>所有broker机器需配置唯一的broker id（ .id）。如果一个集群下的两个broker配置了相同的broker id，则第二个broker启动时会失败并报错。</li>
+</ul>
+<h6 id="操作系统优化"><a href="#操作系统优化" class="headerlink" title="操作系统优化"></a>操作系统优化</h6><p>大部分Linux发布版本默认的内核参数配置能让大部分应用工作的相当好。但对于实际的Kafka broker场景来说，做稍些改变会提升broker性能。主要涉及的配置：虚拟内存、网络和磁盘挂载（用来存储log segment），一般在<em>/etc/sysctl.conf</em> (CentOS系统)。</p>
+<ul>
+<li>Virtual Memory</li>
+</ul>
+<p>一般来说，Linux的虚拟内存会根据系统负载自动调整。内存页（page）swap到磁盘会显著的影响Kafka的性能，并且Kafka重度使用page cache，如果VM系统swap到磁盘，那说明没有足够的内存来分配page cache。</p>
+<p>避免swap的一种方式是设置swap空间为0。但是，swap会在系统崩溃时提供安全机制，或者会在out of memory的情况下阻止操作系统 kill 掉进程。由于这个原因，推荐 <em>vm.swappiness</em>参数设置为一个非常低的值：1 。这个参数表示 VM系统中的多少百分比用来作为swap空间。</p>
+<p>另外一种方式是通过内核调节“脏页”（注：“脏页”会被刷到磁盘上）。Kafka依赖磁盘I/O性能来提高producer的响应时间。这也是为什么通常优先把log segment功能放在可以快速响应的磁盘中（比如，SSD）。这样使得flush进程把“脏数据”写入磁盘前，“脏页”数目就减少了，可以设置<em>vm.dirty_background_ratio</em>（表示占用系统内存的百分比）参数的值为 10 以下。大部分应用场景下，<em>vm.dirty_background_ratio</em>设置为 5 就够用了，要注意了：这个参数值不能设置为 0 ，因为设置为 0 后会引起内核持续刷“脏页”，使得内核的buffer write功能没法施展。</p>
+<p>“脏页”的总量可以通过<em>vm.dirty_ratio</em> 来改变，默认值是 20 （此处也是百分比），这个值的设置范围较大，一般建议设置 60 到 80 为合理的值。但是<em>vm.dirty_ratio</em> 参数也引来了不小的风险，会造成大量unflush的数据在硬刷到磁盘时产生较长的I/O停顿。如果<em>vm.dirty_ratio</em> 值设置的较大时，强烈建议Kafka开启备份功能，以备系统崩溃。</p>
+<p>在设置了这些参数后，需要监控Kafka集群运行时“脏页”的数量，当前“脏页”数量可由如下方式查看（/proc/vmstat文件）：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"># cat /proc/vmstat | egrep &quot;dirty|writeback&quot; nr_dirty 3875</div><div class="line">nr_writeback 29</div><div class="line">nr_writeback_temp 0</div></pre></td></tr></table></figure>
+<ul>
+<li>磁盘</li>
+</ul>
+<p>除了考虑磁盘硬件本身和RAID配置外，磁盘的filesystem对Kafka集群的影响最大。虽然有许多filesystem，但最常用的是EXT4或者XFS。在这里XFS文件系统比EXT4稍好，具体原因Google下。</p>
+<p>另外一点是，建议开启mount的<em>noatime</em> mount选项。文件系统在文件被访问、创建、修改等的时候会记录文件的一些时间戳，比如：文件创建时间（ctime）、最近一次修改时间（mtime）和最近一次访问时间（atime）。默认情况下，atime的更新会有一次读操作，这会产生大量的磁盘读写，然而atime对Kafka完全没用。</p>
+<ul>
+<li>网络</li>
+</ul>
+<p>Linux发布版本的网络参数对高网络流量不适用。对于Kafka集群，推荐更改每个socket发送和接收buffer的最大内存：<em>net.core.wmem_default</em> 和 <em>net.core.rmem_default</em> 为128 kb，<em>net.core.wmem_max</em> 和<em>net.core.rmem_max</em> 为 2 Mb。另外一个socket参数是TCP socket的发送和接收buffer： <em>net.ipv4.tcp_wmem</em> 和 <em>net.ipv4.tcp_rmem</em>。</p>
+<h6 id="Kafka集群稳定"><a href="#Kafka集群稳定" class="headerlink" title="Kafka集群稳定"></a>Kafka集群稳定</h6><p>主要涉及到GC、数据中心布局和ZK使用：</p>
+<ul>
+<li>GC调优</li>
+</ul>
+<p>调GC是门手艺活，幸亏Java 7引进了G1 垃圾回收，使得GC调优变的没那么难。G1主要有两个配置选项来调优：<em>MaxGCPauseMillis</em>和<em>InitiatingHeapOccupancyPercent</em>，具体参数设置可以参考Google，这里不赘述。</p>
+<p>Kafka broker能够有效的利用堆内存和对象回收，所以这些值可以调小点。对于 64Gb内存，Kafka运行堆内存5Gb，<em>MaxGCPauseMillis</em>和<em>InitiatingHeapOccupancyPercent</em> 分别设置为 20毫秒和 35。</p>
+<p>Kafka的启动脚本使用的不是 G1回收，需要在环境变量中加入：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"># export JAVA_HOME=/usr/java/jdk1.8.0_51</div><div class="line"># export KAFKA_JVM_PERFORMANCE_OPTS=&quot;-server -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35 -XX:+DisableExplicitGC -Djava.awt.headless=true&quot;</div><div class="line"># /usr/local/kafka/bin/kafka-server-start.sh -daemon /usr/local/kafka/config/server.properties</div></pre></td></tr></table></figure>
+<ul>
+<li>数据中心布局</li>
+</ul>
+<p>原则上Kafka broker不建议都在一个机架上，为了容灾，但现实情况大部分公司做不到，此处略去。</p>
+<ul>
+<li>Zookeeper</li>
+</ul>
+<p>Kafka集群利用ZK来存储broker、topic和partition的元数据信息。</p>
+<p>在Kafka 0.9.0之前，consumer利用ZK来直接存储consumer group的信息，包括topic的消费情况、每个partition消费的周期性commit。在0.9.0版本，提供新的consumer接口利用Kafka broker来管理。</p>
+<p>Consumer可以选择使用Zk或者Kafka来提交 offset和 提交间隔。如果consumer使用ZK管理offset，那每个consumer在每个partition的每个时间间隔写入ZK。合理的offset提交间隔是1分钟，但如果一个Kafka集群有大量的consumer消费时，这个ZK流量将是巨大的。所以如果ZK不能处理大流量，那只能把offset提交间隔设大，但同时也带来丢数据的风险。最保险的建议是使用Kafka来提交offset。</p>
+<p>另外，建议Kafka集群不要和其他应用使用同一组ZK，因为Kafka对于ZK的延迟和超时是相当敏感的，ZK的不通将会导致Kafka的不可预测性。</p>
+<h6 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h6><p>Kafka在各大互联公司应用广泛，希望上述Kafka集群调优对各位有帮助。</p>
+<p>PS：最近在负责招聘，有Hadoop、Spark、Flink、Kafka、Storm等相关经验的优秀人才，请联系我或者后台留言。</p>
+<p>Enjoy!</p>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/10/24/visual-tools-for-machine-learning-part-3/" rel="next" title="机器学习可视化系统完结篇：模型评估和参数调优">
+                <i class="fa fa-chevron-left"></i> 机器学习可视化系统完结篇：模型评估和参数调优
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/12/05/turning-back-time-savepoints/" rel="prev" title="Savepoint：Flink让时光倒流">
+                Savepoint：Flink让时光倒流 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="http://img0.ph.126.net/3vPAbMoh_6fH3-g_I0zo-w==/6631748363397501906.jpg"
+               alt="侠天" />
+          <p class="site-author-name" itemprop="name">侠天</p>
+          <p class="site-description motion-element" itemprop="description">侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">20</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/1333564335" target="_blank" title="微博">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  微博
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://www.infoq.com/cn/author/%E4%BE%A0%E5%A4%A9" target="_blank" title="InfoQ">
+                  
+                    <i class="fa fa-fw fa-infoq"></i>
+                  
+                  InfoQ
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-6"><a class="nav-link" href="#Kafka-Broker个数"><span class="nav-number">1.</span> <span class="nav-text">Kafka Broker个数</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Kafka-Broker配置"><span class="nav-number">2.</span> <span class="nav-text">Kafka Broker配置</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#操作系统优化"><span class="nav-number">3.</span> <span class="nav-text">操作系统优化</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Kafka集群稳定"><span class="nav-number">4.</span> <span class="nav-text">Kafka集群稳定</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#总结"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">侠天</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+  </script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+    });
+  </script>
+  <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+  
+
+  
+
+</body>
+</html>
