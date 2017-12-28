@@ -238,6 +238,344 @@
             
               
                 
+                <a class="post-title-link" href="/2017/12/28/face-emotion-recognition/" itemprop="url">
+                  面部表情（表情包）识别
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-12-28T15:54:38+08:00" content="2017-12-28">
+              2017-12-28
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h5 id="动机"><a href="#动机" class="headerlink" title="动机"></a>动机</h5><p>人类面部表情丰富，但可以总结归纳为7类基本表情： happy, sad, surprise, fear, anger, disgust, and neutral。面部表情是通过面部肌肉活动表达出来，有些比较微妙且复杂，包含了大量内心活动信息。通过面部表情识别，我们能简单而低成本地度量出观众/用户对内容和服务的态度。例如，零售商使用这些度量评估客户的满意度。健康医疗提供商能在治疗的过程根据病人的表情状态来提高服务。娱乐厂商能够监控观众的喜欢来持续的生产优质的内容。</p>
+<p>训练过的人类很容易读懂其他人的情绪。事实上，只有14个月大的婴儿就可以区别出happy和sad的区别。但是计算机能够比人类在识别情绪上做的更好吗？为了找到答案，我们设计一个深度神经网络使得机器可以读懂人类情绪。换句话说，给机器以“眼”识别面部表情。</p>
+<h5 id="语料数据"><a href="#语料数据" class="headerlink" title="语料数据"></a>语料数据</h5><p>训练模型的数据集使用的是Kaggle面部识别挑战赛的数据集（2013年）。它由35887张面部图片组成，48x48像素灰度图片，标注为7类基本表情： happy, sad, surprise, fear, anger, disgust, and neutral。<br><img src="http://img1.ph.126.net/eQ9Kkb9S1YFQPntFi5EK7g==/6632618077095307714.png" alt="image"><br>Figure 1. An overview of FER2013</p>
+<p>当作者分析语料数据集时，发现“disgust”分类相对于其它分类不均衡（只有113张样本）。作者将两类相似的情感（disgust和anger）合并起来。为了防止数据倾斜，作者构建一个数据生成器 <a href="https://github.com/JostineHo/mememoji/blob/master/src/fer2013datagen.py" target="_blank" rel="external">fer2013datagen.py</a>，该生成器很容易分割训练集和保留数据集。本例使用28709张面部图片作为训练集，余下的图片作为测试集和验证集（每个数据集3589张）。这样我们获得了6类均衡的数据集，见图2，包含happy, sad, surprise, fear, anger, and neutral。</p>
+<p><img src="http://img1.ph.126.net/-94jcsPjstG_I4Lh5Q6KUw==/1286622118564049914.png" alt="image"><br>Figure 2. Training and validation data distribution.</p>
+<h5 id="算法模型"><a href="#算法模型" class="headerlink" title="算法模型"></a>算法模型</h5><p><img src="http://img1.ph.126.net/jQoTGwwtyMz4CVnTExalYg==/6632600484911863570.png" alt="image"><br>Figure 3. Mr. Bean, the model for the model.</p>
+<p>深度学习在计算机视觉上是非常流行的技术。本文选择卷积神经网络（CNN）层作为构建基础创建模型架构。CNN是有名的模仿人脑工作的模型。本文使用憨豆先生的图片作为示例来解释如何将图像赋值给卷积神经网络模型。</p>
+<p>典型的卷积神经网络包涵输入层，卷积层，稠密层（比如，全联接层）和输出层（见图4）。这些层按序组合，在 <a href="https://keras.io/models/sequential/" target="_blank" rel="external">Keras</a>中，使用Sequential()函数创建模型，再把其它层加入进来。<br><img src="http://img0.ph.126.net/lJj_0Q57zu08Ur7WCzTUAA==/6632621375630191038.png" alt="image"><br>Figure 4. Facial Emotion Recognition CNN Architecture (modification from Eindhoven University of Technology-PARsE).</p>
+<h6 id="输入层"><a href="#输入层" class="headerlink" title="输入层"></a>输入层</h6><ul>
+<li>输入层需要预处理，输入固定维度的数据。所以图片需先预处理再传入输入层。作者使用 <a href="http://docs.opencv.org/3.1.0/d7/d8b/tutorial_py_face_detection.html#gsc.tab=0" target="_blank" rel="external">OpenCV</a>（计算机视觉库）做图像面部识别。OpenCV的haar-cascade_frontalface_default.xml文件包含预训练的过滤器，使用Adaboost算法能快速找到面部并裁剪。</li>
+<li>使用cv2.cvtColor函数将裁剪面部图片转化为灰度图，并使用cv2.resize改变图片大小为48x48像素。处理完的面部图片，相比于原始的（3，48，48）三色RGB格式“瘦身”不少。同时也确保传入输入层的图片是（1，48，48）的numpy数组。</li>
+</ul>
+<h6 id="卷积层"><a href="#卷积层" class="headerlink" title="卷积层"></a>卷积层</h6><ul>
+<li>numpy数组传入Convolution2D层，指定过滤层的数量作为超参数。过滤层（比如，核函数）是随机生成权重。每个过滤层，（3，3）的感受野，采用权值共享与原图像卷积生成feature map。</li>
+<li><p>卷积层生成的feature map代表像素值的强度。例如，图5，通过过滤层1和原始图像卷积生成一个feature map，其它过滤层紧接着进行卷积操作生成一系列feature map。<br>![image}(<a href="http://img1.ph.126.net/_6iuFYZBisDFa1GS6RTOnA==/6632345398214215141.png" target="_blank" rel="external">http://img1.ph.126.net/_6iuFYZBisDFa1GS6RTOnA==/6632345398214215141.png</a>)<br>Figure 5. Convolution and 1st max-pooling used in the network</p>
+</li>
+<li><p>池化（Pooling）是一种降低维度的技术，常用于一个或者多个卷积层之后。池化操作是构建CNN的重要步骤，因为增加的多个卷积层会极大的影响计算时间。本文使用流行的池化方法MaxPooling2D，其使用（2，2）窗口作用于feature map求的最大像素值。池化后图像降低4个维度。</p>
+</li>
+</ul>
+<h6 id="稠密层"><a href="#稠密层" class="headerlink" title="稠密层"></a>稠密层</h6><ul>
+<li><p>稠密层（比如，全联接层）是模仿人脑传输神经元的方式。它输入大量输入特征和变换特征，通过联接层与训练权重相连。<br><img src="http://img1.ph.126.net/Ugnqgs0PS9Zbi4akG4jiGQ==/6632410269400257343.png" alt="image"><br>Figure 6. Neural network during training: Forward propagation (left) to Backward propagation (right).</p>
+</li>
+<li><p>模型训练时权重前向传播，而误差是反向传播。反向传播起始与预测值和实际值的差值，计算所需的权重调整大小反向传回到每层。采用超参数调优手段（比如，学习率和网络密度）控制训练速度和架构的复杂度。随着灌入更多的训练数据，神经网络能够使得误差最小化。</p>
+</li>
+<li>一般，神经网络层/节点数越多，越能捕捉到足够的信号。但是，也会造成算法模型训练过拟合。应用dropout可以防止训练模型过拟合。Dropout随机选择部分节点（通常，占总节点数的百分比不超过50%），并将其权重置为0。该方法能有效的控制模型对噪声对敏感度，同时也保留架构的复杂度。</li>
+</ul>
+<h6 id="输出层"><a href="#输出层" class="headerlink" title="输出层"></a>输出层</h6><ul>
+<li>本文的输出层使用softmax激励函数代替sigmoid函数，将输出每类表情的概率。</li>
+<li>因此，本文的算法模型能显示出人脸表情组成的详细组成概率。随后会发现没必要将人类表情表示为单个表情。本文采用的是混合表情来精确表示特定情感</li>
+</ul>
+<blockquote>
+<p>注意，没有特定的公式能建立一个神经网络保证对各种场景都有效。不同的问题需要不同的模型架构，产生期待的验证准确度。这也是为什么说神经网络是个“黒盒算法”。但是也不要太气馁，模型训练的时间会让你找到最佳模型，获得最大价值。</p>
+</blockquote>
+<h6 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h6><p>刚开始创建了一个简单的CNN深度学习模型，包括一个输入层，三个卷积层和一个输出层。事实证明，简单的算法模型效果比较差。准确度0.1500意味着仅仅是随机猜测的结果（1/6）。简单的网络结构导致不能有效的判别面部表情，那只能说明要“深挖”。。。<br><img src="http://img0.ph.126.net/VCeDngUkFKKkaQ-MJsxn4g==/6632675251699952190.png" alt="image"><br>下面稍微修改下三部分的组合，增加模型的复杂度：</p>
+<ul>
+<li>卷积层的数量和配置</li>
+<li>稠密层的数量和配置</li>
+<li>稠密层的dropout占比</li>
+</ul>
+<p>使用AWS的GPU计算（g2.2xlarge）训练和评估组合的算法模型。这次极大的减少了训练时间和模型调优的效率。最后的网络模型是九层，每三层卷积层接着一个max-pooling层，见图7。<br><img src="http://img1.ph.126.net/byZdgskm07usZbByAzg6rQ==/6632680749258091039.png" alt="image"><br>Figure 7. Final model CNN architecture.</p>
+<h5 id="模型验证"><a href="#模型验证" class="headerlink" title="模型验证"></a>模型验证</h5><p><img src="http://img1.ph.126.net/GxWub00vjpnSBnECeGtIyw==/6632719232165060458.png" alt="image"></p>
+<h6 id="结果"><a href="#结果" class="headerlink" title="结果"></a>结果</h6><p>最后的CNN模型交叉验证准确度是58%，其具有积极意义。因为人类面部表情经常由多个基本表情组合，仅仅用单一表情是很难描述。本例中，当训练模型预测不准确时，正确的标签一般是第二相似的表情，见图8（浅蓝色标签）。<br><img src="http://img0.ph.126.net/83AHbQZScwTcKY81Aaq1Vg==/6632333303586312360.png" alt="image"><br>Figure 8. Prediction of 24 example faces randomly selected from test set.</p>
+<h6 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h6><p><img src="http://img1.ph.126.net/LceB0ChVa_LNM1SlCFiV5A==/3082713944954739160.png" alt="image"><br>Figure 9. Confusion matrix for true and prediction emotion counts.</p>
+<p>仔细看下每个表情的预测结果。图9是测试集的模型预测的混淆矩阵。矩阵给出表情预测的数量和多分类模型的效果展示：</p>
+<ul>
+<li>该模型很好的鉴别出正表情（happy和surprised），预测准确度高。大约7000张训练集中，happy表情的准确度达到76.7%。surprised表情预测准确度为69.3%。</li>
+<li>平均意义上讲，本例的神经网络模型对负表情的预测效果较差。sad表情只有39.7%的准确度，并且该网络模型频繁的误判别angry、fear和neutral表情。另外，当预测sad表情和neutral表情时经常搞混，可能是因为这两个表情很少出现。</li>
+<li>误分类预测小于3的频率<br><img src="http://img1.ph.126.net/lNCCREn4aPkk1ws9fBGDJw==/6632665356095308078.png" alt="image"><br>Figure 10. Correct predictions on 2nd and 3rd highest probable emotion.</li>
+</ul>
+<h6 id="计算机视觉"><a href="#计算机视觉" class="headerlink" title="计算机视觉"></a>计算机视觉</h6><p>随着池化层数量的增加，下游神经网络管道的feature map越来越抽象。图11和图12可视化第二次和第三次max-pooling池化层后的feature map。</p>
+<p>分析和可视化卷积神经网络内层输出的代码见，<a href="https://github.com/JostineHo/mememoji/blob/master/data_visualization.ipynb" target="_blank" rel="external">https://github.com/JostineHo/mememoji/blob/master/data_visualization.ipynb</a>。<br><img src="http://img0.ph.126.net/VoVMQJv7NNm_lwvXOWmu_A==/6632493832283960571.png" alt="image"><br>Figure 11. 第二个max-pooling池化层后的CNN (64-filter) feature maps。<br><img src="http://img0.ph.126.net/dP_zQ-Ah1krDJCSXogpnNA==/2601954684732937650.png" alt="iamge"><br>Figure 12. 第三个max-pooling池化层后的CNN (128-filter) feature maps。</p>
+<h5 id="关于作者"><a href="#关于作者" class="headerlink" title="关于作者"></a>关于作者</h5><p><strong>Jostine Ho</strong>是数据科学家和深度学习研究者。她感兴趣于计算机视觉和自动化解决现实世界中具体问题。她毕业于德克萨斯大学奥斯汀分校，取得石油系统工程专业硕士学位。</p>
+<h5 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h5><ol>
+<li><a href="https://www.kaggle.com/c/challenges-in-representation-learning-facial-expression-recognition-challenge/data" target="_blank" rel="external"><em>“Dataset: Facial Emotion Recognition (FER2013)”</em></a> ICML 2013 Workshop in Challenges in Representation Learning, June 21 in Atlanta, GA.</li>
+<li><a href="http://cs231n.github.io/convolutional-networks/" target="_blank" rel="external"><em>“Andrej Karpathy’s Convolutional Neural Networks (CNNs / ConvNets)”</em></a> Convolutional Neural Networks for Visual Recognition (CS231n), Stanford University.</li>
+<li>Srivastava et al., 2014. <em>“Dropout: A Simple Way to Prevent Neural Networks from Overfitting”</em>, Journal of Machine Learning Research, 15:1929-1958.</li>
+<li>Duncan, D., Shine, G., English, C., 2016. <a href="http://cs231n.stanford.edu/reports2016/022_Report.pdf" target="_blank" rel="external"><em>“Report: Facial Emotion Recognition in Real-time”</em></a> Convolutional Neural Networks for Visual Recognition (CS231n), Stanford University.</li>
+</ol>
+<h2 id="Enjoy"><a href="#Enjoy" class="headerlink" title="Enjoy!"></a>Enjoy!</h2><p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/12/28/deep-learning-with-python-chapter-1-1.1/" itemprop="url">
+                  《Deep Learning with Python》第一章 1.1 人工智能、机器学习和深度学习
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-12-28T15:29:23+08:00" content="2017-12-28">
+              2017-12-28
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>第一章 什么是深度学习？</p>
+<p>本章涉及的知识点：</p>
+<ul>
+<li>基本概念的高层次（High-level）定义</li>
+<li>机器学习的发展历程</li>
+<li>深度学习兴起背后的关键因素以及未来的展望</li>
+</ul>
+<p>过去几十年，人工智能（artificial intelligence，AI）一直是媒体强烈炒作的主题。机器学习、深度学习和人工智能也经常出现在无数非技术刊物上。人们构想将来智能聊天机器人、自动驾驶汽车和虚拟助理的工作生活的画面——在昏暗的灯光下，人类的工作很少，而大部分经济活动都有机器人或者AI智能实体。对于当前或者未来机器学习的从业者来讲，需要从吹捧过度的新闻中意识到改变世界的新产品。你们的将来将承担重要的任务：读完本书后，你将会成为开发AI智能实体的开发者。接着解决这几个问题：目前深度学习能实现什么？深度学习的意义如何？人类下一步该如何做？你相信关于人工智能的宣传吗？</p>
+<p>本章介绍人工智能、机器学习和深度学习相关知识。</p>
+<h5 id="1-1-人工智能、机器学习和深度学习"><a href="#1-1-人工智能、机器学习和深度学习" class="headerlink" title="1.1 人工智能、机器学习和深度学习"></a>1.1 人工智能、机器学习和深度学习</h5><p>首先，当人们讨论AI时要清楚谈论的是什么？什么是人工智能、机器学习和深度学习（见图1.1）？它们之间又有什么关系呢？</p>
+<p><img src="http://img2.ph.126.net/_vMUT5Tf4E2AW8xp0PwRSQ==/3083558369884862744.jpg" alt="image"></p>
+<p>图1.1 人工智能、机器学习和深度学习</p>
+<h6 id="1-1-1-人工智能"><a href="#1-1-1-人工智能" class="headerlink" title="1.1.1 人工智能"></a>1.1.1 人工智能</h6><p>人工智能诞生于1950年代，当时少数计算机科学的先行者开始探讨计算机是否能够像人类一样“思考”——这个问题到现在还在探索。其简明的定义如下：像人类一样自动化完成智力任务。比如，AI通常认为包括机器学习和深度学习的领域，但是也包含许多非学习的方法。例如，早期的棋类程序只涉及程序设定的硬编码规则，没用到机器学习。在相当长一段时期内，许多专家相信：程序处理足够大的基于知识的显式规则集合能达到人类水平的智能。这种方法称之为符号型AI（symbolic AI），它是1950年代到1980年代主流的AI，并在1980年代专家系统方面快速达到巅峰。</p>
+<p>虽然符号型AI能解决定义明确的、逻辑性的问题，比如棋类问题，但是却不能解决更复杂、模糊类的问题，比如，图像分类、语音识别和语言翻译。随之而来的是机器学习这种新方法取代了符号型AI。</p>
+<h6 id="1-1-2-机器学习"><a href="#1-1-2-机器学习" class="headerlink" title="1.1.2 机器学习"></a>1.1.2 机器学习</h6><p>在英国维多利亚时代，埃达·洛夫莱斯伯爵夫人（Ada Lovelace）是查尔斯·巴贝奇（Charles Babbage）的好友和合作者。巴贝奇是分析机（<em>Analytical Engine</em>）的发明者。该分析机是公认的第一个机械式通用电脑。虽然预言性的远见超越了当时的时代，但是，在1830年代到1840年代设计的分析机并不是真正意义上的通用电脑。因为通用计算机的概念那时尚未出现，它仅仅是一种自动的数学计算分析，因此命名为分析机。在1843年，埃达注记分析机，“分析机谈不上能创造什么东西。但是能做我们命令它做的任何工作……它的职责是帮助我们去实现已知的事情。”</p>
+<p>在1950年，AI先行者阿兰·图灵（Alan Turing）在他的著作《计算机器和智能》中引用这个注记作为“洛夫莱斯伯爵夫人的异议”，并提出图灵测试（<em>Turing test</em>）的概念。图灵思考通用计算机是否有学习和创造的能力，并得出下面的结论：</p>
+<p>机器学习起因于以下问题：对于计算机来说，除“我们命令它做的任务”之外，它能自我学习完成特定任务吗？计算机能做的工作会让我们感到意外吗？除了程序员人为制定规则的数据处理外，计算机从数据中能自我学习出规则吗？</p>
+<p>上述问题打开了新编程范式的大门。在经典编程中，即符号型AI范式，人们输入规则（即为程序）和数据，根据这些规则处理数据，输出答案（见图1.2）；在机器学习中，人们输入数据和该数据对应的答案，输出的是程序规则。这些学习来的规则能应用到新的数据上，并产生原创性的答案。</p>
+<p><img src="http://img2.ph.126.net/zS-WEc-ALKQMRPfBMCdxDw==/1277896394286009152.jpg" alt="image"></p>
+<p>图1.2 机器学习：新的编程范式</p>
+<p>机器学习系统是训练得到的，而不是用显式的编制。给机器学习一个任务相关的许多例子，它能发现这些例子的统计性的结构，并形成规则自动完成任务。例如，如果想给假期照片自动化打标签，你需要提出一个机器学习系统，输入许多打好标签的照片，该系统学习统计性规则并为指定的照片打标签。</p>
+<p>虽然机器学习在1990年代才开始繁荣，但是由于硬件性能和数据大小的提升，机器学习很快变得非常流行，并成为AI最成功的子领域。机器学习与数学统计紧密相关，但是它在许多方面又有别于统计学。不像统计学，机器学习试图处理海量、复杂的数据集（比如，数百万张图片，包含数以万计的像素），然而经典统计分析（比如贝叶斯分析）将对此无能为力。因此，机器学习，特别是深度学习，展现相对较少的数学理论，更多的是工程化导向。</p>
+<h6 id="1-1-3-数据的特征学习"><a href="#1-1-3-数据的特征学习" class="headerlink" title="1.1.3 数据的特征学习"></a>1.1.3 数据的特征学习</h6><p>为了定义深度学习，以及理解深度学习和其它机器学习方法的不同，首先，需要知道机器学习算法在做什么。这里仅仅讲述机器学习在给定期望的数据例子下发现规则，执行数据处理的任务。所以为了实现机器学习，需要知道下面三件事：</p>
+<ul>
+<li>输入数据点（<em>Input data points</em>）：例如，如果是语音识别的任务，这些数据点应该是语音文件。如果是图标标注的任务，数据点应该是图片；</li>
+<li>期望的输出样例（<em>Examples of the expected output</em>）：语音识别的任务中，期望的输出样例是语音的手写文本；图像标注的任务中，期望的输出样例是“狗”，“猫”等等的标签；</li>
+<li>算法的评估标准：算法的评估标准是为了判断当前算法的输出值与期望的输出值之间的距离。评估标准可以反馈调节算法的工作，这个调节的步骤经常成为学习（<em>learning</em>）。</li>
+</ul>
+<p>机器学习模型将输入数据集转化成有意义的输出，这个过程是从已有的输入和输出对的例子中学习到的。因此，机器学习和深度学习的中心问题是可读性的转化数据（<em>transform data</em>）：换句话说，学习输入数据的有用的表征（<em>representations</em>）。数据表征使得数据更接近期望的输出。</p>
+<p>那什么是数据的表征？其核心是数据的表现形式——表示（<em>represent</em>）或者编码（<em>encode</em>）数据。例如，彩色图片可以编码为RGB格式（红－绿－蓝）或者HSV格式（色相，饱和度，色调）。机器学习模型就是为了找到输入数据的合适表征——数据的转换是为了任务的更容易处理，比如，分类任务。</p>
+<p>下面举一个例子。假设有x轴，y轴和一些数据点坐标（x，y），见图1.3：</p>
+<p><img src="http://img0.ph.126.net/04Sz9oujEoWniyq8hB1c5Q==/6632724729723197958.jpg" alt="image"></p>
+<p>图1.3 样本数据点</p>
+<p>正如你所见，有一些白色的数据点，一些黑色的数据点。本例假设想实现一个算法：输入数据点的坐标（x，y），输出该数据点是黑色还是白色的。在本例中，</p>
+<ul>
+<li>输入是数据点的坐标；</li>
+<li>期望输出是数据点的颜色；</li>
+<li>算法评估标准：判断正确的数据点的百分比</li>
+</ul>
+<p>此处的首要任务是数据集的新表征，该数据表征需要能清晰分离白色的点和黑色的点。本例使用的数据转换是坐标变换，见图1.4：</p>
+<p><img src="http://img2.ph.126.net/ozi-X0Uo6GzqaInar-PlBQ==/6632474041074666089.jpg" alt="image"></p>
+<p>图1.4 坐标变换</p>
+<p>在新的坐标系统中，数据点的坐标可以看成是数据集的一个新表征。并且效果非常棒！使用了数据集的新表征，黑/白分类问题就可以用很简单的规则解决了：“黑色数据点的x &gt; 0，或者”白色数据点的x &lt; 0“。”这个新表征方法基本解决了分类问题。</p>
+<p>在本例中，人工定义了坐标变换。但是，如果尝试系统性地搜索所有不同的可能的坐标变换，并将正确分类数据点的百分比作为反馈，那就是在做机器学习。机器学习中的“学习”，是描述自动搜索更优的数据表征的过程。</p>
+<p>所有机器学习算法都包含自动化寻找这么一个转换：该转换能根据给定的任务将数据集转化成有用的特征表示。这个操作可能是坐标变换，如前所见，或者线性投影（线性投影可能损失有用的信息），翻译，非线性操作（比如，当x &gt; 0时，选中所有数据点），等等。机器学习算法通常不能创造性地搜索到这些转换；它们仅仅通过预定义的操作集合进行搜索，此过程也称为超参数空间（<em>hypothesis space</em>）。</p>
+<p>那究什么是竟机器学习呢？从技术上来讲，在预定义的参数空间内，自动搜索输入数据集有效的表征，并以反馈信号做引导。这个简单的理念可以解决广大的人工职能任务，从语音识别到自动驾驶。</p>
+<p>现在理解完机器学习的学习，下面开始探索是什么让深度学习比较特别。</p>
+<h6 id="1-1-4-何为深度学习的“深度”"><a href="#1-1-4-何为深度学习的“深度”" class="headerlink" title="1.1.4 何为深度学习的“深度”"></a>1.1.4 何为深度学习的“深度”</h6><p>深度学习是机器学习的一个特定子领域，其数据集的学习表征强调学习一系列连续的表征层，这些逐层的表征层不断地增加了有效的数据表征。深度学习的“深度”并不涉及更深度的学习方法；而是表示一系列连续的特征层的理念。数据模型的层数称为模型的深度（<em>depth</em>）。深度学习的其它叫法有，分层表征学习和多级表征学习。当前的深度学习经常涉及十层甚至上百层的连续特征表示层，它们都是从训练数据集自动学习的。其它机器学习的方法一般倾向于从训练数据学习一层或者两层的表征，因此，这种机器学习也称为浅层学习（<em>shallow learning</em>）。</p>
+<p>在深度学习中，这些表征层通常是通过多层神经网络（<em>neural network</em>）模型学习得到的。神经网络来源于生物科学，深度学习的核心概念启发自对人类大脑的理解，但是深度学习模型并不是大脑的模型。没有证据表明大脑实现的学习机制被用在了当前的深度学习模型。你可能偶然发现某些顶级科学文章宣称深度学习像大脑一样工作或者模拟大脑，但是实际情况不是这样的。这可能对该领域的新人在理解深度学习上带来疑惑和困扰。你不需要搞得像大脑一样神秘，只管忘掉看到的关于深度学习和生物相关的假设。深度学习是一个从训练数据学习表征的数学框架。</p>
+<p>深度学习算法到底如何进行表征学习呢？下面看一个几层深度网络的例子，其转换数字图片来识别图片中的数字，见图1.5：</p>
+<p><img src="http://img1.ph.126.net/zcurzP-FbaeciNhnqPCh-A==/6632257437283995751.jpg" alt="image"></p>
+<p>图1.5 图片识别数字的分类神经网络</p>
+<p>如图1.6所示，神经网络将数字图片转换为学习特征，对原始图片进行图像增强，从而识别出最终的结果。你可以认为神经网络经过多层连续的过滤器进行信息提取，最后得到结果。</p>
+<p><img src="http://img0.ph.126.net/GBppKkcw7ElSMkcN1nBC8A==/2590132735711099905.jpg" alt="image"></p>
+<p>图1.6 数字分类模型的深度学习表征</p>
+<p>所以，什么是深度学习呢？从技术性上讲，深度学习是多级数据集表征学习。就这么简单的机制，经过足够多层的扩展，能够魔术般的解决问题。</p>
+<h6 id="1-1-5-三张图理解深度学习工作原理"><a href="#1-1-5-三张图理解深度学习工作原理" class="headerlink" title="1.1.5 三张图理解深度学习工作原理"></a>1.1.5 三张图理解深度学习工作原理</h6><p>此时，你已经知道机器学习是通过观察样本数据集的输入和目标，进而学习将输入（比如，图片）和目标（比如，“cat”标签）映射。你也知道深度神经网络是从样本数据集中学习数据转换（也即学习表征），通过多层数据转换层实现输入和目标的映射。下面看下这个学习过程具体是如何工作的？</p>
+<p>layer处理输入数据的规范要求存储在layer的权重（<em>weights</em>）中，这些权重其实是一堆数值。从技术术语上讲，layer通过权重参数化实现了数据转换（权重有时也称layer的参数），见图1.7。本文中，学习（learning）意味着寻找神经网络中所有layer的权重值的集合，比如正确地将样本数据集的输入和相关的目标映射。这里需要注意的是，一个神经网络可能包含成千上万个参数。修改某个参数可能会影响其它所有的参数，那找到所有参数的正确值看似是个相当艰巨的任务。</p>
+<p><img src="http://img1.ph.126.net/qscFw2XAikKq0BnRFpyIpQ==/6632556504446747512.jpg" alt="image"></p>
+<p>图1.7  权重参数化的神经网络</p>
+<p>为了控制神经网络的输出，需要度量模型输出和期望值之间的距离。这部分是神经网络模型的损失函数（<em>loss function</em>）的工作，有时也称观察函数（<em>objective function</em>）。损失函数输入神经网络模型的预测值和实际目标（期望输出），计算两者之间的距离值，评估神经网络在训练模型上的效果，见图1.8。</p>
+<p><img src="http://img0.ph.126.net/WKE1LCZ2BbXaYf3mNGaejA==/6632287124097945627.jpg" alt="image"></p>
+<p>图1.8 度量神经网络模型输出的损失函数</p>
+<p>深度学习的主要诀窍是，使用损失函数值作为反馈信号微调权重值，降低训练数据在某个方向上的损失值，见图1.9。前面的调节过程是神经网络的优化器（<em>optimizer</em>）的工作。优化器是由后向传播算法（<em>Backpropagation</em>）实现的，其是深度学习的核心算法，下一章惠详细讲解向传播算法是如何工作的。</p>
+<p><img src="http://img2.ph.126.net/Vt1sOr95zZ_p5MSEzRD7yQ==/6632646664397631389.jpg" alt="image"></p>
+<p>图1.9 损失函数值调节权重值</p>
+<p>一般神经网络权重值先随机初始化，这时神经网络完成的看起来仅仅是些随机数据转换，它输出的结果自然地远离理想值，损失函数值也相应很高。但是随着神经网络数据处理的推进，权重值也在正确的方向上逐步微调，损失值也在降低。前面描述的过程称为迭代训练（<em>training loop</em>）。重复迭代足够的训练次数后得到的权重值会最小化损失函数值。具有最小化损失值的神经网络模型输出与期望的目标值几乎相同。</p>
+<h6 id="1-16-深度学习的应用场景"><a href="#1-16-深度学习的应用场景" class="headerlink" title="1.16 深度学习的应用场景"></a>1.16 深度学习的应用场景</h6><p>虽然深度学习是机器学习中早期的子领域，但是其也就在2010年代才稍微兴盛起来。过去几十年，深度学习没什么进展，只在感知学习问题上有点成绩。</p>
+<p>深度学习当前已经在机器学习难以出成绩的领域有了以下突破：</p>
+<ul>
+<li>图像分类</li>
+<li>语音识别</li>
+<li>手写字识别</li>
+<li>机器翻译</li>
+<li>文本语音转换</li>
+<li>智能数字设备，比如 Google Now和Amazon Alexa</li>
+<li>自动驾驶</li>
+<li>广告投放，比如Google，百度和微软的Bing</li>
+<li>网站搜索</li>
+<li>自然语言的问答</li>
+<li>AlphaGo</li>
+</ul>
+<p>人们仍在探索深度学习更广泛的领域，如果成功的话，深度学习可能在科学、软件开发等方面帮助人类开辟新世纪。</p>
+<p>未完待续。。。</p>
+<p>Enjoy!</p>
+<blockquote>
+<p>翻译本书系列的初衷是，觉得其中把深度学习讲解的通俗易懂。不光有实例，也包含作者多年实践对深度学习概念、原理的深度理解。最后说不重要的一点，François Chollet是Keras作者。</p>
+<h2 id="声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。"><a href="#声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。" class="headerlink" title="声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。"></a>声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。</h2><p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+</blockquote>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2017/12/28/BeautifulSoup-scrap/" itemprop="url">
                   Python:BeautifulSoup爬虫手把手实例教程
                 </a>
@@ -666,168 +1004,6 @@
 <p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
 <p>若发现以上文章有任何不妥，请联系我。</p>
 <p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/12/28/face-emotion-recognition/" itemprop="url">
-                  面部表情（表情包）识别
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-12-28T15:24:11+08:00" content="2017-12-28">
-              2017-12-28
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h5 id="动机"><a href="#动机" class="headerlink" title="动机"></a>动机</h5><p>人类面部表情丰富，但可以总结归纳为7类基本表情： happy, sad, surprise, fear, anger, disgust, and neutral。面部表情是通过面部肌肉活动表达出来，有些比较微妙且复杂，包含了大量内心活动信息。通过面部表情识别，我们能简单而低成本地度量出观众/用户对内容和服务的态度。例如，零售商使用这些度量评估客户的满意度。健康医疗提供商能在治疗的过程根据病人的表情状态来提高服务。娱乐厂商能够监控观众的喜欢来持续的生产优质的内容。</p>
-<p>训练过的人类很容易读懂其他人的情绪。事实上，只有14个月大的婴儿就可以区别出happy和sad的区别。但是计算机能够比人类在识别情绪上做的更好吗？为了找到答案，我们设计一个深度神经网络使得机器可以读懂人类情绪。换句话说，给机器以“眼”识别面部表情。</p>
-<h5 id="语料数据"><a href="#语料数据" class="headerlink" title="语料数据"></a>语料数据</h5><p>训练模型的数据集使用的是Kaggle面部识别挑战赛的数据集（2013年）。它由35887张面部图片组成，48x48像素灰度图片，标注为7类基本表情： happy, sad, surprise, fear, anger, disgust, and neutral。</p>
-<p><img src="https://github.com/JostineHo/mememoji/blob/master/figures/fer2013.png" alt="An overview of FER2013"></p>
-<p>当作者分析语料数据集时，发现“disgust”分类相对于其它分类不均衡（只有113张样本）。作者将两类相似的情感（disgust和anger）合并起来。为了防止数据倾斜，作者构建一个数据生成器 <a href="https://github.com/JostineHo/mememoji/blob/master/src/fer2013datagen.py" target="_blank" rel="external">fer2013datagen.py</a>，该生成器很容易分割训练集和保留数据集。本例使用28709张面部图片作为训练集，余下的图片作为测试集和验证集（每个数据集3589张）。这样我们获得了6类均衡的数据集，见图2，包含happy, sad, surprise, fear, anger, and neutral。</p>
-<p>Figure 2. Training and validation data distribution.</p>
-<p><img src="https://github.com/JostineHo/mememoji/blob/master/figures/trainval_distribution.png" alt=""></p>
-<h5 id="算法模型"><a href="#算法模型" class="headerlink" title="算法模型"></a>算法模型</h5><p>Figure 3. Mr. Bean, the model for the model.</p>
-<p>深度学习在计算机视觉上是非常流行的技术。本文选择卷积神经网络（CNN）层作为构建基础创建模型架构。CNN是有名的模仿人脑工作的模型。本文使用憨豆先生的图片作为示例来解释如何将图像赋值给卷积神经网络模型。</p>
-<p>典型的卷积神经网络包涵输入层，卷积层，稠密层（比如，全联接层）和输出层（见图4）。这些层按序组合，在 <a href="https://keras.io/models/sequential/" target="_blank" rel="external">Keras</a>中，使用Sequential()函数创建模型，再把其它层加入进来。</p>
-<p>Figure 4. Facial Emotion Recognition CNN Architecture (modification from Eindhoven University of Technology-PARsE).</p>
-<h6 id="输入层"><a href="#输入层" class="headerlink" title="输入层"></a>输入层</h6><ul>
-<li>输入层需要预处理，输入固定维度的数据。所以图片需先预处理再传入输入层。作者使用 <a href="http://docs.opencv.org/3.1.0/d7/d8b/tutorial_py_face_detection.html#gsc.tab=0" target="_blank" rel="external">OpenCV</a>（计算机视觉库）做图像面部识别。OpenCV的haar-cascade_frontalface_default.xml文件包含预训练的过滤器，使用Adaboost算法能快速找到面部并裁剪。</li>
-<li>使用cv2.cvtColor函数将裁剪面部图片转化为灰度图，并使用cv2.resize改变图片大小为48x48像素。处理完的面部图片，相比于原始的（3，48，48）三色RGB格式“瘦身”不少。同时也确保传入输入层的图片是（1，48，48）的numpy数组。</li>
-</ul>
-<h6 id="卷积层"><a href="#卷积层" class="headerlink" title="卷积层"></a>卷积层</h6><ul>
-<li>numpy数组传入Convolution2D层，指定过滤层的数量作为超参数。过滤层（比如，核函数）是随机生成权重。每个过滤层，（3，3）的感受野，采用权值共享与原图像卷积生成feature map。</li>
-<li>卷积层生成的feature map代表像素值的强度。例如，图5，通过过滤层1和原始图像卷积生成一个feature map，其它过滤层紧接着进行卷积操作生成一系列feature map。</li>
-</ul>
-<p>Figure 5. Convolution and 1st max-pooling used in the network</p>
-<ul>
-<li>池化（Pooling）是一种降低维度的技术，常用于一个或者多个卷积层之后。池化操作是构建CNN的重要步骤，因为增加的多个卷积层会极大的影响计算时间。本文使用流行的池化方法MaxPooling2D，其使用（2，2）窗口作用于feature map求的最大像素值。池化后图像降低4个维度。</li>
-</ul>
-<h6 id="稠密层"><a href="#稠密层" class="headerlink" title="稠密层"></a>稠密层</h6><ul>
-<li>稠密层（比如，全联接层）是模仿人脑传输神经元的方式。它输入大量输入特征和变换特征，通过联接层与训练权重相连。</li>
-</ul>
-<p>Figure 6. Neural network during training: Forward propagation (left) to Backward propagation (right).</p>
-<ul>
-<li>模型训练时权重前向传播，而误差是反向传播。反向传播起始与预测值和实际值的差值，计算所需的权重调整大小反向传回到每层。采用超参数调优手段（比如，学习率和网络密度）控制训练速度和架构的复杂度。随着灌入更多的训练数据，神经网络能够使得误差最小化。</li>
-<li>一般，神经网络层/节点数越多，越能捕捉到足够的信号。但是，也会造成算法模型训练过拟合。应用dropout可以防止训练模型过拟合。Dropout随机选择部分节点（通常，占总节点数的百分比不超过50%），并将其权重置为0。该方法能有效的控制模型对噪声对敏感度，同时也保留架构的复杂度。</li>
-</ul>
-<h6 id="输出层"><a href="#输出层" class="headerlink" title="输出层"></a>输出层</h6><ul>
-<li>本文的输出层使用softmax激励函数代替sigmoid函数，将输出每类表情的概率。</li>
-<li>因此，本文的算法模型能显示出人脸表情组成的详细组成概率。随后会发现没必要将人类表情表示为单个表情。本文采用的是混合表情来精确表示特定情感</li>
-</ul>
-<blockquote>
-<p>注意，没有特定的公式能建立一个神经网络保证对各种场景都有效。不同的问题需要不同的模型架构，产生期待的验证准确度。这也是为什么说神经网络是个“黒盒算法”。但是也不要太气馁，模型训练的时间会让你找到最佳模型，获得最大价值。</p>
-</blockquote>
-<h6 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h6><p>刚开始创建了一个简单的CNN深度学习模型，包括一个输入层，三个卷积层和一个输出层。事实证明，简单的算法模型效果比较差。准确度0.1500意味着仅仅是随机猜测的结果（1/6）。简单的网络结构导致不能有效的判别面部表情，那只能说明要“深挖”。。。</p>
-<p>下面稍微修改下三部分的组合，增加模型的复杂度：</p>
-<ul>
-<li>卷积层的数量和配置</li>
-<li>稠密层的数量和配置</li>
-<li>稠密层的dropout占比</li>
-</ul>
-<p>使用AWS的GPU计算（g2.2xlarge）训练和评估组合的算法模型。这次极大的减少了训练时间和模型调优的效率。最后的网络模型是九层，每三层卷积层接着一个max-pooling层，见图7。</p>
-<p>Figure 7. Final model CNN architecture.</p>
-<h5 id="模型验证"><a href="#模型验证" class="headerlink" title="模型验证"></a>模型验证</h5><h6 id="结果"><a href="#结果" class="headerlink" title="结果"></a>结果</h6><p>最后的CNN模型交叉验证准确度是58%，其具有积极意义。因为人类面部表情经常由多个基本表情组合，仅仅用单一表情是很难描述。本例中，当训练模型预测不准确时，正确的标签一般是第二相似的表情，见图8（浅蓝色标签）。</p>
-<p>Figure 8. Prediction of 24 example faces randomly selected from test set.</p>
-<h6 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h6><p>Figure 9. Confusion matrix for true and prediction emotion counts.</p>
-<p>仔细看下每个表情的预测结果。图9是测试集的模型预测的混淆矩阵。矩阵给出表情预测的数量和多分类模型的效果展示：</p>
-<ul>
-<li>该模型很好的鉴别出正表情（happy和surprised），预测准确度高。大约7000张训练集中，happy表情的准确度达到76.7%。surprised表情预测准确度为69.3%。</li>
-<li>平均意义上讲，本例的神经网络模型对负表情的预测效果较差。sad表情只有39.7%的准确度，并且该网络模型频繁的误判别angry、fear和neutral表情。另外，当预测sad表情和neutral表情时经常搞混，可能是因为这两个表情很少出现。</li>
-<li>误分类预测小于3的频率</li>
-</ul>
-<p>Figure 10. Correct predictions on 2nd and 3rd highest probable emotion.</p>
-<h6 id="计算机视觉"><a href="#计算机视觉" class="headerlink" title="计算机视觉"></a>计算机视觉</h6><p>随着池化层数量的增加，下游神经网络管道的feature map越来越抽象。图11和图12可视化第二次和第三次max-pooling池化层后的feature map。</p>
-<p>分析和可视化卷积神经网络内层输出的代码见，<a href="https://github.com/JostineHo/mememoji/blob/master/data_visualization.ipynb" target="_blank" rel="external">https://github.com/JostineHo/mememoji/blob/master/data_visualization.ipynb</a>。</p>
-<p>Figure 11. 第二个max-pooling池化层后的CNN (64-filter) feature maps。</p>
-<p>Figure 12. 第三个max-pooling池化层后的CNN (128-filter) feature maps。</p>
-<h5 id="关于作者"><a href="#关于作者" class="headerlink" title="关于作者"></a>关于作者</h5><p><strong>Jostine Ho</strong>是数据科学家和深度学习研究者。她感兴趣于计算机视觉和自动化解决现实世界中具体问题。她毕业于德克萨斯大学奥斯汀分校，取得石油系统工程专业硕士学位。</p>
-<h5 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h5><ol>
-<li><a href="https://www.kaggle.com/c/challenges-in-representation-learning-facial-expression-recognition-challenge/data" target="_blank" rel="external"><em>“Dataset: Facial Emotion Recognition (FER2013)”</em></a> ICML 2013 Workshop in Challenges in Representation Learning, June 21 in Atlanta, GA.</li>
-<li><a href="http://cs231n.github.io/convolutional-networks/" target="_blank" rel="external"><em>“Andrej Karpathy’s Convolutional Neural Networks (CNNs / ConvNets)”</em></a> Convolutional Neural Networks for Visual Recognition (CS231n), Stanford University.</li>
-<li>Srivastava et al., 2014. <em>“Dropout: A Simple Way to Prevent Neural Networks from Overfitting”</em>, Journal of Machine Learning Research, 15:1929-1958.</li>
-<li>Duncan, D., Shine, G., English, C., 2016. <a href="http://cs231n.stanford.edu/reports2016/022_Report.pdf" target="_blank" rel="external"><em>“Report: Facial Emotion Recognition in Real-time”</em></a> Convolutional Neural Networks for Visual Recognition (CS231n), Stanford University.</li>
-</ol>
-<p><a href="https://github.com/JostineHo/mememoji#33-dense-layers" target="_blank" rel="external">https://github.com/JostineHo/mememoji#33-dense-layers</a></p>
 
           
         
@@ -1585,190 +1761,6 @@
 <p>Enjoy!</p>
 <hr>
 <p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
-<p>若发现以上文章有任何不妥，请联系我。</p>
-<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/12/28/deep-learning-with-python-chapter-1-1.1/" itemprop="url">
-                  《Deep Learning with Python》第一章 1.1 人工智能、机器学习和深度学习
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-12-28T15:00:15+08:00" content="2017-12-28">
-              2017-12-28
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>第一章 什么是深度学习？</p>
-<p>本章涉及的知识点：</p>
-<ul>
-<li>基本概念的高层次（High-level）定义</li>
-<li>机器学习的发展历程</li>
-<li>深度学习兴起背后的关键因素以及未来的展望</li>
-</ul>
-<p>过去几十年，人工智能（artificial intelligence，AI）一直是媒体强烈炒作的主题。机器学习、深度学习和人工智能也经常出现在无数非技术刊物上。人们构想将来智能聊天机器人、自动驾驶汽车和虚拟助理的工作生活的画面——在昏暗的灯光下，人类的工作很少，而大部分经济活动都有机器人或者AI智能实体。对于当前或者未来机器学习的从业者来讲，需要从吹捧过度的新闻中意识到改变世界的新产品。你们的将来将承担重要的任务：读完本书后，你将会成为开发AI智能实体的开发者。接着解决这几个问题：目前深度学习能实现什么？深度学习的意义如何？人类下一步该如何做？你相信关于人工智能的宣传吗？</p>
-<p>本章介绍人工智能、机器学习和深度学习相关知识。</p>
-<h5 id="1-1-人工智能、机器学习和深度学习"><a href="#1-1-人工智能、机器学习和深度学习" class="headerlink" title="1.1 人工智能、机器学习和深度学习"></a>1.1 人工智能、机器学习和深度学习</h5><p>首先，当人们讨论AI时要清楚谈论的是什么？什么是人工智能、机器学习和深度学习（见图1.1）？它们之间又有什么关系呢？</p>
-<p><img src="http://img2.ph.126.net/_vMUT5Tf4E2AW8xp0PwRSQ==/3083558369884862744.jpg" alt="image"></p>
-<p>图1.1 人工智能、机器学习和深度学习</p>
-<h6 id="1-1-1-人工智能"><a href="#1-1-1-人工智能" class="headerlink" title="1.1.1 人工智能"></a>1.1.1 人工智能</h6><p>人工智能诞生于1950年代，当时少数计算机科学的先行者开始探讨计算机是否能够像人类一样“思考”——这个问题到现在还在探索。其简明的定义如下：像人类一样自动化完成智力任务。比如，AI通常认为包括机器学习和深度学习的领域，但是也包含许多非学习的方法。例如，早期的棋类程序只涉及程序设定的硬编码规则，没用到机器学习。在相当长一段时期内，许多专家相信：程序处理足够大的基于知识的显式规则集合能达到人类水平的智能。这种方法称之为符号型AI（symbolic AI），它是1950年代到1980年代主流的AI，并在1980年代专家系统方面快速达到巅峰。</p>
-<p>虽然符号型AI能解决定义明确的、逻辑性的问题，比如棋类问题，但是却不能解决更复杂、模糊类的问题，比如，图像分类、语音识别和语言翻译。随之而来的是机器学习这种新方法取代了符号型AI。</p>
-<h6 id="1-1-2-机器学习"><a href="#1-1-2-机器学习" class="headerlink" title="1.1.2 机器学习"></a>1.1.2 机器学习</h6><p>在英国维多利亚时代，埃达·洛夫莱斯伯爵夫人（Ada Lovelace）是查尔斯·巴贝奇（Charles Babbage）的好友和合作者。巴贝奇是分析机（<em>Analytical Engine</em>）的发明者。该分析机是公认的第一个机械式通用电脑。虽然预言性的远见超越了当时的时代，但是，在1830年代到1840年代设计的分析机并不是真正意义上的通用电脑。因为通用计算机的概念那时尚未出现，它仅仅是一种自动的数学计算分析，因此命名为分析机。在1843年，埃达注记分析机，“分析机谈不上能创造什么东西。但是能做我们命令它做的任何工作……它的职责是帮助我们去实现已知的事情。”</p>
-<p>在1950年，AI先行者阿兰·图灵（Alan Turing）在他的著作《计算机器和智能》中引用这个注记作为“洛夫莱斯伯爵夫人的异议”，并提出图灵测试（<em>Turing test</em>）的概念。图灵思考通用计算机是否有学习和创造的能力，并得出下面的结论：</p>
-<p>机器学习起因于以下问题：对于计算机来说，除“我们命令它做的任务”之外，它能自我学习完成特定任务吗？计算机能做的工作会让我们感到意外吗？除了程序员人为制定规则的数据处理外，计算机从数据中能自我学习出规则吗？</p>
-<p>上述问题打开了新编程范式的大门。在经典编程中，即符号型AI范式，人们输入规则（即为程序）和数据，根据这些规则处理数据，输出答案（见图1.2）；在机器学习中，人们输入数据和该数据对应的答案，输出的是程序规则。这些学习来的规则能应用到新的数据上，并产生原创性的答案。</p>
-<p><img src="http://img2.ph.126.net/zS-WEc-ALKQMRPfBMCdxDw==/1277896394286009152.jpg" alt="image"></p>
-<p>图1.2 机器学习：新的编程范式</p>
-<p>机器学习系统是训练得到的，而不是用显式的编制。给机器学习一个任务相关的许多例子，它能发现这些例子的统计性的结构，并形成规则自动完成任务。例如，如果想给假期照片自动化打标签，你需要提出一个机器学习系统，输入许多打好标签的照片，该系统学习统计性规则并为指定的照片打标签。</p>
-<p>虽然机器学习在1990年代才开始繁荣，但是由于硬件性能和数据大小的提升，机器学习很快变得非常流行，并成为AI最成功的子领域。机器学习与数学统计紧密相关，但是它在许多方面又有别于统计学。不像统计学，机器学习试图处理海量、复杂的数据集（比如，数百万张图片，包含数以万计的像素），然而经典统计分析（比如贝叶斯分析）将对此无能为力。因此，机器学习，特别是深度学习，展现相对较少的数学理论，更多的是工程化导向。</p>
-<h6 id="1-1-3-数据的特征学习"><a href="#1-1-3-数据的特征学习" class="headerlink" title="1.1.3 数据的特征学习"></a>1.1.3 数据的特征学习</h6><p>为了定义深度学习，以及理解深度学习和其它机器学习方法的不同，首先，需要知道机器学习算法在做什么。这里仅仅讲述机器学习在给定期望的数据例子下发现规则，执行数据处理的任务。所以为了实现机器学习，需要知道下面三件事：</p>
-<ul>
-<li>输入数据点（<em>Input data points</em>）：例如，如果是语音识别的任务，这些数据点应该是语音文件。如果是图标标注的任务，数据点应该是图片；</li>
-<li>期望的输出样例（<em>Examples of the expected output</em>）：语音识别的任务中，期望的输出样例是语音的手写文本；图像标注的任务中，期望的输出样例是“狗”，“猫”等等的标签；</li>
-<li>算法的评估标准：算法的评估标准是为了判断当前算法的输出值与期望的输出值之间的距离。评估标准可以反馈调节算法的工作，这个调节的步骤经常成为学习（<em>learning</em>）。</li>
-</ul>
-<p>机器学习模型将输入数据集转化成有意义的输出，这个过程是从已有的输入和输出对的例子中学习到的。因此，机器学习和深度学习的中心问题是可读性的转化数据（<em>transform data</em>）：换句话说，学习输入数据的有用的表征（<em>representations</em>）。数据表征使得数据更接近期望的输出。</p>
-<p>那什么是数据的表征？其核心是数据的表现形式——表示（<em>represent</em>）或者编码（<em>encode</em>）数据。例如，彩色图片可以编码为RGB格式（红－绿－蓝）或者HSV格式（色相，饱和度，色调）。机器学习模型就是为了找到输入数据的合适表征——数据的转换是为了任务的更容易处理，比如，分类任务。</p>
-<p>下面举一个例子。假设有x轴，y轴和一些数据点坐标（x，y），见图1.3：</p>
-<p><img src="http://img0.ph.126.net/04Sz9oujEoWniyq8hB1c5Q==/6632724729723197958.jpg" alt="image"></p>
-<p>图1.3 样本数据点</p>
-<p>正如你所见，有一些白色的数据点，一些黑色的数据点。本例假设想实现一个算法：输入数据点的坐标（x，y），输出该数据点是黑色还是白色的。在本例中，</p>
-<ul>
-<li>输入是数据点的坐标；</li>
-<li>期望输出是数据点的颜色；</li>
-<li>算法评估标准：判断正确的数据点的百分比</li>
-</ul>
-<p>此处的首要任务是数据集的新表征，该数据表征需要能清晰分离白色的点和黑色的点。本例使用的数据转换是坐标变换，见图1.4：</p>
-<p><img src="http://img2.ph.126.net/ozi-X0Uo6GzqaInar-PlBQ==/6632474041074666089.jpg" alt="image"></p>
-<p>图1.4 坐标变换</p>
-<p>在新的坐标系统中，数据点的坐标可以看成是数据集的一个新表征。并且效果非常棒！使用了数据集的新表征，黑/白分类问题就可以用很简单的规则解决了：“黑色数据点的x &gt; 0，或者”白色数据点的x &lt; 0“。”这个新表征方法基本解决了分类问题。</p>
-<p>在本例中，人工定义了坐标变换。但是，如果尝试系统性地搜索所有不同的可能的坐标变换，并将正确分类数据点的百分比作为反馈，那就是在做机器学习。机器学习中的“学习”，是描述自动搜索更优的数据表征的过程。</p>
-<p>所有机器学习算法都包含自动化寻找这么一个转换：该转换能根据给定的任务将数据集转化成有用的特征表示。这个操作可能是坐标变换，如前所见，或者线性投影（线性投影可能损失有用的信息），翻译，非线性操作（比如，当x &gt; 0时，选中所有数据点），等等。机器学习算法通常不能创造性地搜索到这些转换；它们仅仅通过预定义的操作集合进行搜索，此过程也称为超参数空间（<em>hypothesis space</em>）。</p>
-<p>那究什么是竟机器学习呢？从技术上来讲，在预定义的参数空间内，自动搜索输入数据集有效的表征，并以反馈信号做引导。这个简单的理念可以解决广大的人工职能任务，从语音识别到自动驾驶。</p>
-<p>现在理解完机器学习的学习，下面开始探索是什么让深度学习比较特别。</p>
-<h6 id="1-1-4-何为深度学习的“深度”"><a href="#1-1-4-何为深度学习的“深度”" class="headerlink" title="1.1.4 何为深度学习的“深度”"></a>1.1.4 何为深度学习的“深度”</h6><p>深度学习是机器学习的一个特定子领域，其数据集的学习表征强调学习一系列连续的表征层，这些逐层的表征层不断地增加了有效的数据表征。深度学习的“深度”并不涉及更深度的学习方法；而是表示一系列连续的特征层的理念。数据模型的层数称为模型的深度（<em>depth</em>）。深度学习的其它叫法有，分层表征学习和多级表征学习。当前的深度学习经常涉及十层甚至上百层的连续特征表示层，它们都是从训练数据集自动学习的。其它机器学习的方法一般倾向于从训练数据学习一层或者两层的表征，因此，这种机器学习也称为浅层学习（<em>shallow learning</em>）。</p>
-<p>在深度学习中，这些表征层通常是通过多层神经网络（<em>neural network</em>）模型学习得到的。神经网络来源于生物科学，深度学习的核心概念启发自对人类大脑的理解，但是深度学习模型并不是大脑的模型。没有证据表明大脑实现的学习机制被用在了当前的深度学习模型。你可能偶然发现某些顶级科学文章宣称深度学习像大脑一样工作或者模拟大脑，但是实际情况不是这样的。这可能对该领域的新人在理解深度学习上带来疑惑和困扰。你不需要搞得像大脑一样神秘，只管忘掉看到的关于深度学习和生物相关的假设。深度学习是一个从训练数据学习表征的数学框架。</p>
-<p>深度学习算法到底如何进行表征学习呢？下面看一个几层深度网络的例子，其转换数字图片来识别图片中的数字，见图1.5：</p>
-<p><img src="http://img1.ph.126.net/zcurzP-FbaeciNhnqPCh-A==/6632257437283995751.jpg" alt="image"></p>
-<p>图1.5 图片识别数字的分类神经网络</p>
-<p>如图1.6所示，神经网络将数字图片转换为学习特征，对原始图片进行图像增强，从而识别出最终的结果。你可以认为神经网络经过多层连续的过滤器进行信息提取，最后得到结果。</p>
-<p><img src="http://img0.ph.126.net/GBppKkcw7ElSMkcN1nBC8A==/2590132735711099905.jpg" alt="image"></p>
-<p>图1.6 数字分类模型的深度学习表征</p>
-<p>所以，什么是深度学习呢？从技术性上讲，深度学习是多级数据集表征学习。就这么简单的机制，经过足够多层的扩展，能够魔术般的解决问题。</p>
-<h6 id="1-1-5-三张图理解深度学习工作原理"><a href="#1-1-5-三张图理解深度学习工作原理" class="headerlink" title="1.1.5 三张图理解深度学习工作原理"></a>1.1.5 三张图理解深度学习工作原理</h6><p>此时，你已经知道机器学习是通过观察样本数据集的输入和目标，进而学习将输入（比如，图片）和目标（比如，“cat”标签）映射。你也知道深度神经网络是从样本数据集中学习数据转换（也即学习表征），通过多层数据转换层实现输入和目标的映射。下面看下这个学习过程具体是如何工作的？</p>
-<p>layer处理输入数据的规范要求存储在layer的权重（<em>weights</em>）中，这些权重其实是一堆数值。从技术术语上讲，layer通过权重参数化实现了数据转换（权重有时也称layer的参数），见图1.7。本文中，学习（learning）意味着寻找神经网络中所有layer的权重值的集合，比如正确地将样本数据集的输入和相关的目标映射。这里需要注意的是，一个神经网络可能包含成千上万个参数。修改某个参数可能会影响其它所有的参数，那找到所有参数的正确值看似是个相当艰巨的任务。</p>
-<p><img src="http://img1.ph.126.net/qscFw2XAikKq0BnRFpyIpQ==/6632556504446747512.jpg" alt="image"></p>
-<p>图1.7  权重参数化的神经网络</p>
-<p>为了控制神经网络的输出，需要度量模型输出和期望值之间的距离。这部分是神经网络模型的损失函数（<em>loss function</em>）的工作，有时也称观察函数（<em>objective function</em>）。损失函数输入神经网络模型的预测值和实际目标（期望输出），计算两者之间的距离值，评估神经网络在训练模型上的效果，见图1.8。</p>
-<p><img src="http://img0.ph.126.net/WKE1LCZ2BbXaYf3mNGaejA==/6632287124097945627.jpg" alt="image"></p>
-<p>图1.8 度量神经网络模型输出的损失函数</p>
-<p>深度学习的主要诀窍是，使用损失函数值作为反馈信号微调权重值，降低训练数据在某个方向上的损失值，见图1.9。前面的调节过程是神经网络的优化器（<em>optimizer</em>）的工作。优化器是由后向传播算法（<em>Backpropagation</em>）实现的，其是深度学习的核心算法，下一章惠详细讲解向传播算法是如何工作的。</p>
-<p><img src="http://img2.ph.126.net/Vt1sOr95zZ_p5MSEzRD7yQ==/6632646664397631389.jpg" alt="image"></p>
-<p>图1.9 损失函数值调节权重值</p>
-<p>一般神经网络权重值先随机初始化，这时神经网络完成的看起来仅仅是些随机数据转换，它输出的结果自然地远离理想值，损失函数值也相应很高。但是随着神经网络数据处理的推进，权重值也在正确的方向上逐步微调，损失值也在降低。前面描述的过程称为迭代训练（<em>training loop</em>）。重复迭代足够的训练次数后得到的权重值会最小化损失函数值。具有最小化损失值的神经网络模型输出与期望的目标值几乎相同。</p>
-<h6 id="1-16-深度学习的应用场景"><a href="#1-16-深度学习的应用场景" class="headerlink" title="1.16 深度学习的应用场景"></a>1.16 深度学习的应用场景</h6><p>虽然深度学习是机器学习中早期的子领域，但是其也就在2010年代才稍微兴盛起来。过去几十年，深度学习没什么进展，只在感知学习问题上有点成绩。</p>
-<p>深度学习当前已经在机器学习难以出成绩的领域有了以下突破：</p>
-<ul>
-<li>图像分类</li>
-<li>语音识别</li>
-<li>手写字识别</li>
-<li>机器翻译</li>
-<li>文本语音转换</li>
-<li>智能数字设备，比如 Google Now和Amazon Alexa</li>
-<li>自动驾驶</li>
-<li>广告投放，比如Google，百度和微软的Bing</li>
-<li>网站搜索</li>
-<li>自然语言的问答</li>
-<li>AlphaGo</li>
-</ul>
-<p>人们仍在探索深度学习更广泛的领域，如果成功的话，深度学习可能在科学、软件开发等方面帮助人类开辟新世纪。</p>
-<p>未完待续。。。</p>
-<p>Enjoy!</p>
-<blockquote>
-<p>翻译本书系列的初衷是，觉得其中把深度学习讲解的通俗易懂。不光有实例，也包含作者多年实践对深度学习概念、原理的深度理解。最后说不重要的一点，François Chollet是Keras作者。</p>
-<h2 id="声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。"><a href="#声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。" class="headerlink" title="声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。"></a>声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。</h2><p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
-</blockquote>
 <p>若发现以上文章有任何不妥，请联系我。</p>
 <p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
 
