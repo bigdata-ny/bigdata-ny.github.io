@@ -238,160 +238,6 @@
             
               
                 
-                <a class="post-title-link" href="/2017/12/28/face-emotion-recognition/" itemprop="url">
-                  面部表情（表情包）识别
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-12-28T16:07:41+08:00" content="2017-12-28">
-              2017-12-28
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h5 id="动机"><a href="#动机" class="headerlink" title="动机"></a>动机</h5><p>人类面部表情丰富，但可以总结归纳为7类基本表情： happy, sad, surprise, fear, anger, disgust, and neutral。面部表情是通过面部肌肉活动表达出来，有些比较微妙且复杂，包含了大量内心活动信息。通过面部表情识别，我们能简单而低成本地度量出观众/用户对内容和服务的态度。例如，零售商使用这些度量评估客户的满意度。健康医疗提供商能在治疗的过程根据病人的表情状态来提高服务。娱乐厂商能够监控观众的喜欢来持续的生产优质的内容。</p>
-<p>训练过的人类很容易读懂其他人的情绪。事实上，只有14个月大的婴儿就可以区别出happy和sad的区别。但是计算机能够比人类在识别情绪上做的更好吗？为了找到答案，我们设计一个深度神经网络使得机器可以读懂人类情绪。换句话说，给机器以“眼”识别面部表情。</p>
-<h5 id="语料数据"><a href="#语料数据" class="headerlink" title="语料数据"></a>语料数据</h5><p>训练模型的数据集使用的是Kaggle面部识别挑战赛的数据集（2013年）。它由35887张面部图片组成，48x48像素灰度图片，标注为7类基本表情： happy, sad, surprise, fear, anger, disgust, and neutral。<br><img src="http://img1.ph.126.net/rMw0LOC29HbsfzcAXU7zLw==/6632541111283960069.png" alt="image"><br>Figure 1. An overview of FER2013</p>
-<p>当作者分析语料数据集时，发现“disgust”分类相对于其它分类不均衡（只有113张样本）。作者将两类相似的情感（disgust和anger）合并起来。为了防止数据倾斜，作者构建一个数据生成器 <a href="https://github.com/JostineHo/mememoji/blob/master/src/fer2013datagen.py" target="_blank" rel="external">fer2013datagen.py</a>，该生成器很容易分割训练集和保留数据集。本例使用28709张面部图片作为训练集，余下的图片作为测试集和验证集（每个数据集3589张）。这样我们获得了6类均衡的数据集，见图2，包含happy, sad, surprise, fear, anger, and neutral。</p>
-<p><img src="http://img1.ph.126.net/-94jcsPjstG_I4Lh5Q6KUw==/1286622118564049914.png" alt="image"><br>Figure 2. Training and validation data distribution.</p>
-<h5 id="算法模型"><a href="#算法模型" class="headerlink" title="算法模型"></a>算法模型</h5><p><img src="http://img1.ph.126.net/jQoTGwwtyMz4CVnTExalYg==/6632600484911863570.png" alt="image"><br>Figure 3. Mr. Bean, the model for the model.</p>
-<p>深度学习在计算机视觉上是非常流行的技术。本文选择卷积神经网络（CNN）层作为构建基础创建模型架构。CNN是有名的模仿人脑工作的模型。本文使用憨豆先生的图片作为示例来解释如何将图像赋值给卷积神经网络模型。</p>
-<p>典型的卷积神经网络包涵输入层，卷积层，稠密层（比如，全联接层）和输出层（见图4）。这些层按序组合，在 <a href="https://keras.io/models/sequential/" target="_blank" rel="external">Keras</a>中，使用Sequential()函数创建模型，再把其它层加入进来。<br><img src="http://img0.ph.126.net/yxSj5yiIKuZ-0KCmNk-l4w==/6632346497725842891.png" alt="image"><br>Figure 4. Facial Emotion Recognition CNN Architecture (modification from Eindhoven University of Technology-PARsE).</p>
-<h6 id="输入层"><a href="#输入层" class="headerlink" title="输入层"></a>输入层</h6><ul>
-<li>输入层需要预处理，输入固定维度的数据。所以图片需先预处理再传入输入层。作者使用 <a href="http://docs.opencv.org/3.1.0/d7/d8b/tutorial_py_face_detection.html#gsc.tab=0" target="_blank" rel="external">OpenCV</a>（计算机视觉库）做图像面部识别。OpenCV的haar-cascade_frontalface_default.xml文件包含预训练的过滤器，使用Adaboost算法能快速找到面部并裁剪。</li>
-<li>使用cv2.cvtColor函数将裁剪面部图片转化为灰度图，并使用cv2.resize改变图片大小为48x48像素。处理完的面部图片，相比于原始的（3，48，48）三色RGB格式“瘦身”不少。同时也确保传入输入层的图片是（1，48，48）的numpy数组。</li>
-</ul>
-<h6 id="卷积层"><a href="#卷积层" class="headerlink" title="卷积层"></a>卷积层</h6><ul>
-<li>numpy数组传入Convolution2D层，指定过滤层的数量作为超参数。过滤层（比如，核函数）是随机生成权重。每个过滤层，（3，3）的感受野，采用权值共享与原图像卷积生成feature map。</li>
-<li><p>卷积层生成的feature map代表像素值的强度。例如，图5，通过过滤层1和原始图像卷积生成一个feature map，其它过滤层紧接着进行卷积操作生成一系列feature map。<br><img src="http://img2.ph.126.net/5dussQ8UCCWvk6A8_nOvoQ==/6632702739490648439.png" alt="image"><br>Figure 5. Convolution and 1st max-pooling used in the network</p>
-</li>
-<li><p>池化（Pooling）是一种降低维度的技术，常用于一个或者多个卷积层之后。池化操作是构建CNN的重要步骤，因为增加的多个卷积层会极大的影响计算时间。本文使用流行的池化方法MaxPooling2D，其使用（2，2）窗口作用于feature map求的最大像素值。池化后图像降低4个维度。</p>
-</li>
-</ul>
-<h6 id="稠密层"><a href="#稠密层" class="headerlink" title="稠密层"></a>稠密层</h6><ul>
-<li><p>稠密层（比如，全联接层）是模仿人脑传输神经元的方式。它输入大量输入特征和变换特征，通过联接层与训练权重相连。<br><img src="http://img2.ph.126.net/G3e8Ye0wiS4g595FhAVVrQ==/2601954684732937664.png" alt="image"><br>Figure 6. Neural network during training: Forward propagation (left) to Backward propagation (right).</p>
-</li>
-<li><p>模型训练时权重前向传播，而误差是反向传播。反向传播起始与预测值和实际值的差值，计算所需的权重调整大小反向传回到每层。采用超参数调优手段（比如，学习率和网络密度）控制训练速度和架构的复杂度。随着灌入更多的训练数据，神经网络能够使得误差最小化。</p>
-</li>
-<li>一般，神经网络层/节点数越多，越能捕捉到足够的信号。但是，也会造成算法模型训练过拟合。应用dropout可以防止训练模型过拟合。Dropout随机选择部分节点（通常，占总节点数的百分比不超过50%），并将其权重置为0。该方法能有效的控制模型对噪声对敏感度，同时也保留架构的复杂度。</li>
-</ul>
-<h6 id="输出层"><a href="#输出层" class="headerlink" title="输出层"></a>输出层</h6><ul>
-<li>本文的输出层使用softmax激励函数代替sigmoid函数，将输出每类表情的概率。</li>
-<li>因此，本文的算法模型能显示出人脸表情组成的详细组成概率。随后会发现没必要将人类表情表示为单个表情。本文采用的是混合表情来精确表示特定情感</li>
-</ul>
-<blockquote>
-<p>注意，没有特定的公式能建立一个神经网络保证对各种场景都有效。不同的问题需要不同的模型架构，产生期待的验证准确度。这也是为什么说神经网络是个“黒盒算法”。但是也不要太气馁，模型训练的时间会让你找到最佳模型，获得最大价值。</p>
-</blockquote>
-<h6 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h6><p>刚开始创建了一个简单的CNN深度学习模型，包括一个输入层，三个卷积层和一个输出层。事实证明，简单的算法模型效果比较差。准确度0.1500意味着仅仅是随机猜测的结果（1/6）。简单的网络结构导致不能有效的判别面部表情，那只能说明要“深挖”。。。<br><a href="http://img2.ph.126.net/uiC8pbN-PK9vk3i3i_E_dg==/6632460846935132816.png" target="_blank" rel="external">image</a><br>下面稍微修改下三部分的组合，增加模型的复杂度：</p>
-<ul>
-<li>卷积层的数量和配置</li>
-<li>稠密层的数量和配置</li>
-<li>稠密层的dropout占比</li>
-</ul>
-<p>使用AWS的GPU计算（g2.2xlarge）训练和评估组合的算法模型。这次极大的减少了训练时间和模型调优的效率。最后的网络模型是九层，每三层卷积层接着一个max-pooling层，见图7。<br><img src="http://img1.ph.126.net/byZdgskm07usZbByAzg6rQ==/6632680749258091039.png" alt="image"><br>Figure 7. Final model CNN architecture.</p>
-<h5 id="模型验证"><a href="#模型验证" class="headerlink" title="模型验证"></a>模型验证</h5><p><img src="http://img0.ph.126.net/MyTvn8QWikiz0lzd4WKVyw==/6632437757190955644.png" alt="image"></p>
-<h6 id="结果"><a href="#结果" class="headerlink" title="结果"></a>结果</h6><p>最后的CNN模型交叉验证准确度是58%，其具有积极意义。因为人类面部表情经常由多个基本表情组合，仅仅用单一表情是很难描述。本例中，当训练模型预测不准确时，正确的标签一般是第二相似的表情，见图8（浅蓝色标签）。<br><img src="http://img0.ph.126.net/D-QOV5WTGJ_hnBtTAi6mVQ==/6632316810911891151.png" alt="image"><br>Figure 8. Prediction of 24 example faces randomly selected from test set.</p>
-<h6 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h6><p><img src="http://img1.ph.126.net/_I-J4aQiQ910-JCPhYx8-Q==/3082713944954739157.png" alt="image"><br>Figure 9. Confusion matrix for true and prediction emotion counts.</p>
-<p>仔细看下每个表情的预测结果。图9是测试集的模型预测的混淆矩阵。矩阵给出表情预测的数量和多分类模型的效果展示：</p>
-<ul>
-<li>该模型很好的鉴别出正表情（happy和surprised），预测准确度高。大约7000张训练集中，happy表情的准确度达到76.7%。surprised表情预测准确度为69.3%。</li>
-<li>平均意义上讲，本例的神经网络模型对负表情的预测效果较差。sad表情只有39.7%的准确度，并且该网络模型频繁的误判别angry、fear和neutral表情。另外，当预测sad表情和neutral表情时经常搞混，可能是因为这两个表情很少出现。</li>
-<li>误分类预测小于3的频率<br><img src="http://img2.ph.126.net/_w5tDCvH66Aqjk3XbQS4ow==/6632441055725838950.png" alt="image"><br>Figure 10. Correct predictions on 2nd and 3rd highest probable emotion.</li>
-</ul>
-<h6 id="计算机视觉"><a href="#计算机视觉" class="headerlink" title="计算机视觉"></a>计算机视觉</h6><p>随着池化层数量的增加，下游神经网络管道的feature map越来越抽象。图11和图12可视化第二次和第三次max-pooling池化层后的feature map。</p>
-<p>分析和可视化卷积神经网络内层输出的代码见，<a href="https://github.com/JostineHo/mememoji/blob/master/data_visualization.ipynb" target="_blank" rel="external">https://github.com/JostineHo/mememoji/blob/master/data_visualization.ipynb</a>。<br><img src="http://img2.ph.126.net/YdQguRO5Fk-FllUX_Nzi1Q==/1282962943866801548.png" alt="image"><br>Figure 11. 第二个max-pooling池化层后的CNN (64-filter) feature maps。<br><img src="http://img1.ph.126.net/jVkrxuRkGihe8C6ywfJYLA==/6632453150353738432.png" alt="iamge"><br>Figure 12. 第三个max-pooling池化层后的CNN (128-filter) feature maps。</p>
-<h5 id="关于作者"><a href="#关于作者" class="headerlink" title="关于作者"></a>关于作者</h5><p><strong>Jostine Ho</strong>是数据科学家和深度学习研究者。她感兴趣于计算机视觉和自动化解决现实世界中具体问题。她毕业于德克萨斯大学奥斯汀分校，取得石油系统工程专业硕士学位。</p>
-<h5 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h5><ol>
-<li><a href="https://www.kaggle.com/c/challenges-in-representation-learning-facial-expression-recognition-challenge/data" target="_blank" rel="external"><em>“Dataset: Facial Emotion Recognition (FER2013)”</em></a> ICML 2013 Workshop in Challenges in Representation Learning, June 21 in Atlanta, GA.</li>
-<li><a href="http://cs231n.github.io/convolutional-networks/" target="_blank" rel="external"><em>“Andrej Karpathy’s Convolutional Neural Networks (CNNs / ConvNets)”</em></a> Convolutional Neural Networks for Visual Recognition (CS231n), Stanford University.</li>
-<li>Srivastava et al., 2014. <em>“Dropout: A Simple Way to Prevent Neural Networks from Overfitting”</em>, Journal of Machine Learning Research, 15:1929-1958.</li>
-<li>Duncan, D., Shine, G., English, C., 2016. <a href="http://cs231n.stanford.edu/reports2016/022_Report.pdf" target="_blank" rel="external"><em>“Report: Facial Emotion Recognition in Real-time”</em></a> Convolutional Neural Networks for Visual Recognition (CS231n), Stanford University.</li>
-</ol>
-<h2 id="Enjoy"><a href="#Enjoy" class="headerlink" title="Enjoy!"></a>Enjoy!</h2><p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
-<p>若发现以上文章有任何不妥，请联系我。</p>
-<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
                 <a class="post-title-link" href="/2017/12/28/deep-learning-with-python-chapter-1-1.1/" itemprop="url">
                   《Deep Learning with Python》第一章 1.1 人工智能、机器学习和深度学习
                 </a>
@@ -406,7 +252,7 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-12-28T15:58:54+08:00" content="2017-12-28">
+            <time itemprop="dateCreated" datetime="2017-12-28T16:17:23+08:00" content="2017-12-28">
               2017-12-28
             </time>
           </span>
@@ -523,8 +369,164 @@
 <p>Enjoy!</p>
 <blockquote>
 <p>翻译本书系列的初衷是，觉得其中把深度学习讲解的通俗易懂。不光有实例，也包含作者多年实践对深度学习概念、原理的深度理解。最后说不重要的一点，François Chollet是Keras作者。</p>
-<h2 id="声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。"><a href="#声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。" class="headerlink" title="声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。"></a>声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。</h2><p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。</p>
 </blockquote>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/12/28/face-emotion-recognition/" itemprop="url">
+                  面部表情（表情包）识别
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-12-28T16:07:41+08:00" content="2017-12-28">
+              2017-12-28
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h5 id="动机"><a href="#动机" class="headerlink" title="动机"></a>动机</h5><p>人类面部表情丰富，但可以总结归纳为7类基本表情： happy, sad, surprise, fear, anger, disgust, and neutral。面部表情是通过面部肌肉活动表达出来，有些比较微妙且复杂，包含了大量内心活动信息。通过面部表情识别，我们能简单而低成本地度量出观众/用户对内容和服务的态度。例如，零售商使用这些度量评估客户的满意度。健康医疗提供商能在治疗的过程根据病人的表情状态来提高服务。娱乐厂商能够监控观众的喜欢来持续的生产优质的内容。</p>
+<p>训练过的人类很容易读懂其他人的情绪。事实上，只有14个月大的婴儿就可以区别出happy和sad的区别。但是计算机能够比人类在识别情绪上做的更好吗？为了找到答案，我们设计一个深度神经网络使得机器可以读懂人类情绪。换句话说，给机器以“眼”识别面部表情。</p>
+<h5 id="语料数据"><a href="#语料数据" class="headerlink" title="语料数据"></a>语料数据</h5><p>训练模型的数据集使用的是Kaggle面部识别挑战赛的数据集（2013年）。它由35887张面部图片组成，48x48像素灰度图片，标注为7类基本表情： happy, sad, surprise, fear, anger, disgust, and neutral。<br><img src="http://img1.ph.126.net/rMw0LOC29HbsfzcAXU7zLw==/6632541111283960069.png" alt="image"><br>Figure 1. An overview of FER2013</p>
+<p>当作者分析语料数据集时，发现“disgust”分类相对于其它分类不均衡（只有113张样本）。作者将两类相似的情感（disgust和anger）合并起来。为了防止数据倾斜，作者构建一个数据生成器 <a href="https://github.com/JostineHo/mememoji/blob/master/src/fer2013datagen.py" target="_blank" rel="external">fer2013datagen.py</a>，该生成器很容易分割训练集和保留数据集。本例使用28709张面部图片作为训练集，余下的图片作为测试集和验证集（每个数据集3589张）。这样我们获得了6类均衡的数据集，见图2，包含happy, sad, surprise, fear, anger, and neutral。</p>
+<p><img src="http://img1.ph.126.net/-94jcsPjstG_I4Lh5Q6KUw==/1286622118564049914.png" alt="image"><br>Figure 2. Training and validation data distribution.</p>
+<h5 id="算法模型"><a href="#算法模型" class="headerlink" title="算法模型"></a>算法模型</h5><p><img src="http://img1.ph.126.net/jQoTGwwtyMz4CVnTExalYg==/6632600484911863570.png" alt="image"><br>Figure 3. Mr. Bean, the model for the model.</p>
+<p>深度学习在计算机视觉上是非常流行的技术。本文选择卷积神经网络（CNN）层作为构建基础创建模型架构。CNN是有名的模仿人脑工作的模型。本文使用憨豆先生的图片作为示例来解释如何将图像赋值给卷积神经网络模型。</p>
+<p>典型的卷积神经网络包涵输入层，卷积层，稠密层（比如，全联接层）和输出层（见图4）。这些层按序组合，在 <a href="https://keras.io/models/sequential/" target="_blank" rel="external">Keras</a>中，使用Sequential()函数创建模型，再把其它层加入进来。<br><img src="http://img0.ph.126.net/yxSj5yiIKuZ-0KCmNk-l4w==/6632346497725842891.png" alt="image"><br>Figure 4. Facial Emotion Recognition CNN Architecture (modification from Eindhoven University of Technology-PARsE).</p>
+<h6 id="输入层"><a href="#输入层" class="headerlink" title="输入层"></a>输入层</h6><ul>
+<li>输入层需要预处理，输入固定维度的数据。所以图片需先预处理再传入输入层。作者使用 <a href="http://docs.opencv.org/3.1.0/d7/d8b/tutorial_py_face_detection.html#gsc.tab=0" target="_blank" rel="external">OpenCV</a>（计算机视觉库）做图像面部识别。OpenCV的haar-cascade_frontalface_default.xml文件包含预训练的过滤器，使用Adaboost算法能快速找到面部并裁剪。</li>
+<li>使用cv2.cvtColor函数将裁剪面部图片转化为灰度图，并使用cv2.resize改变图片大小为48x48像素。处理完的面部图片，相比于原始的（3，48，48）三色RGB格式“瘦身”不少。同时也确保传入输入层的图片是（1，48，48）的numpy数组。</li>
+</ul>
+<h6 id="卷积层"><a href="#卷积层" class="headerlink" title="卷积层"></a>卷积层</h6><ul>
+<li>numpy数组传入Convolution2D层，指定过滤层的数量作为超参数。过滤层（比如，核函数）是随机生成权重。每个过滤层，（3，3）的感受野，采用权值共享与原图像卷积生成feature map。</li>
+<li><p>卷积层生成的feature map代表像素值的强度。例如，图5，通过过滤层1和原始图像卷积生成一个feature map，其它过滤层紧接着进行卷积操作生成一系列feature map。<br><img src="http://img2.ph.126.net/5dussQ8UCCWvk6A8_nOvoQ==/6632702739490648439.png" alt="image"><br>Figure 5. Convolution and 1st max-pooling used in the network</p>
+</li>
+<li><p>池化（Pooling）是一种降低维度的技术，常用于一个或者多个卷积层之后。池化操作是构建CNN的重要步骤，因为增加的多个卷积层会极大的影响计算时间。本文使用流行的池化方法MaxPooling2D，其使用（2，2）窗口作用于feature map求的最大像素值。池化后图像降低4个维度。</p>
+</li>
+</ul>
+<h6 id="稠密层"><a href="#稠密层" class="headerlink" title="稠密层"></a>稠密层</h6><ul>
+<li><p>稠密层（比如，全联接层）是模仿人脑传输神经元的方式。它输入大量输入特征和变换特征，通过联接层与训练权重相连。<br><img src="http://img2.ph.126.net/G3e8Ye0wiS4g595FhAVVrQ==/2601954684732937664.png" alt="image"><br>Figure 6. Neural network during training: Forward propagation (left) to Backward propagation (right).</p>
+</li>
+<li><p>模型训练时权重前向传播，而误差是反向传播。反向传播起始与预测值和实际值的差值，计算所需的权重调整大小反向传回到每层。采用超参数调优手段（比如，学习率和网络密度）控制训练速度和架构的复杂度。随着灌入更多的训练数据，神经网络能够使得误差最小化。</p>
+</li>
+<li>一般，神经网络层/节点数越多，越能捕捉到足够的信号。但是，也会造成算法模型训练过拟合。应用dropout可以防止训练模型过拟合。Dropout随机选择部分节点（通常，占总节点数的百分比不超过50%），并将其权重置为0。该方法能有效的控制模型对噪声对敏感度，同时也保留架构的复杂度。</li>
+</ul>
+<h6 id="输出层"><a href="#输出层" class="headerlink" title="输出层"></a>输出层</h6><ul>
+<li>本文的输出层使用softmax激励函数代替sigmoid函数，将输出每类表情的概率。</li>
+<li>因此，本文的算法模型能显示出人脸表情组成的详细组成概率。随后会发现没必要将人类表情表示为单个表情。本文采用的是混合表情来精确表示特定情感</li>
+</ul>
+<blockquote>
+<p>注意，没有特定的公式能建立一个神经网络保证对各种场景都有效。不同的问题需要不同的模型架构，产生期待的验证准确度。这也是为什么说神经网络是个“黒盒算法”。但是也不要太气馁，模型训练的时间会让你找到最佳模型，获得最大价值。</p>
+</blockquote>
+<h6 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h6><p>刚开始创建了一个简单的CNN深度学习模型，包括一个输入层，三个卷积层和一个输出层。事实证明，简单的算法模型效果比较差。准确度0.1500意味着仅仅是随机猜测的结果（1/6）。简单的网络结构导致不能有效的判别面部表情，那只能说明要“深挖”。。。<br><a href="http://img2.ph.126.net/uiC8pbN-PK9vk3i3i_E_dg==/6632460846935132816.png" target="_blank" rel="external">image</a><br>下面稍微修改下三部分的组合，增加模型的复杂度：</p>
+<ul>
+<li>卷积层的数量和配置</li>
+<li>稠密层的数量和配置</li>
+<li>稠密层的dropout占比</li>
+</ul>
+<p>使用AWS的GPU计算（g2.2xlarge）训练和评估组合的算法模型。这次极大的减少了训练时间和模型调优的效率。最后的网络模型是九层，每三层卷积层接着一个max-pooling层，见图7。<br><img src="http://img1.ph.126.net/byZdgskm07usZbByAzg6rQ==/6632680749258091039.png" alt="image"><br>Figure 7. Final model CNN architecture.</p>
+<h5 id="模型验证"><a href="#模型验证" class="headerlink" title="模型验证"></a>模型验证</h5><p><img src="http://img0.ph.126.net/MyTvn8QWikiz0lzd4WKVyw==/6632437757190955644.png" alt="image"></p>
+<h6 id="结果"><a href="#结果" class="headerlink" title="结果"></a>结果</h6><p>最后的CNN模型交叉验证准确度是58%，其具有积极意义。因为人类面部表情经常由多个基本表情组合，仅仅用单一表情是很难描述。本例中，当训练模型预测不准确时，正确的标签一般是第二相似的表情，见图8（浅蓝色标签）。<br><img src="http://img0.ph.126.net/D-QOV5WTGJ_hnBtTAi6mVQ==/6632316810911891151.png" alt="image"><br>Figure 8. Prediction of 24 example faces randomly selected from test set.</p>
+<h6 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h6><p><img src="http://img1.ph.126.net/_I-J4aQiQ910-JCPhYx8-Q==/3082713944954739157.png" alt="image"><br>Figure 9. Confusion matrix for true and prediction emotion counts.</p>
+<p>仔细看下每个表情的预测结果。图9是测试集的模型预测的混淆矩阵。矩阵给出表情预测的数量和多分类模型的效果展示：</p>
+<ul>
+<li>该模型很好的鉴别出正表情（happy和surprised），预测准确度高。大约7000张训练集中，happy表情的准确度达到76.7%。surprised表情预测准确度为69.3%。</li>
+<li>平均意义上讲，本例的神经网络模型对负表情的预测效果较差。sad表情只有39.7%的准确度，并且该网络模型频繁的误判别angry、fear和neutral表情。另外，当预测sad表情和neutral表情时经常搞混，可能是因为这两个表情很少出现。</li>
+<li>误分类预测小于3的频率<br><img src="http://img2.ph.126.net/_w5tDCvH66Aqjk3XbQS4ow==/6632441055725838950.png" alt="image"><br>Figure 10. Correct predictions on 2nd and 3rd highest probable emotion.</li>
+</ul>
+<h6 id="计算机视觉"><a href="#计算机视觉" class="headerlink" title="计算机视觉"></a>计算机视觉</h6><p>随着池化层数量的增加，下游神经网络管道的feature map越来越抽象。图11和图12可视化第二次和第三次max-pooling池化层后的feature map。</p>
+<p>分析和可视化卷积神经网络内层输出的代码见，<a href="https://github.com/JostineHo/mememoji/blob/master/data_visualization.ipynb" target="_blank" rel="external">https://github.com/JostineHo/mememoji/blob/master/data_visualization.ipynb</a>。<br><img src="http://img2.ph.126.net/YdQguRO5Fk-FllUX_Nzi1Q==/1282962943866801548.png" alt="image"><br>Figure 11. 第二个max-pooling池化层后的CNN (64-filter) feature maps。<br><img src="http://img1.ph.126.net/jVkrxuRkGihe8C6ywfJYLA==/6632453150353738432.png" alt="iamge"><br>Figure 12. 第三个max-pooling池化层后的CNN (128-filter) feature maps。</p>
+<h5 id="关于作者"><a href="#关于作者" class="headerlink" title="关于作者"></a>关于作者</h5><p><strong>Jostine Ho</strong>是数据科学家和深度学习研究者。她感兴趣于计算机视觉和自动化解决现实世界中具体问题。她毕业于德克萨斯大学奥斯汀分校，取得石油系统工程专业硕士学位。</p>
+<h5 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h5><ol>
+<li><a href="https://www.kaggle.com/c/challenges-in-representation-learning-facial-expression-recognition-challenge/data" target="_blank" rel="external"><em>“Dataset: Facial Emotion Recognition (FER2013)”</em></a> ICML 2013 Workshop in Challenges in Representation Learning, June 21 in Atlanta, GA.</li>
+<li><a href="http://cs231n.github.io/convolutional-networks/" target="_blank" rel="external"><em>“Andrej Karpathy’s Convolutional Neural Networks (CNNs / ConvNets)”</em></a> Convolutional Neural Networks for Visual Recognition (CS231n), Stanford University.</li>
+<li>Srivastava et al., 2014. <em>“Dropout: A Simple Way to Prevent Neural Networks from Overfitting”</em>, Journal of Machine Learning Research, 15:1929-1958.</li>
+<li>Duncan, D., Shine, G., English, C., 2016. <a href="http://cs231n.stanford.edu/reports2016/022_Report.pdf" target="_blank" rel="external"><em>“Report: Facial Emotion Recognition in Real-time”</em></a> Convolutional Neural Networks for Visual Recognition (CS231n), Stanford University.</li>
+</ol>
+<h2 id="Enjoy"><a href="#Enjoy" class="headerlink" title="Enjoy!"></a>Enjoy!</h2><p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
 <p>若发现以上文章有任何不妥，请联系我。</p>
 <p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
 
