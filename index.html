@@ -238,6 +238,1588 @@
             
               
                 
+                <a class="post-title-link" href="/2017/12/28/BeautifulSoup-scrap/" itemprop="url">
+                  Python:BeautifulSoup爬虫手把手实例教程
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-12-28T15:25:17+08:00" content="2017-12-28">
+              2017-12-28
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>Web爬虫能自动抽取数据，并以人们容易理解的方式展现。本文章将举个金融市场的例子，但是Web爬虫能做的远不止于此。</p>
+<p>如果你是一个狂热的投资者，当你需要的股票价格跨多个网站，那获取每天的股票价格是相当痛苦。本文通过创建一个Web爬虫自动从互联网上检索股指数据。</p>
+<h5 id="开始"><a href="#开始" class="headerlink" title="开始"></a>开始</h5><p>我们将使用Python和BeautifulSoup编写爬虫：</p>
+<ul>
+<li>对于Mac用户，Python已预装好。打开终端，输入python —version，你回看到Python版本是2.7.x；</li>
+<li>对于Windows用户，请按官方文档安装Python</li>
+</ul>
+<p>接下来使用<code>pip</code>安装BeautifulSoup库，在terminal中执行：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">easy_install pip  </div><div class="line">pip install BeautifulSoup4</div></pre></td></tr></table></figure>
+<p><strong>Note</strong>：如果执行以上命令失败，请尝试加上<code>sudo</code>再次执行。</p>
+<h5 id="基础知识"><a href="#基础知识" class="headerlink" title="基础知识"></a>基础知识</h5><p>在看代码之前，先理解一下HTML网页基本知识和爬取规则。</p>
+<h6 id="HTML标签"><a href="#HTML标签" class="headerlink" title="HTML标签"></a>HTML标签</h6><p>如果你已经熟悉HTML标签，可以跳过此部分。</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&lt;!DOCTYPE html&gt;</span>  </div><div class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span>  </div><div class="line">    <span class="tag">&lt;<span class="name">head</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">head</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">body</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">h1</span>&gt;</span> First Scraping <span class="tag">&lt;/<span class="name">h1</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">p</span>&gt;</span> Hello World <span class="tag">&lt;/<span class="name">p</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">body</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></div></pre></td></tr></table></figure>
+<p>上面是HTML网页基本的语法，网页中的每个<tag>代表一个功能块：</tag></p>
+<ol>
+<li><code>&lt;!DOCTYPE html&gt;</code>：HTML文档必须以&lt;!DOCTYPE html&gt;标签为起点；</li>
+<li>HTML文档包含在<code>&lt;html&gt;</code> 和<code>&lt;/html&gt;</code>标签之间；</li>
+<li>HTML文档的元数据和脚本声明放在<code>&lt;head&gt;</code> 和 <code>&lt;/head&gt;</code>标签之间；</li>
+<li>HTML文档的正文部分放在 <code>&lt;body&gt;</code> 和 <code>&lt;/body&gt;</code>标签内；</li>
+<li><code>&lt;h1&gt;</code> 到 <code>&lt;h6&gt;</code>标签定义标题；</li>
+<li><code>&lt;p&gt;</code> 标签定义段落； </li>
+</ol>
+<p>其它常用的标签有，<code>&lt;a&gt;</code> ：超链接，<code>&lt;table&gt;</code> ：表格；<code>&lt;tr&gt;</code> 表格的行，<code>&lt;td&gt;</code>表格的列。</p>
+<p>有时，HTML标签也带有 <code>id</code> 或者 <code>class</code>  属性。 <code>id</code> 属性是指定HTML标签的唯一id，其在HTML文档内取值唯一。 <code>class</code> 属性是表示同一类HTML标签。我们可以使用两个属性进行数据定位。</p>
+<p>W3Schools上可以学到更多关于HTML tag，id和class的知识。</p>
+<h6 id="爬取规则"><a href="#爬取规则" class="headerlink" title="爬取规则"></a>爬取规则</h6><ul>
+<li>爬取网站的第一步是，阅读网站的爬取协议或者声明。一般情况，爬取的数据不能用于商业目的。</li>
+<li>不能太频繁的请求网站数据，不然会被列入黑名单。最好能让你的程序模拟人的行为。一般设为每秒访问一个页面为最佳。</li>
+<li>网站的布局会随时改变，确保改写你的代码能重新爬取该网页。</li>
+</ul>
+<h5 id="检查（Inspect）网页"><a href="#检查（Inspect）网页" class="headerlink" title="检查（Inspect）网页"></a>检查（Inspect）网页</h5><p>下面拿<a href="http://www.bloomberg.com/quote/SPX:IND" target="_blank" rel="external">Bloomberg Quote</a>网站举例：</p>
+<p>当前炒股非常火，假设某个炒股者关注股票市场，想得到股指（S&amp;P 500）名字和价格。首先在浏览器打开该网页，使用浏览器的检查器（inspector）来检查网页。</p>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*KOJCuAYQyMIC8QdQyXERyw.png" alt="imge"></p>
+<p>鼠标悬停在价格的位置，你会看到价格周围蓝色的方框。当点击它时，相关的网页在浏览器控制台上显示被选中。</p>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*T0t6G2tawfTtKHR4yY_iVQ.png" alt="image"></p>
+<p>上面的结果显示，该股指的价格包含在HTML标签的一级， <code>&lt;div class=&quot;basic-quote&quot;&gt;</code> → <code>&lt;div class=&quot;price-container up&quot;&gt;</code> → <code>&lt;div class=&quot;price&quot;&gt;</code>。</p>
+<p>相似的，如果将鼠标悬停在“S&amp;P 500 Index”并点击名字，会看到它包含在<code>&lt;div class=&quot;basic-quote&quot;&gt;</code> 和 <code>&lt;h1 class=&quot;name&quot;&gt;</code>。</p>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*ga5bmPtLDdWUTvL-pNxBgg.png" alt="imge"></p>
+<p>现在我们知道可以通过<code>class</code> 标签辅助定位所需爬取的数据。</p>
+<h5 id="代码实践"><a href="#代码实践" class="headerlink" title="代码实践"></a>代码实践</h5><p>知道所要爬取的数据位置，那就动起手来开始爬虫。</p>
+<p>首先，导入所需的编程库：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># import libraries</span></div><div class="line"><span class="keyword">import</span> urllib2</div><div class="line"><span class="keyword">from</span> bs4 <span class="keyword">import</span> BeautifulSoup</div></pre></td></tr></table></figure>
+<p>接着，声明网页URL变量：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># specify the url</span></div><div class="line">quote_page = ‘http://www.bloomberg.com/quote/SPX:IND<span class="string">'</span></div></pre></td></tr></table></figure>
+<p>然后，使用Python urllib2获取HTML网页：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># query the website and return the html to the variable ‘page’</span></div><div class="line">page = urllib2.urlopen(quote_page)</div></pre></td></tr></table></figure>
+<p>最后，把网页解析成BeautifulSoup格式：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># parse the html using beautiful soap and store in variable `soup`</span></div><div class="line">soup = BeautifulSoup(page, ‘html.parser’)</div></pre></td></tr></table></figure>
+<p>上面<code>soup</code>变量获得网页的HTML内容。我们将从其中抽取数据。</p>
+<p>还记得所需爬取数据的唯一层吗？BeautifulSoup能帮我们获取这些层，并使用<code>find()</code>抽取其内容。因为HTML的class标签是唯一的，所以可简单的查询 <code>&lt;div class=&quot;name&quot;&gt;</code>。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># Take out the &lt;div&gt; of name and get its value</span></div><div class="line">name_box = soup.find(‘h1’, attrs=&#123;‘<span class="class"><span class="keyword">class</span>’:</span> ‘name’&#125;)</div></pre></td></tr></table></figure>
+<p>通过 <code>text</code>函数获取数据：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">name = name_box.text.strip() <span class="comment"># strip() is used to remove starting and trailing</span></div><div class="line"><span class="keyword">print</span> name</div></pre></td></tr></table></figure>
+<p>同样地，我们获取股指价格：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># get the index price</span></div><div class="line">price_box = soup.find(‘div’, attrs=&#123;‘<span class="class"><span class="keyword">class</span>’:</span>’price’&#125;)</div><div class="line">price = price_box.text</div><div class="line"><span class="keyword">print</span> price</div></pre></td></tr></table></figure>
+<p>当运行程序，将会打印S&amp;P 500股指。</p>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*8sCE0XTu0Q0iHi2-QLpgXg.png" alt="image"></p>
+<h5 id="导出Excel-CSV文件"><a href="#导出Excel-CSV文件" class="headerlink" title="导出Excel CSV文件"></a>导出Excel CSV文件</h5><p>获取数据之后进行存储，Excel逗号分隔的格式看起来不错。你能用Excel打开查看数据。</p>
+<p>首先，导入Python的csv模块和datetime模块：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> csv</div><div class="line"><span class="keyword">from</span> datetime <span class="keyword">import</span> datetime</div></pre></td></tr></table></figure>
+<p>将爬取的数据存储到一个csv文件：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># open a csv file with append, so old data will not be erased</span></div><div class="line"><span class="keyword">with</span> open(‘index.csv’, ‘a’) <span class="keyword">as</span> csv_file:</div><div class="line"> writer = csv.writer(csv_file)</div><div class="line"> writer.writerow([name, price, datetime.now()])</div></pre></td></tr></table></figure>
+<p>执行程序后，你可以打开一个index.csv文件，看到如下内容：</p>
+<p><img src="http://img1.ph.126.net/7RTZNqWxEwVnVHR6LIA8Aw==/6632293721166253840.png" alt="image"></p>
+<p>如果每天执行该程序，你无需打开网站即可获得S&amp;P 500股指价格。</p>
+<h5 id="进阶使用"><a href="#进阶使用" class="headerlink" title="进阶使用"></a>进阶使用</h5><p>这时你可以轻松爬取一个股指，下面举例一次抽取多个股指数据。</p>
+<p>首先，更新quote_page变量为一个URL数组：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">quote_page = [‘http://www.bloomberg.com/quote/SPX:IND<span class="string">', ‘http://www.bloomberg.com/quote/CCMP:IND'</span>]</div></pre></td></tr></table></figure>
+<p>然后，将爬取代码加一个for循环，其处理每个URL并将数据存储到data：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># for loop</span></div><div class="line">data = []</div><div class="line"><span class="keyword">for</span> pg <span class="keyword">in</span> quote_page:</div><div class="line"> <span class="comment"># query the website and return the html to the variable ‘page’</span></div><div class="line"> page = urllib2.urlopen(pg)</div><div class="line"><span class="comment"># parse the html using beautiful soap and store in variable `soup`</span></div><div class="line"> soup = BeautifulSoup(page, ‘html.parser’)</div><div class="line"><span class="comment"># Take out the &lt;div&gt; of name and get its value</span></div><div class="line"> name_box = soup.find(‘h1’, attrs=&#123;‘<span class="class"><span class="keyword">class</span>’:</span> ‘name’&#125;)</div><div class="line"> name = name_box.text.strip() <span class="comment"># strip() is used to remove starting and trailing</span></div><div class="line"><span class="comment"># get the index price</span></div><div class="line"> price_box = soup.find(‘div’, attrs=&#123;‘<span class="class"><span class="keyword">class</span>’:</span>’price’&#125;)</div><div class="line"> price = price_box.text</div><div class="line"><span class="comment"># save the data in tuple</span></div><div class="line"> data.append((name, price))</div></pre></td></tr></table></figure>
+<p>同时，更改存储csv文件部分代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># open a csv file with append, so old data will not be erased</span></div><div class="line"><span class="keyword">with</span> open(‘index.csv’, ‘a’) <span class="keyword">as</span> csv_file:</div><div class="line"> writer = csv.writer(csv_file)</div><div class="line"> <span class="comment"># The for loop</span></div><div class="line"> <span class="keyword">for</span> name, price <span class="keyword">in</span> data:</div><div class="line"> writer.writerow([name, price, datetime.now()])</div></pre></td></tr></table></figure>
+<p>现在实现一次爬取两个股指价格。</p>
+<p>Enjoy!</p>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/12/28/how-apache-flink-enables-new-streaming-applications/" itemprop="url">
+                  Flink开启流处理技术新潮流：解决流处理event time和消息乱序
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-12-28T15:24:57+08:00" content="2017-12-28">
+              2017-12-28
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p><em>写在之前：此文翻译自：<a href="http://data-artisans.com/how-apache-flink-enables-new-streaming-applications-part-1" target="_blank" rel="external">how-apache-flink-enables-new-streaming-applications</a>，做了少许改动，感谢原作者。</em></p>
+<p>速度是成功的一重要要素，流处理技术的速度使得其越来越受青睐。在现实世界中，数据产品总是以持续不断的处理面目示人，比如，web服务日志，移动应用用户行为，或者传感器数据。</p>
+<p>到目前为止，大部分数据处理架构技术栈都建立在有限的、静态的数据假设之上。现代流处理技术在不断地努力，通过模拟和处理现实世界的event，而最理想的模拟情况是把数据看作“streams”。Flink不但实现“streams”流，而且具有开创性的技术点。本篇先来讲述Flink解决消息乱序和event time窗口。</p>
+<h5 id="消息乱序和event-time窗口"><a href="#消息乱序和event-time窗口" class="headerlink" title="消息乱序和event time窗口"></a>消息乱序和event time窗口</h5><p>在讨论解决消息乱序问题之前，需先定义时间和顺序。在流处理中，时间的概念有两个：</p>
+<ul>
+<li><strong>Event time </strong>：Event time是事件发生的时间，经常以时间戳表示，并和数据一起发送。带时间戳的数据流有，Web服务日志、监控agent的日志、移动端日志等；</li>
+<li><strong>Processing time </strong> ：Processing time是处理事件数据的服务器时间，一般是运行流处理应用的服务器时钟。</li>
+</ul>
+<p>许多流处理场景中，事件发生的时间和事件到达待处理的消息队列时间有各种延迟：</p>
+<ol>
+<li>各种网络延迟；</li>
+<li>数据流消费者导致的队列阻塞和反压影响；</li>
+<li>数据流毛刺，即，数据波动；</li>
+<li>事件生产者（移动设备、传感器等）离线；</li>
+</ol>
+<p>上述诸多原因会导致队列中的消息频繁乱序。事件发生的时间和事件到达待处理的消息队列时间的不同随着时间在不断变化，这常被称为时间偏移（<em>event time skew</em>），表示成：<em>“processing time – event time”</em>。</p>
+<p>对大部分应用来讲，基于事件的创建时间分析数据比基于事件的处理时间分析数据要更有意义。Flink允许用户定义基于事件时间（event time）的窗口，而不是处理时间。</p>
+<p>Flink使用<em>事件时间 clock</em> 来跟踪事件时间，其是以<em>watermarks</em>来实现的。<em>watermarks</em>是Flink 源流基于事件时间点生成的特殊事件。 <em>T</em> 时间点的<em>watermarks</em>意味着，小于 T 的时间戳的事件不会再到达。Flink的所有操作都基于<em>watermarks</em>来跟踪事件时间。</p>
+<p>下图描述Flink是如何计算事件时间窗口。当<em>watermarks</em>到达时窗口计算会被触发，并更新事件时间clock：</p>
+<p>很明显，左上角<em>watermarks</em> W(4)快要到达，出现计算窗口T1-T4；右上角因为消息有乱序（事件时间为3的事件排在事件时间为7的后面），同时出现两个计算窗口T1-T4和T4-T8；左下角<em>watermarks</em> W(4)触发计算窗口演化，小于事件时间4的事件不再到达；右下角参考前面解读。</p>
+<p>基于事件时间的Pipeline会产生更精确的结果，因为一旦有相应事件时间的事件到达会尽快计算；而相对于周期性的批量处理来讲，基于事件时间的数据流pipeline会更早的计算出结果，并且更精确（批量处理不能很好的处理跨batch的消息乱序）。</p>
+<h5 id="结合事件时间和实时pipeline"><a href="#结合事件时间和实时pipeline" class="headerlink" title="结合事件时间和实时pipeline"></a>结合事件时间和实时pipeline</h5><p>事件时间pipeline会因为必要的事件时间过程而导致一定的延迟。有时延迟太大导致无法获得实时结果，这时就得增加延迟短的结果。</p>
+<p>Flink是一个流处理框架，能毫秒级处理事件，它能在同一个应用中综合低延迟的实时pipeline和事件时间pipeline，列子如下：</p>
+<ol>
+<li>基于单个事件的低延迟报警。如果某类事件被识别，需要发出报警信息；</li>
+<li>基于处理时间窗口的实时dashboard，能够聚合秒级的事件数；</li>
+<li>基于事件时间的精确统计</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line">    * Main entry point.</div><div class="line">    */</div><div class="line">   <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</div><div class="line">       </div><div class="line">       <span class="comment">// create environment and configure it</span></div><div class="line">       <span class="keyword">final</span> StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();</div><div class="line">       env.registerType(Statistic.class);</div><div class="line">       env.registerType(SensorReading.class);</div><div class="line">       </div><div class="line">       env.setParallelism(<span class="number">4</span>);</div><div class="line">       env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);</div><div class="line">       </div><div class="line">       </div><div class="line">       <span class="comment">// create a stream of sensor readings, assign timestamps, and create watermarks</span></div><div class="line">       DataStream&lt;SensorReading&gt; readings = env</div><div class="line">               .addSource(<span class="keyword">new</span> SampleDataGenerator())</div><div class="line">               .assignTimestamps(<span class="keyword">new</span> ReadingsTimestampAssigner());</div><div class="line">       </div><div class="line">       <span class="comment">// path (1) - low latency event-at a time filter</span></div><div class="line">       readings</div><div class="line">               .filter(reading -&gt; reading.reading() &gt; <span class="number">100.0</span>)</div><div class="line">               .map( reading -&gt; <span class="string">"-- ALERT -- Reading above threshold: "</span> + reading )</div><div class="line">               .print();</div><div class="line">       </div><div class="line">       <span class="comment">// path (2) - processing time windows: Compute max readings per sensor group</span></div><div class="line">       </div><div class="line">       <span class="comment">// because the default stream time is set to Event Time, we override the trigger with a</span></div><div class="line">       <span class="comment">// processing time trigger</span></div><div class="line">       </div><div class="line">       readings</div><div class="line">               .keyBy( reading -&gt; reading.sensorGroup() )</div><div class="line">               .window(TumblingTimeWindows.of(Time.seconds(<span class="number">5</span>)))</div><div class="line">               .trigger(ProcessingTimeTrigger.create())</div><div class="line">               .fold(<span class="keyword">new</span> Statistic(), (curr, next) -&gt;</div><div class="line">                       <span class="keyword">new</span> Statistic(next.sensorGroup(), next.timestamp(), Math.max(curr.value(), next.reading())))</div><div class="line">               </div><div class="line">               .map(stat -&gt; <span class="string">"PROC TIME - max for "</span> + stat)</div><div class="line">               .print();</div><div class="line">       </div><div class="line">       <span class="comment">// path (3) - event time windows: Compute average reading over sensors per minute</span></div><div class="line">       </div><div class="line">       <span class="comment">// we use a WindowFunction here, to illustrate how to get access to the window object</span></div><div class="line">       <span class="comment">// that contains bounds, etc.</span></div><div class="line">       <span class="comment">// Pre-aggregation is possible by adding a pre-aggregator ReduceFunction</span></div><div class="line">       </div><div class="line">       readings</div><div class="line">               <span class="comment">// group by, window and aggregate </span></div><div class="line">               .keyBy(reading -&gt; reading.sensorId() )</div><div class="line">               .timeWindow(Time.minutes(<span class="number">1</span>), Time.seconds(<span class="number">10</span>))</div><div class="line">               .apply(<span class="keyword">new</span> WindowFunction&lt;SensorReading, Statistic, String, TimeWindow&gt;() &#123;</div><div class="line"></div><div class="line">                   <span class="meta">@Override</span></div><div class="line">                   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">apply</span><span class="params">(String id, TimeWindow window, Iterable&lt;SensorReading&gt; values, Collector&lt;Statistic&gt; out)</span> </span>&#123;</div><div class="line">                       <span class="keyword">int</span> count = <span class="number">0</span>;</div><div class="line">                       <span class="keyword">double</span> agg = <span class="number">0.0</span>;</div><div class="line">                       <span class="keyword">for</span> (SensorReading r : values) &#123;</div><div class="line">                           agg += r.reading();</div><div class="line">                           count++;</div><div class="line">                       &#125;</div><div class="line">                       out.collect(<span class="keyword">new</span> Statistic(id, window.getStart(), agg / count));</div><div class="line">                   &#125;</div><div class="line">               &#125;)</div><div class="line">               </div><div class="line">               .map(stat -&gt; <span class="string">"EVENT TIME - avg for "</span> + stat)</div><div class="line">               .print();</div><div class="line">       </div><div class="line">       env.execute(<span class="string">"Event time example"</span>);</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
+<p>Flink提供的窗口触发条件包括处理时间clock，事件时间clock，以及数据流内容。</p>
+<h5 id="Flink是如何度量时间？"><a href="#Flink是如何度量时间？" class="headerlink" title="Flink是如何度量时间？"></a>Flink是如何度量时间？</h5><p>下面看下Flink是如何处理时间的，在这点上与其它老的流处理系统有啥不同。</p>
+<p>一般意义上讲，时间是用clock度量的。最简单的clock称为<em>wall clock</em>，它是集群中服务器执行流处理作业的间隔clock。<em>wall clock</em>是用来跟踪处理时间的。</p>
+<p>为了跟踪事件时间，我们需要集群机器间相同的clock。Flink是通过<em>watermarks</em>机制实现的。一个<em>watermarks</em>是指在真实事件流时间点发生的事件（比如，上午10点），那么到现在为止上午10点前的事件不会再到达。事件时间clock（<em>event time clock</em>）跟踪时间比wall clock要粗粒度，但是更准确。</p>
+<p>还有第三种clock，叫做<em>system clock</em>。它是用来保证流处理系统的“exactly-once“语义的。Flink跟踪作业的处理是通过<em>barriers</em>（栏栅），并进行snapshot。<em>barriers</em>与<em>watermarks</em>类似，不同之处在于，<em>barriers</em>是由Flink的master机器的<em>wall clock</em> 生成， 而<em>watermarks</em>是由真实世界的时间生成。同样，Spark Streaming的micro-batche schedule是基于Spark receiver的<em>wall clock</em> 。</p>
+<p>下图完美展现刚才讲的各种时间：</p>
+<p>Worker 1和Worker 2机器上并行执行对数据源和窗口的操作作业。事件上的数字代表时间戳，方块的颜色代表不同的key（灰色流向窗口1，紫色流向窗口2）。数据源从队列中读取事件（有分区，通过key分区），把他们分发到正确的窗口。窗口定义为基于事件时间的时间窗口（Flink包含时间窗口和count窗口）。我能看到Worker 1、Worker 2和Master机器的<em>wall clock</em>不同（缺乏时间同步，具体看ntp），分别为10，8，7。数据源发出<em>watermarks</em>，当前的<em>watermarks</em>时间戳为4。这意味着，event time clock是4，这时进行并行计算。Master（JobManager）对数据源做<em>barriers</em>，并对计算做snapshot。系统时间此时为7，checkpoint为第七个。</p>
+<p>下面对流处理框架中的三种clock进行总结：</p>
+<ul>
+<li><strong>event time clock</strong>：度量事件流的时间，粗粒度；</li>
+<li><strong>system clock</strong>：度量计算的过程。实际上是协调者机器的<em>wall clock</em>；</li>
+<li><strong>wall clock </strong>：度量处理时间。</li>
+</ul>
+<p>下面也给出老的流处理系统的弊端：</p>
+<ol>
+<li>计算不准确：因为真实世界的事件发生顺序与处理的顺序经常不一致；</li>
+<li>计算结果强依赖当前时间；</li>
+<li>系统参数配置会影响程序的语义：比如，增加checkpoin的间隔。</li>
+</ol>
+<p>老的流处理系统的这些缺点让它们没法获得准确的结果（至少是可控的准确度）。</p>
+<p>而Flink完全分离这三种clock：</p>
+<ol>
+<li>基于<em>event time clock</em>的<em>watermarks</em>跟踪事件流时间，允许用户定义基于事件时间的窗口；</li>
+<li><em>system clock</em>与<em>event time clock</em>完全解藕，跟踪计算过程和全局snapshot，不对外暴露api，仅仅用来分布式系统的协调；</li>
+<li>处理时间是用的机器的<em>wall clock</em>，暴露给用户支持处理时间窗口。</li>
+</ol>
+<p>相关文章：</p>
+<p>Enjoy!</p>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/12/28/kafka-cluster-producer/" itemprop="url">
+                  Kafka使用总结：Producer
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-12-28T15:24:30+08:00" content="2017-12-28">
+              2017-12-28
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>Kafka作为消息中间件是各公司平台架构绕不开的话题。</p>
+<p>不管你是把Kafka作为队列，还是消息通道，都需要在应用中通过producer写数据到Kafka，再用consumer从Kafka中消费。应用往Kafka写数据的原因有很多：用户行为分析、日志存储、异步通信等。多样化的使用场景带来了多样化的需求：消息是否能丢失？是否容忍重复？消息的吞吐量？消息的延迟？</p>
+<p>这么苛刻的要求Kafka能满足吗？</p>
+<p><img src="http://img1.ph.126.net/jOA6c9KB5qbpivkjsYGDwg==/6632071619817192826.png" alt="image"></p>
+<h5 id="Kafka-Producer"><a href="#Kafka-Producer" class="headerlink" title="Kafka Producer"></a>Kafka Producer</h5><p>首先，创建ProducerRecord必须包含Topic和Value，key和partition可选。然后，序列化key和value对象为ByteArray，并发送到网络。</p>
+<p>接下来，消息发送到partitioner。如果创建ProducerRecord时指定了partition，此时partitioner啥也不用做，简单的返回指定的partition即可。如果未指定partition，partitioner会基于ProducerRecord的key生成partition。producer选择好partition后，增加record到对应topic和partition的batch record。最后，专有线程负责发送batch record到合适的Kafka broker。</p>
+<p>当broker收到消息时，它会返回一个应答（response）。如果消息成功写入Kafka，broker将返回RecordMetadata对象（包含topic，partition和offset）；相反，broker将返回error。这时producer收到error会尝试重试发送消息几次，直到producer返回error。</p>
+<h5 id="Producer实战"><a href="#Producer实战" class="headerlink" title="Producer实战"></a>Producer实战</h5><h6 id="构造Kafka-Producer"><a href="#构造Kafka-Producer" class="headerlink" title="构造Kafka Producer"></a>构造Kafka Producer</h6><p>创建Properties对象，配置producer参数。根据Properties创建producer对象。Kafka producer必选参数有3个：</p>
+<ul>
+<li><em>bootstrap.servers</em> ：Kafka broker的列表，包含host和port。此处不必包含Kafka集群所有的broker，因为producer会通过其它broker查询到所需信息。但至少包含2个broker；</li>
+<li><em>key.serializer</em>：序列化key参数，值为类名，org.apache.kafka.common.serialization.Serializer接口的实现；</li>
+<li><em>value.serializer</em>：序列化value参数，值为类名，使用方式同<em>key.serializer</em>。</li>
+</ul>
+<p>最简代码实现如下：</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">private Properties kafkaProps = new Properties();</div><div class="line">kafkaProps.put("bootstrap.servers", "broker1:9092,broker2:9092");</div><div class="line">kafkaProps.put("key.serializer", "org.apache.kafka.common.serialization.String-</div><div class="line">Serializer");</div><div class="line">kafkaProps.put("value.serializer", "org.apache.kafka.common.serializa-</div><div class="line">tion.StringSerializer");</div><div class="line">producer = new KafkaProducer&lt;String, String&gt;(kafkaProps);</div></pre></td></tr></table></figure>
+<p>创建Properties对象，key和value为String类型，选用Kafka自带的StringSerializer。通过属性配置可以控制Producer的行为。</p>
+<p>实例化producer后，接着发送消息。这里主要有3种发送消息的方法：</p>
+<ul>
+<li>立即发送：只管发送消息到server端，不care消息是否成功发送。大部分情况下，这种发送方式会成功，因为Kafka自身具有高可用性，producer会自动重试；但有时也会丢失消息；</li>
+<li>同步发送：通过send()方法发送消息，并返回Future对象。get()方法会等待Future对象，看send()方法是否成功；</li>
+<li>异步发送：通过带有回调函数的send()方法发送消息，当producer收到Kafka broker的response会触发回调函数</li>
+</ul>
+<p>以上所有情况，一定要时刻考虑发送消息可能会失败，想清楚如何去处理异常。</p>
+<p>通常我们是一个producer起一个线程开始发送消息。为了优化producer的性能，一般会有下面几种方式：单个producer起多个线程发送消息；使用多个producer。</p>
+<p>下面开始详细展示上面所提到的三种发送消息的方法，以及各种类型错误的处理方式。</p>
+<h6 id="发送消息到Kafka"><a href="#发送消息到Kafka" class="headerlink" title="发送消息到Kafka"></a>发送消息到Kafka</h6><p>最简单的方法如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">ProducerRecord&lt;String, String&gt; record =</div><div class="line">            <span class="keyword">new</span> ProducerRecord&lt;&gt;(<span class="string">"CustomerCountry"</span>, <span class="string">"Precision Products"</span>,<span class="string">"France"</span>);</div><div class="line">    <span class="keyword">try</span> &#123;</div><div class="line">      producer.send(record);</div><div class="line">    &#125; <span class="keyword">catch</span> (Exception e) &#123;</div><div class="line">            e.printStackTrace();</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>创建ProducerRecord对象，Producer使用send()方法发送ProducerRecord。send()方法会返回带有RecordMetadata的Future对象，这里只简单的忽略返回值，所以我们并不会知道消息是否发送成功；</p>
+<p>但即使如此简单，Producer发送消息到Kafka也仍然得处理些异常：当序列化消息失败会抛出SerializationException；buffer溢出会抛出BufferExhaustedException；当发送线程终止会抛出InterruptException。</p>
+<h6 id="同步发消息"><a href="#同步发消息" class="headerlink" title="同步发消息"></a>同步发消息</h6><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">ProducerRecord&lt;String, String&gt; record =</div><div class="line">            <span class="keyword">new</span> ProducerRecord&lt;&gt;(<span class="string">"CustomerCountry"</span>, <span class="string">"Precision Products"</span>, <span class="string">"France"</span>);</div><div class="line">producer.send(record).get();</div></pre></td></tr></table></figure>
+<p>这里，我们使用Future.get()方法等待Kafka的状态返回。Producer可以实现自己的Future来处理Kafka broker返回的异常。如果Producer发送消息成功，它会返回RecordMetadata对象（可用来检索消息的offset）。</p>
+<p>Kafka Producer一般有两类错误。可重试错误会通过重试发送消息解决。比如，连接重连可解决连接错误；partition重新选举leader可解决“no leader”错误。Kafka Producer能配置重试次数，超过重试次数还不能解决的会抛出错误。另外一类就是不能通过重试处理的错误，比如，消息大小太大，这种情况下Kafka Producer会立即报错。</p>
+<h6 id="异步发送消息"><a href="#异步发送消息" class="headerlink" title="异步发送消息"></a>异步发送消息</h6><p>如果应用和Kafka集群间的网络质量太差，那么同步发送消息的方式发送每条消息后需要等待较长时间才收到应答。这对高并发海量消息发送简直就是灾难，因为等待应答的时间远超过消息发送时间。另外，有些app压根就不要求返回值。况且，即使发送消息失败了，只要写下对应的错误日志即可。</p>
+<p>为了异步发送消息，同时可以处理错误。Producer支持带有回调函数的发送消息方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">private</span> <span class="class"><span class="keyword">class</span> <span class="title">DemoProducerCallback</span> <span class="keyword">implements</span> <span class="title">Callback</span> </span>&#123;</div><div class="line">            <span class="meta">@Override</span></div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onCompletion</span><span class="params">(RecordMetadata recordMetadata, Exception e)</span> </span>&#123;</div><div class="line">         <span class="keyword">if</span> (e != <span class="keyword">null</span>) &#123;</div><div class="line">             e.printStackTrace();</div><div class="line">            &#125;</div><div class="line">&#125; &#125;</div><div class="line"></div><div class="line">ProducerRecord&lt;String, String&gt; record =</div><div class="line">            <span class="keyword">new</span> ProducerRecord&lt;&gt;(<span class="string">"CustomerCountry"</span>, <span class="string">"Biomedical Materials"</span>, <span class="string">"USA"</span>);</div><div class="line">producer.send(record, <span class="keyword">new</span> DemoProducerCallback());</div></pre></td></tr></table></figure>
+<p>使用回调函数的前提是实现org.apache.kafka.clients.producer.Callback 接口。如果Kafka返回错误，onCompletion捕获到非null异常。示例代码仅仅打印出了异常信息，实际应用开发需根据实际情况添加业务逻辑处理。</p>
+<h5 id="序列化"><a href="#序列化" class="headerlink" title="序列化"></a>序列化</h5><p>在前面的列子中，可看出Producer配置必须指定序列化方法（serializer，默认是String serializer）。</p>
+<p>这里将讲解如何构建定制化的序列化器，然后介绍Avro序列化器。</p>
+<h6 id="定制序列化器"><a href="#定制序列化器" class="headerlink" title="定制序列化器"></a>定制序列化器</h6><p>当你需要发送到Kafka的对象非String和Integer，那你要么自己实现对应的序列化器，要么使用像Avro、Thrift或者Protobuf之类的业界通用的序列化库。这里强烈推荐使用这些工业化的通用的序列化库。</p>
+<p>为了让大家理解序列化器的工作原理，这里还是先讲讲如何构建定制化的序列化器。下面先建一个简单的Customer类：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Customer</span> </span>&#123;</div><div class="line">            <span class="keyword">private</span> <span class="keyword">int</span> customerID;</div><div class="line">            <span class="keyword">private</span> String customerName;</div><div class="line">            <span class="function"><span class="keyword">public</span> <span class="title">Customer</span><span class="params">(<span class="keyword">int</span> ID, String name)</span> </span>&#123;</div><div class="line">                    <span class="keyword">this</span>.customerID = ID;</div><div class="line">                    <span class="keyword">this</span>.customerName = name;</div><div class="line">&#125;</div><div class="line">      <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getID</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> customerID;</div><div class="line">&#125;</div><div class="line">      <span class="function"><span class="keyword">public</span> String <span class="title">getName</span><span class="params">()</span> </span>&#123;</div><div class="line">       <span class="keyword">return</span> customerName;</div><div class="line">&#125; &#125;</div></pre></td></tr></table></figure>
+<p>接着创建Customer类的序列化器：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> org.apache.kafka.common.errors.SerializationException;</div><div class="line"><span class="keyword">import</span> java.nio.ByteBuffer;</div><div class="line"><span class="keyword">import</span> java.util.Map;</div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">CustomerSerializer</span> <span class="keyword">implements</span> <span class="title">Serializer</span>&lt;<span class="title">Customer</span>&gt; </span>&#123;</div><div class="line">        <span class="meta">@Override</span></div><div class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">configure</span><span class="params">(Map configs, <span class="keyword">boolean</span> isKey)</span> </span>&#123;</div><div class="line">   <span class="comment">// nothing to configure</span></div><div class="line">  &#125;</div><div class="line">  </div><div class="line">  <span class="meta">@Override</span></div><div class="line">  <span class="comment">/**</span></div><div class="line">  We are serializing Customer as:</div><div class="line">  4 byte int representing customerId</div><div class="line">  4 byte int representing length of customerName in UTF-8 bytes (0 if name is</div><div class="line">Null)</div><div class="line">  N bytes representing customerName in UTF-8</div><div class="line">  **/</div><div class="line">  <span class="keyword">public</span> <span class="keyword">byte</span>[] serialize(String topic, Customer data) &#123;</div><div class="line">    <span class="keyword">try</span> &#123;</div><div class="line">                  <span class="keyword">byte</span>[] serializedName;</div><div class="line">                  <span class="keyword">int</span> stringSize;</div><div class="line">      <span class="keyword">if</span> (data == <span class="keyword">null</span>)</div><div class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</div><div class="line">      <span class="keyword">else</span> &#123;</div><div class="line">                                <span class="keyword">if</span> (data.getName() != <span class="keyword">null</span>) &#123;</div><div class="line">         serializeName = data.getName().getBytes(<span class="string">"UTF-8"</span>);</div><div class="line">         stringSize = serializedName.length;</div><div class="line">                                &#125; <span class="keyword">else</span> &#123;</div><div class="line">                                  serializedName = <span class="keyword">new</span> <span class="keyword">byte</span>[<span class="number">0</span>];</div><div class="line">                                  stringSize = <span class="number">0</span>;</div><div class="line">                                &#125; </div><div class="line">      &#125;</div><div class="line">      </div><div class="line">      ByteBuffer buffer = ByteBuffer.allocate(<span class="number">4</span> + <span class="number">4</span> + stringSize);</div><div class="line">      buffer.putInt(data.getID());</div><div class="line">      buffer.putInt(stringSize);</div><div class="line">      buffer.put(serializedName);</div><div class="line">      <span class="keyword">return</span> buffer.array();</div><div class="line">          &#125; <span class="keyword">catch</span> (Exception e) &#123;</div><div class="line">     <span class="keyword">throw</span> <span class="keyword">new</span> SerializationException(<span class="string">"Error when serializing Customer to byte[] "</span> + e);</div><div class="line">  &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">  <span class="meta">@Override</span></div><div class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">close</span><span class="params">()</span> </span>&#123;</div><div class="line">    <span class="comment">// nothing to close</span></div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h6 id="Avro的序列化"><a href="#Avro的序列化" class="headerlink" title="Avro的序列化"></a>Avro的序列化</h6><p>Avro详细说明见官方文档，这里只列出部分要用到的特性。</p>
+<p>Avro Schema是用Json描述，如下：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"> &#123;<span class="attr">"namespace"</span>: <span class="string">"customerManagement.avro"</span>,</div><div class="line">     <span class="attr">"type"</span>: <span class="string">"record"</span>,</div><div class="line">     <span class="attr">"name"</span>: <span class="string">"Customer"</span>,</div><div class="line">     <span class="attr">"fields"</span>: [</div><div class="line">         &#123;<span class="attr">"name"</span>: <span class="string">"id"</span>, <span class="attr">"type"</span>: <span class="string">"int"</span>&#125;,</div><div class="line">         &#123;<span class="attr">"name"</span>: <span class="string">"name"</span>,  <span class="attr">"type"</span>: <span class="string">"string"</span>&#125;,</div><div class="line">         &#123;<span class="attr">"name"</span>: <span class="string">"email"</span>, <span class="attr">"type"</span>: [<span class="string">"null"</span>, <span class="string">"string"</span>], <span class="attr">"default"</span>: <span class="string">"null"</span>&#125;</div><div class="line">] &#125;</div></pre></td></tr></table></figure>
+<p>Avro依赖模式(Schema)来实现数据结构定义，所以读写Avro文件都得依赖其Schema。Kafka中<a href="http://docs.confluent.io/3.0.0/schema-registry/docs/intro.html#schemaregistry-intro" target="_blank" rel="external">Schema Registry</a>提供元数据的存储和解析。那Producer的序列化和Consumer的反序列化都会去Schema Registry读取对应的Schema。</p>
+<p><img src="http://img0.ph.126.net/X0tYnyzV8cKuoxOvK1w4rw==/6632381682093836586.png" alt="image"></p>
+<p>Avro的使用有两种：一种是使用Avro Schema生成的类（官方提供生成工具，比如，avro-tools-1.7.0.jar）；一种是直接Avro Schema。Kafka Producer使用Avro序列化器的方式与其它序列化器相同。下面先说使用Avro Schema生成的类的方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">    Properties props = <span class="keyword">new</span> Properties();</div><div class="line">    props.put(<span class="string">"bootstrap.servers"</span>, <span class="string">"localhost:9092"</span>);</div><div class="line">    props.put(<span class="string">"key.serializer"</span>, <span class="string">"io.confluent.kafka.serializers.KafkaAvroSerializer"</span>);</div><div class="line">    props.put(<span class="string">"value.serializer"</span>, <span class="string">"io.confluent.kafka.serializers.KafkaAvroSerializer"</span>);</div><div class="line">    props.put(<span class="string">"schema.registry.url"</span>, schemaUrl);</div><div class="line">    String topic = <span class="string">"customerContacts"</span>;</div><div class="line">    <span class="keyword">int</span> wait = <span class="number">500</span>;</div><div class="line">    Producer&lt;String, Customer&gt; producer = <span class="keyword">new</span> KafkaProducer&lt;String, Customer&gt;(props);</div><div class="line">    <span class="comment">// We keep producing new events until someone ctrl-c</span></div><div class="line">    <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</div><div class="line">        Customer customer = CustomerGenerator.getNext();</div><div class="line">        System.out.println(<span class="string">"Generated customer "</span> + customer.toString());</div><div class="line">        ProducerRecord&lt;String, Customer&gt; record =</div><div class="line">                            <span class="keyword">new</span> ProducerRecord&lt;&gt;(topic, customer.getId(), customer);</div><div class="line">        producer.send(record);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>其中，schema.registry.url是schema存储的位置，<em>KafkaAvroSerializer</em> 是Avro的序列化器，<em>Customer</em> 是生成的类。</p>
+<p>如果你想直接使用Avro Schema，方法如下：</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div></pre></td><td class="code"><pre><div class="line">Properties props = new Properties();</div><div class="line">props.put("bootstrap.servers", "localhost:9092");</div><div class="line">props.put("key.serializer", "io.confluent.kafka.serializers.KafkaAvroSerializer");</div><div class="line">props.put("value.serializer", "io.confluent.kafka.serializers.KafkaAvroSerializer");</div><div class="line">props.put("schema.registry.url", url);</div><div class="line"></div><div class="line">String schemaString = "&#123;\"namespace\": \"customerManagement.avro\",</div><div class="line">  \"type\": \"record\", " +</div><div class="line">                               "\"name\": \"Customer\"," +</div><div class="line">                               "\"fields\": [" +</div><div class="line">                                "&#123;\"name\": \"id\", \"type\": \"int\"&#125;," +</div><div class="line">                                "&#123;\"name\": \"name\", \"type\": \"string\"&#125;," +</div><div class="line">                                "&#123;\"name\": \"email\", \"type\": [\"null\",\"string</div><div class="line">    \"], \"default\":\"null\" &#125;" +</div><div class="line">                               "]&#125;";</div><div class="line"></div><div class="line">Producer&lt;String, GenericRecord&gt; producer = new KafkaProducer&lt;String, GenericRecord&gt;(props);</div><div class="line"></div><div class="line">Schema.Parser parser = new Schema.Parser();</div><div class="line">Schema schema = parser.parse(schemaString);</div><div class="line"></div><div class="line">for (int nCustomers = 0; nCustomers &lt; customers; nCustomers++) &#123;</div><div class="line">  String name = "exampleCustomer" + nCustomers;</div><div class="line">  String email = "example " + nCustomers + "@example.com";</div><div class="line">  GenericRecord customer = new GenericData.Record(schema);</div><div class="line">  customer.put("id", nCustomer);</div><div class="line">  customer.put("name", name);</div><div class="line">  customer.put("email", email);</div><div class="line">  ProducerRecord&lt;String, GenericRecord&gt; data =</div><div class="line">    new ProducerRecord&lt;String, GenericRecord&gt;("customerContacts", name, customer);</div><div class="line">  producer.send(data);</div><div class="line">&#125; &#125;</div></pre></td></tr></table></figure>
+<p>未完待续。。。</p>
+<p>Enjoy!</p>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/12/28/face-emotion-recognition/" itemprop="url">
+                  面部表情（表情包）识别
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-12-28T15:24:11+08:00" content="2017-12-28">
+              2017-12-28
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h5 id="动机"><a href="#动机" class="headerlink" title="动机"></a>动机</h5><p>人类面部表情丰富，但可以总结归纳为7类基本表情： happy, sad, surprise, fear, anger, disgust, and neutral。面部表情是通过面部肌肉活动表达出来，有些比较微妙且复杂，包含了大量内心活动信息。通过面部表情识别，我们能简单而低成本地度量出观众/用户对内容和服务的态度。例如，零售商使用这些度量评估客户的满意度。健康医疗提供商能在治疗的过程根据病人的表情状态来提高服务。娱乐厂商能够监控观众的喜欢来持续的生产优质的内容。</p>
+<p>训练过的人类很容易读懂其他人的情绪。事实上，只有14个月大的婴儿就可以区别出happy和sad的区别。但是计算机能够比人类在识别情绪上做的更好吗？为了找到答案，我们设计一个深度神经网络使得机器可以读懂人类情绪。换句话说，给机器以“眼”识别面部表情。</p>
+<h5 id="语料数据"><a href="#语料数据" class="headerlink" title="语料数据"></a>语料数据</h5><p>训练模型的数据集使用的是Kaggle面部识别挑战赛的数据集（2013年）。它由35887张面部图片组成，48x48像素灰度图片，标注为7类基本表情： happy, sad, surprise, fear, anger, disgust, and neutral。</p>
+<p><img src="https://github.com/JostineHo/mememoji/blob/master/figures/fer2013.png" alt="An overview of FER2013"></p>
+<p>当作者分析语料数据集时，发现“disgust”分类相对于其它分类不均衡（只有113张样本）。作者将两类相似的情感（disgust和anger）合并起来。为了防止数据倾斜，作者构建一个数据生成器 <a href="https://github.com/JostineHo/mememoji/blob/master/src/fer2013datagen.py" target="_blank" rel="external">fer2013datagen.py</a>，该生成器很容易分割训练集和保留数据集。本例使用28709张面部图片作为训练集，余下的图片作为测试集和验证集（每个数据集3589张）。这样我们获得了6类均衡的数据集，见图2，包含happy, sad, surprise, fear, anger, and neutral。</p>
+<p>Figure 2. Training and validation data distribution.</p>
+<p><img src="https://github.com/JostineHo/mememoji/blob/master/figures/trainval_distribution.png" alt=""></p>
+<h5 id="算法模型"><a href="#算法模型" class="headerlink" title="算法模型"></a>算法模型</h5><p>Figure 3. Mr. Bean, the model for the model.</p>
+<p>深度学习在计算机视觉上是非常流行的技术。本文选择卷积神经网络（CNN）层作为构建基础创建模型架构。CNN是有名的模仿人脑工作的模型。本文使用憨豆先生的图片作为示例来解释如何将图像赋值给卷积神经网络模型。</p>
+<p>典型的卷积神经网络包涵输入层，卷积层，稠密层（比如，全联接层）和输出层（见图4）。这些层按序组合，在 <a href="https://keras.io/models/sequential/" target="_blank" rel="external">Keras</a>中，使用Sequential()函数创建模型，再把其它层加入进来。</p>
+<p>Figure 4. Facial Emotion Recognition CNN Architecture (modification from Eindhoven University of Technology-PARsE).</p>
+<h6 id="输入层"><a href="#输入层" class="headerlink" title="输入层"></a>输入层</h6><ul>
+<li>输入层需要预处理，输入固定维度的数据。所以图片需先预处理再传入输入层。作者使用 <a href="http://docs.opencv.org/3.1.0/d7/d8b/tutorial_py_face_detection.html#gsc.tab=0" target="_blank" rel="external">OpenCV</a>（计算机视觉库）做图像面部识别。OpenCV的haar-cascade_frontalface_default.xml文件包含预训练的过滤器，使用Adaboost算法能快速找到面部并裁剪。</li>
+<li>使用cv2.cvtColor函数将裁剪面部图片转化为灰度图，并使用cv2.resize改变图片大小为48x48像素。处理完的面部图片，相比于原始的（3，48，48）三色RGB格式“瘦身”不少。同时也确保传入输入层的图片是（1，48，48）的numpy数组。</li>
+</ul>
+<h6 id="卷积层"><a href="#卷积层" class="headerlink" title="卷积层"></a>卷积层</h6><ul>
+<li>numpy数组传入Convolution2D层，指定过滤层的数量作为超参数。过滤层（比如，核函数）是随机生成权重。每个过滤层，（3，3）的感受野，采用权值共享与原图像卷积生成feature map。</li>
+<li>卷积层生成的feature map代表像素值的强度。例如，图5，通过过滤层1和原始图像卷积生成一个feature map，其它过滤层紧接着进行卷积操作生成一系列feature map。</li>
+</ul>
+<p>Figure 5. Convolution and 1st max-pooling used in the network</p>
+<ul>
+<li>池化（Pooling）是一种降低维度的技术，常用于一个或者多个卷积层之后。池化操作是构建CNN的重要步骤，因为增加的多个卷积层会极大的影响计算时间。本文使用流行的池化方法MaxPooling2D，其使用（2，2）窗口作用于feature map求的最大像素值。池化后图像降低4个维度。</li>
+</ul>
+<h6 id="稠密层"><a href="#稠密层" class="headerlink" title="稠密层"></a>稠密层</h6><ul>
+<li>稠密层（比如，全联接层）是模仿人脑传输神经元的方式。它输入大量输入特征和变换特征，通过联接层与训练权重相连。</li>
+</ul>
+<p>Figure 6. Neural network during training: Forward propagation (left) to Backward propagation (right).</p>
+<ul>
+<li>模型训练时权重前向传播，而误差是反向传播。反向传播起始与预测值和实际值的差值，计算所需的权重调整大小反向传回到每层。采用超参数调优手段（比如，学习率和网络密度）控制训练速度和架构的复杂度。随着灌入更多的训练数据，神经网络能够使得误差最小化。</li>
+<li>一般，神经网络层/节点数越多，越能捕捉到足够的信号。但是，也会造成算法模型训练过拟合。应用dropout可以防止训练模型过拟合。Dropout随机选择部分节点（通常，占总节点数的百分比不超过50%），并将其权重置为0。该方法能有效的控制模型对噪声对敏感度，同时也保留架构的复杂度。</li>
+</ul>
+<h6 id="输出层"><a href="#输出层" class="headerlink" title="输出层"></a>输出层</h6><ul>
+<li>本文的输出层使用softmax激励函数代替sigmoid函数，将输出每类表情的概率。</li>
+<li>因此，本文的算法模型能显示出人脸表情组成的详细组成概率。随后会发现没必要将人类表情表示为单个表情。本文采用的是混合表情来精确表示特定情感</li>
+</ul>
+<blockquote>
+<p>注意，没有特定的公式能建立一个神经网络保证对各种场景都有效。不同的问题需要不同的模型架构，产生期待的验证准确度。这也是为什么说神经网络是个“黒盒算法”。但是也不要太气馁，模型训练的时间会让你找到最佳模型，获得最大价值。</p>
+</blockquote>
+<h6 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h6><p>刚开始创建了一个简单的CNN深度学习模型，包括一个输入层，三个卷积层和一个输出层。事实证明，简单的算法模型效果比较差。准确度0.1500意味着仅仅是随机猜测的结果（1/6）。简单的网络结构导致不能有效的判别面部表情，那只能说明要“深挖”。。。</p>
+<p>下面稍微修改下三部分的组合，增加模型的复杂度：</p>
+<ul>
+<li>卷积层的数量和配置</li>
+<li>稠密层的数量和配置</li>
+<li>稠密层的dropout占比</li>
+</ul>
+<p>使用AWS的GPU计算（g2.2xlarge）训练和评估组合的算法模型。这次极大的减少了训练时间和模型调优的效率。最后的网络模型是九层，每三层卷积层接着一个max-pooling层，见图7。</p>
+<p>Figure 7. Final model CNN architecture.</p>
+<h5 id="模型验证"><a href="#模型验证" class="headerlink" title="模型验证"></a>模型验证</h5><h6 id="结果"><a href="#结果" class="headerlink" title="结果"></a>结果</h6><p>最后的CNN模型交叉验证准确度是58%，其具有积极意义。因为人类面部表情经常由多个基本表情组合，仅仅用单一表情是很难描述。本例中，当训练模型预测不准确时，正确的标签一般是第二相似的表情，见图8（浅蓝色标签）。</p>
+<p>Figure 8. Prediction of 24 example faces randomly selected from test set.</p>
+<h6 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h6><p>Figure 9. Confusion matrix for true and prediction emotion counts.</p>
+<p>仔细看下每个表情的预测结果。图9是测试集的模型预测的混淆矩阵。矩阵给出表情预测的数量和多分类模型的效果展示：</p>
+<ul>
+<li>该模型很好的鉴别出正表情（happy和surprised），预测准确度高。大约7000张训练集中，happy表情的准确度达到76.7%。surprised表情预测准确度为69.3%。</li>
+<li>平均意义上讲，本例的神经网络模型对负表情的预测效果较差。sad表情只有39.7%的准确度，并且该网络模型频繁的误判别angry、fear和neutral表情。另外，当预测sad表情和neutral表情时经常搞混，可能是因为这两个表情很少出现。</li>
+<li>误分类预测小于3的频率</li>
+</ul>
+<p>Figure 10. Correct predictions on 2nd and 3rd highest probable emotion.</p>
+<h6 id="计算机视觉"><a href="#计算机视觉" class="headerlink" title="计算机视觉"></a>计算机视觉</h6><p>随着池化层数量的增加，下游神经网络管道的feature map越来越抽象。图11和图12可视化第二次和第三次max-pooling池化层后的feature map。</p>
+<p>分析和可视化卷积神经网络内层输出的代码见，<a href="https://github.com/JostineHo/mememoji/blob/master/data_visualization.ipynb" target="_blank" rel="external">https://github.com/JostineHo/mememoji/blob/master/data_visualization.ipynb</a>。</p>
+<p>Figure 11. 第二个max-pooling池化层后的CNN (64-filter) feature maps。</p>
+<p>Figure 12. 第三个max-pooling池化层后的CNN (128-filter) feature maps。</p>
+<h5 id="关于作者"><a href="#关于作者" class="headerlink" title="关于作者"></a>关于作者</h5><p><strong>Jostine Ho</strong>是数据科学家和深度学习研究者。她感兴趣于计算机视觉和自动化解决现实世界中具体问题。她毕业于德克萨斯大学奥斯汀分校，取得石油系统工程专业硕士学位。</p>
+<h5 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h5><ol>
+<li><a href="https://www.kaggle.com/c/challenges-in-representation-learning-facial-expression-recognition-challenge/data" target="_blank" rel="external"><em>“Dataset: Facial Emotion Recognition (FER2013)”</em></a> ICML 2013 Workshop in Challenges in Representation Learning, June 21 in Atlanta, GA.</li>
+<li><a href="http://cs231n.github.io/convolutional-networks/" target="_blank" rel="external"><em>“Andrej Karpathy’s Convolutional Neural Networks (CNNs / ConvNets)”</em></a> Convolutional Neural Networks for Visual Recognition (CS231n), Stanford University.</li>
+<li>Srivastava et al., 2014. <em>“Dropout: A Simple Way to Prevent Neural Networks from Overfitting”</em>, Journal of Machine Learning Research, 15:1929-1958.</li>
+<li>Duncan, D., Shine, G., English, C., 2016. <a href="http://cs231n.stanford.edu/reports2016/022_Report.pdf" target="_blank" rel="external"><em>“Report: Facial Emotion Recognition in Real-time”</em></a> Convolutional Neural Networks for Visual Recognition (CS231n), Stanford University.</li>
+</ol>
+<p><a href="https://github.com/JostineHo/mememoji#33-dense-layers" target="_blank" rel="external">https://github.com/JostineHo/mememoji#33-dense-layers</a></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/12/28/htop-tools/" itemprop="url">
+                  Linux性能利器Htop：完胜top、strace
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-12-28T15:07:52+08:00" content="2017-12-28">
+              2017-12-28
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p><em>写在之前：此文翻译自：<a href="https://peteris.rocks/blog/htop，做了少许改动，感谢原作者。" target="_blank" rel="external">https://peteris.rocks/blog/htop，做了少许改动，感谢原作者。</a></em></p>
+<p>长久以来，我只知Linux有个神器htop，却不知道htop的各项指标的内涵。</p>
+<p>比如，2核的服务器 CPU利用率为 50%，那为啥load average 却显示 1.0？那接下来开始捋捋。。。</p>
+<p>俗话说得好，好记性不如个烂笔头。</p>
+<h5 id="Htop-on-CentOS"><a href="#Htop-on-CentOS" class="headerlink" title="Htop on CentOS"></a>Htop on CentOS</h5><p>来个htop全身照：</p>
+<p><img src="http://img2.ph.126.net/r9cGoR7qNxoukqdaBRgBAQ==/6632126595396926285.png" alt="image"></p>
+<ul>
+<li>Uptime</li>
+</ul>
+<p>uptime：系统运行的时长。</p>
+<p>当然，你可以用<code>uptime</code>：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ uptime</div><div class="line"> 12:17:58 up 111 days, 31 min,  1 user,  load average: 0.00, 0.01, 0.05</div></pre></td></tr></table></figure>
+<p><code>uptime</code>从 <code>/proc/uptime</code>文件获取信息：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">9592411.58 9566042.33</div></pre></td></tr></table></figure>
+<p>前者数字（9592411.58）代表系统运行的秒值，后者（9566042.33）代表服务器空闲秒数。一般多核系统后者秒值会比系统的uptime值大，因为它是取和。作者是怎么知道这个原因的呢？通过跟踪 <code>uptime</code> 程序运行打开的文件，这里是用的 <code>strace</code> 工具：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">strace uptime</div></pre></td></tr></table></figure>
+<p>从strace输出中<code>grep</code>查找系统调用的<code>open</code> 函数。由于strace标准输出内容较多，可以使用<code>2&gt;&amp;1</code>重定向：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ strace uptime 2&gt;&amp;1 | grep open</div><div class="line">...</div><div class="line">open(&quot;/proc/uptime&quot;, O_RDONLY)          = 3</div><div class="line">open(&quot;/var/run/utmp&quot;, O_RDONLY|O_CLOEXEC) = 4</div><div class="line">open(&quot;/proc/loadavg&quot;, O_RDONLY)         = 4</div></pre></td></tr></table></figure>
+<p>其中，包括前面提到的 <code>/proc/uptime</code>文件。这说明我们可以使用 <code>strace -e open uptime</code>来代替<code>strace uptime 2&gt;&amp;1 | grep open</code>。Linux的<code>uptime</code>命令提供易读、宜用的方法。</p>
+<ul>
+<li>Load average</li>
+</ul>
+<p>除了uptime，有三个数字表示 load average：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ uptime</div><div class="line"> 12:59:09 up 32 min,  1 user,  load average: 0.00, 0.01, 0.03</div></pre></td></tr></table></figure>
+<p>load average值是从 <code>/proc/loadavg</code>文件获得，同时你也可以用 <code>strace</code> 验证。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ cat /proc/loadavg</div><div class="line">0.00 0.01 0.03 1/120 1500</div></pre></td></tr></table></figure>
+<p>前三个数字分别表示最近1分钟、5分钟、15分钟的CPU和IO的利用率。第四行显示当前正在运行的进程数和进程总数，最后一行显示最近使用的进程ID。</p>
+<p>下面讲下进程ID。当你启动一个新进程，它将会分到一个ID数字。进程ID通常是递增的，除非进程退出后进程ID重新复用。特殊进程ID <strong>1</strong> 是属于<code>/sbin/init</code> ，系统启动时即分配。</p>
+<p>让我们再来看下 <code>/proc/loadavg</code>文件的内容，然后后台启动 <code>sleep</code> 命令，这时会输出进程ID。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ cat /proc/loadavg</div><div class="line">0.00 0.01 0.03 1/123 1566</div><div class="line">$ sleep 10 &amp;</div><div class="line">[1] 1567</div></pre></td></tr></table></figure>
+<p>所以，<em>1/123</em> 代表一个进程正在运行，总共有123个进程运行过。</p>
+<p>当运行<code>cat /dev/urandom &gt; /dev/null</code> （重复生成随机数）时，你会发现有 2 个进程在运行：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ cat /dev/urandom &gt; /dev/null &amp;</div><div class="line">[1] 1639</div><div class="line">$ cat /proc/loadavg</div><div class="line">1.00 0.69 0.35 2/124 1679</div></pre></td></tr></table></figure>
+<p>这里的两个进程是：随机数生成、<code>cat /proc/loadavg</code>，同时load average值也在增加。</p>
+<p>System load average是runnable或uninterruptable状态的进程数的平均数。所以上面的 load average为 1（平均1个运行的进程），是因为作者演示的服务器是单核CPU，一次跑一个进程那CPU的利用率是100%。如果服务器是双核，那CPU利用率就是50%。双核CPU的利用率如果是100%，那load average 将会是2.0。CPU的核数可以从htop的左上角看到，或者运行 <code>nproc</code>。</p>
+<ul>
+<li>Processes</li>
+</ul>
+<p>在htop的右上角显示进程数和多少个进程正在运行。但是htop使用 <em>Tasks</em> 代表进程（注：<em>Tasks</em> 是进程的一个别名）。</p>
+<p>在htop中，使用键盘上的<code>Shift</code>+<code>H</code>组合键也可轻松看到线程数<em>Tasks: 23, 10 thr</em>，使用<code>Shift</code>+<code>K</code>组合键可以看到内核线程数，<em>Tasks: 23, 40 kthr</em>。</p>
+<ul>
+<li>Process ID / PID</li>
+</ul>
+<p>每个进程启动都会分配一个唯一的进程ID，称作进程ID或者PID。如果你在<em>bash</em>中使用 (<code>&amp;</code>)在后台执行，你将会看到输出的PID。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ sleep 1000 &amp;</div><div class="line">[1] 12503</div></pre></td></tr></table></figure>
+<p>如果你手滑没看到，那也可以在<em>bash</em>中使用 <code>$!</code>内建变量查看到最近一次后台运行的PID：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ echo $!</div><div class="line">12503</div></pre></td></tr></table></figure>
+<p>进程ID是非常有用的，具体为什么可以看维基百科。</p>
+<p><code>procfs</code>是伪文件系统，procfs可以让用户的程序通过读取文件的方法从Linux内核中获取信息。它经常被挂载在 <code>/proc/</code>下，伪装的看起来像个正规文件目录，你也可以使用 <code>ls</code> 和 <code>cd</code>命令。</p>
+<p>某进程相关的所有信息都放在 <code>/proc/&lt;pid&gt;/</code>下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">$ ls /proc/12503</div><div class="line">attr        coredump_filter  fdinfo     maps        ns             personality  smaps    task</div><div class="line">auxv        cpuset           gid_map    mem         numa_maps      projid_map   stack    uid_map</div><div class="line">cgroup      cwd              io         mountinfo   oom_adj        root         stat     wchan</div><div class="line">clear_refs  environ          limits     mounts      oom_score      schedstat    statm</div><div class="line">cmdline     exe              loginuid   mountstats  oom_score_adj  sessionid    status</div><div class="line">comm        fd               map_files  net         pagemap        setgroups    syscall</div></pre></td></tr></table></figure>
+<p>比如，  /proc/\<pid>/cmdline  会让你知道这个进程是如何启动的：</pid></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ cat /proc/12503/cmdline</div><div class="line">sleep1000$</div></pre></td></tr></table></figure>
+<p>正确的查看姿势是（因为命令是用<em>\0</em> 分隔）：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ od -c /proc/12503/cmdline</div><div class="line">0000000   s   l   e   e   p  \0   1   0   0   0  \0</div><div class="line">0000013</div></pre></td></tr></table></figure>
+<p>或者：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">$ tr &apos;\0&apos; &apos;\n&apos; &lt; /proc/12503/cmdline</div><div class="line">sleep</div><div class="line">1000</div><div class="line">$ strings /proc/12503/cmdline</div><div class="line">sleep</div><div class="line">1000</div></pre></td></tr></table></figure>
+<p>进程的进程目录还包含有链接（link），比如： <code>cwd</code>指向工作目录，<code>exe</code>指向可执行的二进制文件：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ ls -l /proc/12503/&#123;cwd,exe&#125;</div><div class="line">lrwxrwxrwx 1 ubuntu ubuntu 0 Jul  6 10:10 /proc/12503/cwd -&gt; /home/username</div><div class="line">lrwxrwxrwx 1 ubuntu ubuntu 0 Jul  6 10:10 /proc/12503/exe -&gt; /bin/sleep</div></pre></td></tr></table></figure>
+<p>以上就是<code>htop</code>，<code>top</code>， <code>ps</code>这些诊断工具是为啥可以获取到一个进程的详细信息的，/proc/\<pid>/\<file>。</file></pid></p>
+<ul>
+<li>Process tree</li>
+</ul>
+<p>在htop中使用<code>F5</code> 即可看到进程树，当然也可以用<code>ps f</code>：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ ps f</div><div class="line">  PID TTY      STAT   TIME COMMAND</div><div class="line">12472 pts/0    Ss     0:00 -bash</div><div class="line">12684 pts/0    R+     0:00  \_ ps f</div></pre></td></tr></table></figure>
+<p>或者 <code>pstree</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">$ pstree -a</div><div class="line">init</div><div class="line">  ├─atd</div><div class="line">  ├─cron</div><div class="line">  ├─sshd -D</div><div class="line">  │   └─sshd</div><div class="line">  │       └─sshd</div><div class="line">  │           └─bash</div><div class="line">  │               └─pstree -a</div><div class="line">...</div></pre></td></tr></table></figure>
+<p>从这里你就可以知道为啥 <code>bash</code> 或者 <code>sshd</code> 是其它进程的父进程。</p>
+<p> <code>/sbin/init</code> 作为系统启动进程，进程ID为1，接着是SSH的守护进程 <code>sshd</code>（当你用ssh连接到服务器），接着是 <code>bash</code> shell。</p>
+<ul>
+<li>Process user</li>
+</ul>
+<p>每个进程属于一个user，user以数值ID代表：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ sleep 1000 &amp;</div><div class="line">[1] 2045</div><div class="line">$  grep Uid /proc/2045/status</div><div class="line">Uid:    1000    1000    1000    1000</div></pre></td></tr></table></figure>
+<p>可以用<code>id</code>命令发现更多关于此user的信息：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ id 1000</div><div class="line">uid=1000(ubuntu) gid=1000(ubuntu) groups=1000(ubuntu),4(adm)</div></pre></td></tr></table></figure>
+<p>通过如下证明<code>id</code>是从<code>/etc/passwd</code> 和 <code>/etc/group</code> 文件获取信息的：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ strace -e open id 1000</div><div class="line">open(&quot;/etc/passwd&quot;, O_RDONLY|O_CLOEXEC) = 3</div><div class="line">open(&quot;/etc/group&quot;, O_RDONLY|O_CLOEXEC)  = 3</div></pre></td></tr></table></figure>
+<p>查看<code>/etc/passwd</code> 和 <code>/etc/group</code> 文件的内容：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">$ cat /etc/passwd</div><div class="line">root:x:0:0:root:/root:/bin/bash</div><div class="line">daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin</div><div class="line">xxx:x:1000:1000:Ubuntu:/home/ubuntu:/bin/bash</div><div class="line">$ cat /etc/group</div><div class="line">root:x:0:</div><div class="line">adm:x:4:syslog,ubuntu</div><div class="line">xxx:x:1000:</div></pre></td></tr></table></figure>
+<p>passwd文件内没有密码，那密码存储在哪里呢？实际存在<code>/etc/shadow</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ sudo cat /etc/shadow</div><div class="line">root:$6$mS9o0QBw$P1ojPSTexV2PQ.Z./rqzYex.k7TJE2nVeIVL0dql/:17126:0:99999:7:::</div><div class="line">daemon:*:17109:0:99999:7:::</div><div class="line">ubuntu:$6$GIfdqlb/$ms9ZoxfrUq455K6UbmHyOfz7DVf7TWaveyHcp.:17126:0:99999:7:::</div></pre></td></tr></table></figure>
+<p>如果你想以root用户来运行程序，得用<code>sudo</code>：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">$ id</div><div class="line">uid=1000(ubuntu) gid=1000(ubuntu) groups=1000(ubuntu),4(adm)</div><div class="line">$ sudo id</div><div class="line">uid=0(root) gid=0(root) groups=0(root)</div><div class="line">$ sudo -u ubuntu id</div><div class="line">uid=1000(ubuntu) gid=1000(ubuntu) groups=1000(ubuntu),4(adm)</div><div class="line">$ sudo -u daemon id</div><div class="line">uid=1(daemon) gid=1(daemon) groups=1(daemon)</div></pre></td></tr></table></figure>
+<p>如果你想登录到另外一个用户并启动各种命令，使用<code>sudo bash</code> 或者 <code>sudo -u user bash</code>。</p>
+<p>当你不想输入密码登录服务器，则可以增加user到 <code>/etc/sudoers</code> 文件。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ echo &quot;$USER ALL=(ALL) NOPASSWD: ALL&quot; &gt;&gt; /etc/sudoers</div><div class="line">-bash: /etc/sudoers: Permission denied</div></pre></td></tr></table></figure>
+<p>你会发现只有root用户可以操作。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ sudo echo &quot;$USER ALL=(ALL) NOPASSWD: ALL&quot; &gt;&gt; /etc/sudoers</div><div class="line">-bash: /etc/sudoers: Permission denied</div></pre></td></tr></table></figure>
+<p>咋回事呢？还是不行。。。</p>
+<p>当你以root权限执行<code>echo</code>命令追加一行到<code>/etc/sudoers</code> ，仍然使用的原user。</p>
+<p>通常有两种解决方法：</p>
+<ol>
+<li><code>echo &quot;$USER ALL=(ALL) NOPASSWD: ALL&quot; | sudo tee -a /etc/sudoers</code></li>
+<li><code>sudo bash -c &quot;echo &#39;$USER ALL=(ALL) NOPASSWD: ALL&#39; &gt;&gt; /etc/sudoers&quot;</code></li>
+</ol>
+<p>第一种，<code>tee -a</code>追加标准输入到文件，这时执行以root权限；</p>
+<p>第二种，我们以root用户执行bash，用 (<code>-c</code>) 以root执行整个命令。注意双引号/单引号，因为 <code>$USER</code>变量转义的问题。</p>
+<p>当你想更改密码时，可用 <code>passwd</code>，也可用 <code>/etc/shadow</code> 文件，这个文件必须用root权限：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ ls -l /etc/shadow</div><div class="line">-rw-r----- 1 root shadow 1122 Nov 27 18:52 /etc/shadow</div></pre></td></tr></table></figure>
+<p> <code>passwd</code> 如何才能被常规user执行往具有保护权限的文件写入？</p>
+<p>当你启动一个进程时，那这个进程属于你的用户，即使这个可执行文件的拥有者是其它user。</p>
+<p>你能改变文件的权限：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ ls -l /usr/bin/passwd</div><div class="line">-rwsr-xr-x 1 root root 54256 Mar 29  2016 /usr/bin/passwd</div></pre></td></tr></table></figure>
+<p>注意 <code>s</code> 字符，它是<code>sudo chmod u+s /usr/bin/passwd</code>实现的，意味着能以拥有者root的身份运行可执行文件。</p>
+<p>你使用 <code>find /bin -user root -perm -u+s</code>会发现一个<code>setuid</code> 可执行文件。同理，对用户组可以用 (<code>g+s</code>)。</p>
+<ul>
+<li>Process state</li>
+</ul>
+<p>接下来看下<em>htop</em>中进程状态列，其用字母 <em>S</em> 表示。</p>
+<p>下面是进程列的可能取值：</p>
+<table>
+<thead>
+<tr>
+<th>R</th>
+<th>运行状态（running）或者运行队列中的就绪状态（runnable）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S</td>
+<td>中断睡眠（等待事件完成）</td>
+</tr>
+<tr>
+<td>D</td>
+<td>非中断睡眠（常为IO）</td>
+</tr>
+<tr>
+<td>Z</td>
+<td>僵尸进程，无效进程但是未被父进程回收</td>
+</tr>
+<tr>
+<td>T</td>
+<td>被控制信号停止</td>
+</tr>
+<tr>
+<td>t</td>
+<td>跟踪时被调试者停止</td>
+</tr>
+<tr>
+<td>X</td>
+<td>死亡状态</td>
+</tr>
+</tbody>
+</table>
+<p> 注意，当你运行<code>ps</code>时，它将也会显示子状态，比如<em>Ss，R+，Ss+</em>，等等.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">$ ps x</div><div class="line">  PID TTY      STAT   TIME COMMAND</div><div class="line"> 1688 ?        Ss     0:00 /lib/systemd/systemd --user</div><div class="line"> 1689 ?        S      0:00 (sd-pam)</div><div class="line"> 1724 ?        S      0:01 sshd: vagrant@pts/0</div><div class="line"> 1725 pts/0    Ss     0:00 -bash</div><div class="line"> 2628 pts/0    R+     0:00 ps x</div></pre></td></tr></table></figure>
+<p><strong>R - 运行状态或者运行队列中的就绪状态</strong></p>
+<p>在这种状态下，进程正在运行或者在运行队列中等待运行。</p>
+<p>那运行的都是啥呢？</p>
+<p>当你编译所写的源代码，生成的机器码是CPU指令集，并保存为可执行文件。当你启动程序时，该程序被加载进内存，然后CPU执行这些指令集。</p>
+<p>从根本上来说，CPU是在执行指令，换句话说，处理数字。</p>
+<p><strong>S - 中断睡眠</strong></p>
+<p>这意味着该进程的指令不能在CPU上立即执行。相反地，该进程等待某个事件或者条件发生。当事件发生，系统内核设置进程状态为运行状态。</p>
+<p>本例是GNU的coreutils软件包中的<code>sleep</code>工具。它将睡眠指定秒数。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">$ sleep 1000 &amp;</div><div class="line">[1] 10089</div><div class="line">$ ps f</div><div class="line">  PID TTY      STAT   TIME COMMAND</div><div class="line"> 3514 pts/1    Ss     0:00 -bash</div><div class="line">10089 pts/1    S      0:00  \_ sleep 1000</div><div class="line">10094 pts/1    R+     0:00  \_ ps f</div></pre></td></tr></table></figure>
+<p>所以这是一个中断睡眠。那如何中断该进程？通过发送控制信号。</p>
+<p>你能在 <em>htop</em> 中点击 <em>F9</em> ，然后在左侧菜单中选择一个信号发送。</p>
+<p>发送的信号中最有名的是<code>kill</code>。因为<code>kill</code>是一个系统调用，其能发送信号给进程。程序<code>/bin/kill</code>能从用户空间做系统调用，默认的信号是使用<code>TERM</code>，该信号要求进程中止或者杀死。</p>
+<p>信号其实只是一个数字，但是数字太难记住，所以我们常说对应的名字。信号名字用大写表示，并用<code>SIG</code>前缀。</p>
+<p>常用的信号有<code>INT</code>， <code>KILL</code>， <code>STOP</code>， <code>CONT</code>， <code>HUP</code>。</p>
+<p>让我们发送<code>INT</code>（也称作，<code>SIGINT</code>或者<code>2</code>或者 <code>Terminal interrupt</code> ）中断睡眠。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ <span class="built_in">kill</span> -INT 10089</div><div class="line">[1]+  Interrupt               sleep 1000</div></pre></td></tr></table></figure>
+<p>当你在键盘上敲击<code>CTRL</code>+<code>C</code> 也会产生上面同样的效果。 <code>bash</code> 将发送前台进程 <code>SIGINT</code> 信号。</p>
+<p>顺便提一下，在 <code>bash</code>中，虽然大部分操作系统都有 <code>/bin/kill</code> ，但是 <code>kill</code> 是一个内建命令。这是为什么呢？如果你创建的进程达到限制条件，它允许进程被kill。</p>
+<p>实现相同功能的命令：</p>
+<ul>
+<li><code>kill -INT 10089</code></li>
+<li><code>kill -2 10089</code></li>
+<li><code>/bin/kill -2 10089</code></li>
+</ul>
+<p>另外一个有用的信号是 <code>SIGKILL</code> (也被称作 <code>9</code>)。你可以使用该信号kill掉不响应的进程，省的你发狂的按 <code>CTRL</code>+<code>C</code> 键盘。</p>
+<p>当编写程序时，你能设置信号handler函数，该函数将在进程收到信号时被调用。换句话说，你能捕获信号，然后做点什么事。例如，清理或者优雅的关闭进程。所以发送 <code>SIGINT</code> 信号（用户想中断一个进程）和<code>SIGTERM</code> （用户想中止一个进程）并不意味着进程被中止。</p>
+<p>当你运行Python脚本，你会发现一个意外：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ python -c <span class="string">'import sys; sys.stdin.read()'</span></div><div class="line">^C</div><div class="line">Traceback (most recent call last):</div><div class="line">  File <span class="string">"&lt;string&gt;"</span>, line 1, <span class="keyword">in</span> &lt;module&gt;</div><div class="line">KeyboardInterrupt</div></pre></td></tr></table></figure>
+<p>你可以告诉内核强制中止一个进程，使用发送 <code>KILL</code>信号：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ sleep 1000 &amp;</div><div class="line">[1] 2658</div><div class="line">$ <span class="built_in">kill</span> -9 2658</div><div class="line">[1]+  Killed                  sleep 1000</div></pre></td></tr></table></figure>
+<p><strong>D - 非中断睡眠</strong></p>
+<p>不像中止睡眠进程那么简单，你不能用信号唤醒该进程。这就是为什么许多人喊怕看到这个状态。你不能kill该进程，因为kill意味着通过发送<code>SIGKILL</code> 信号给该进程。</p>
+<p>如果进程必须等待不中断或者事件被期望快速发生，那这个状态被使用，比如读写磁盘。但是这仅仅发生一秒分之一。</p>
+<p>引用自StackOverflow</p>
+<blockquote>
+<p>不中断进程经常等到I/O出现页缺失（page fault）。进程/任务不能在这种状态下中断，因为它不能处理任何信号；如果中断了，另外一个页缺失将会发生，会返回到原始位置。</p>
+</blockquote>
+<p>换句话说，如果你在使用NFS（网络文件系统）时出现中断，那得好久才恢复。</p>
+<p>或者，以我的经验看，意味着进程正在交换许多小内存。</p>
+<p>让我们试着一个进程进入不中断睡眠。</p>
+<p><code>8.8.8.8</code> 是Google提供的公共DNS服务。他们没有一个开放的NFS，但是也不能阻止试验。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ sudo mount 8.8.8.8:/tmp /tmp &amp;</div><div class="line">[1] 12646</div><div class="line">$ sudo ps x | grep mount.nfs</div><div class="line">12648 pts/1    D      0:00 /sbin/mount.nfs 8.8.8.8:/tmp /tmp -o rw</div></pre></td></tr></table></figure>
+<p>如何找出刚才发生了什么？ <code>strace</code>!</p>
+<p> <code>strace</code>上面<code>ps</code>的输出命令：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ sudo strace /sbin/mount.nfs 8.8.8.8:/tmp /tmp -o rw</div><div class="line">...</div><div class="line">mount(<span class="string">"8.8.8.8:/tmp"</span>, <span class="string">"/tmp"</span>, <span class="string">"nfs"</span>, 0, ...</div></pre></td></tr></table></figure>
+<p>所以 <code>mount</code> 系统调用正在阻塞进程。</p>
+<p>如果想看看发生了什么，你能运行带<code>intr</code> 选项的 <code>mount</code> 命令来中断： <code>sudo mount 8.8.8.8:/tmp /tmp -o intr</code>。</p>
+<p><strong>Z - 僵尸进程，无效进程但是未被父进程回收</strong></p>
+<p>当一个进程以 <code>exit</code>退出时，它还有子进程，此时子进程变成了僵尸进程。</p>
+<ul>
+<li>如果僵尸进程存在一小会，那相当正常；</li>
+<li>僵尸进程存在很长时间可能导致程序bug；</li>
+<li>僵尸进程不消耗内存，仅仅是一个进程ID；</li>
+<li>僵尸进程不能被<code>kill</code> ；</li>
+<li>发生<code>SIGCHLD</code> 信号能让父进程回收僵尸进程；</li>
+<li><code>kill</code> 僵尸进程的父进程能摆脱父进程和其僵尸进程</li>
+</ul>
+<p>下面写个C程序的例子展示下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</div><div class="line">  <span class="built_in">printf</span>(<span class="string">"Running\n"</span>);</div><div class="line"></div><div class="line">  <span class="keyword">int</span> pid = fork();</div><div class="line"></div><div class="line">  <span class="keyword">if</span> (pid == <span class="number">0</span>) &#123;</div><div class="line">    <span class="built_in">printf</span>(<span class="string">"I am the child process\n"</span>);</div><div class="line">    <span class="built_in">printf</span>(<span class="string">"The child process is exiting now\n"</span>);</div><div class="line">    <span class="built_in">exit</span>(<span class="number">0</span>);</div><div class="line">  &#125; <span class="keyword">else</span> &#123;</div><div class="line">    <span class="built_in">printf</span>(<span class="string">"I am the parent process\n"</span>);</div><div class="line">    <span class="built_in">printf</span>(<span class="string">"The parent process is sleeping now\n"</span>);</div><div class="line">    sleep(<span class="number">20</span>);</div><div class="line">    <span class="built_in">printf</span>(<span class="string">"The parent process is finished\n"</span>);</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>安装GNU C编译器（GCC）：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt install -y gcc</div></pre></td></tr></table></figure>
+<p>编译代码并运行：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">gcc zombie.c -o zombie</div><div class="line">./zombie</div></pre></td></tr></table></figure>
+<p>查看进程树：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">$ ps f</div><div class="line">  PID TTY      STAT   TIME COMMAND</div><div class="line"> 3514 pts/1    Ss     0:00 -bash</div><div class="line"> 7911 pts/1    S+     0:00  \_ ./zombie</div><div class="line"> 7912 pts/1    Z+     0:00      \_ [zombie] &lt;defunct&gt;</div><div class="line"> 1317 pts/0    Ss     0:00 -bash</div><div class="line"> 7913 pts/0    R+     0:00  \_ ps f</div></pre></td></tr></table></figure>
+<p>我们得到了僵尸进程。当父进程退出，僵尸进程也退出。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ ps f</div><div class="line">  PID TTY      STAT   TIME COMMAND</div><div class="line"> 3514 pts/1    Ss+    0:00 -bash</div><div class="line"> 1317 pts/0    Ss     0:00 -bash</div><div class="line"> 7914 pts/0    R+     0:00  \_ ps f</div></pre></td></tr></table></figure>
+<p>如果用<code>while (true) ;</code> 代替 <code>sleep(20)</code> ，僵尸进程将正常退出。</p>
+<p>使用<code>exit</code>时，该进程所有的内存和资源被释放，其它的进程可以继续使用。</p>
+<p>为什么要保留僵尸进程存在呢？</p>
+<p>父进程使用 <code>wait</code>系统调用找出其子进程退出码（信号 handler）。如果一个进程睡眠，它需要等待唤醒。</p>
+<p>为什么不简单的强制进程唤醒和kill掉？当你厌倦小孩时，你不会把他扔垃圾桶。这里的原因相同。坏事情总会发生的。</p>
+<p><strong>T - 被控制信号停止</strong></p>
+<p>打开两个终端窗口，使用 <code>ps u</code>能查看到用户的进程：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ ps u</div><div class="line">USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND</div><div class="line">ubuntu    1317  0.0  0.9  21420  4992 pts/0    Ss+  Jun07   0:00 -bash</div><div class="line">ubuntu    3514  1.5  1.0  21420  5196 pts/1    Ss   07:28   0:00 -bash</div><div class="line">ubuntu    3528  0.0  0.6  36084  3316 pts/1    R+   07:28   0:00 ps u</div></pre></td></tr></table></figure>
+<p>忽略 <code>-bash</code> 和<code>ps u</code>进程。</p>
+<p>现在在其中一个终端窗口运行<code>cat /dev/urandom &gt; /dev/null</code> 。其进程状态为 <code>R+</code> ，意味着正在运行。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ ps u</div><div class="line">USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND</div><div class="line">ubuntu    3540  103  0.1   6168   688 pts/1    R+   07:29   0:04 cat /dev/urandom</div></pre></td></tr></table></figure>
+<p>按 <code>CTRL</code>+<code>Z</code> 停止该进程：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ <span class="comment"># CTRL+Z</span></div><div class="line">[1]+  Stopped                 cat /dev/urandom &gt; /dev/null</div><div class="line">$ ps aux</div><div class="line">USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND</div><div class="line">ubuntu    3540 86.8  0.1   6168   688 pts/1    T    07:29   0:15 cat /dev/urandom</div></pre></td></tr></table></figure>
+<p>该进程的状态现在为 <code>T</code>。</p>
+<p>在第一个终端运行 <code>fg</code> 可以重新恢复该进程。</p>
+<p>另外一种停止进程的方法是用 <code>kill</code> 发送 <code>STOP</code> 信号给进程。然后使用 <code>CONT</code> 信号可让进程恢复执行。</p>
+<p><strong>t - 跟踪时被调试者停止</strong></p>
+<p>首先，安装GNU调试器（gdb）：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt install -y gdb</div></pre></td></tr></table></figure>
+<p>监听网络端口1234的入网连接：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ nc <span class="_">-l</span> 1234 &amp;</div><div class="line">[1] 3905</div></pre></td></tr></table></figure>
+<p>状态显示睡眠状态，那意味着该进程在等待网络传入数据。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ ps u</div><div class="line">USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND</div><div class="line">ubuntu    3905  0.0  0.1   9184   896 pts/0    S    07:41   0:00 nc <span class="_">-l</span> 1234</div></pre></td></tr></table></figure>
+<p>运行调试器，并与进程ID为3905的进程关联：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo gdb -p 3905</div></pre></td></tr></table></figure>
+<p>你会发现这个进程的状态变为<code>t</code>，这意味着调试器正在跟踪该进程。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ ps u</div><div class="line">USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND</div><div class="line">ubuntu    3905  0.0  0.1   9184   896 pts/0    t    07:41   0:00 nc <span class="_">-l</span> 1234</div></pre></td></tr></table></figure>
+<ul>
+<li>Process time</li>
+</ul>
+<p>Linux是一个多任务的操作系统。这意味着，即使机器只有一个PCU，也能在同一个时间点运行多个进程。你可以通过SSH连接服务器查看 <em>htop</em> 输出，同时你的web服务也在通过网络传输博客内容给读者。</p>
+<p>那系统是如何做到在单个CPU上一个时间点只执行一个指令呢？答案是时间共享。</p>
+<p>一个进程运行“一点时间”，然后挂起；这时另外一个等待的进程运行“一点时间”。进程运行的这“一点时间”称为时间片（time slice）。</p>
+<p>时间片通常是几毫秒。所以只要服务器系统的负载不高，你是注意不到的。</p>
+<p>这也就可以解释为什么平均负载（load average）是运行进程的平均数了。如果你的服务器只有一个核，平均负载是1.0，那CPU的利用率达到100%。如果平均负载高于1.0，那意味着等待运行的进程数大于CPU能承载运行的进程数。所以会发现服务器宕机或者延迟。如果负载小雨1.0，那意味着CPU有时会处于空闲状态，不做任何工作。</p>
+<p>这也给你一个提示：为什么一个运行了10秒的进程的运行时间有时会高于或者低于准确的10秒。</p>
+<ul>
+<li>Process niceness and priority</li>
+</ul>
+<p>当运行的task数比可用的CPU核数要多时，你必须找个方法决定接下来哪个task运行哪个task保持等待。这其实是 task scheduler的职责。</p>
+<p>Linux内核的scheduler负责选择运行进程队列中哪个进程接下来运行，依赖于内核使用的scheduler算法。</p>
+<p>一般你不能影响scheduler，但是让它知道哪个进程更重要。</p>
+<p>Nice值(<code>NI</code>) 是表示用户空间进程优先级的数值，其代表静态优先级。Nice值的范围是-20~+19，拥有Nice值越大的进程的实际优先级越小（即Nice值为+19的进程优先级最小，为-20的进程优先级最大），默认的Nice值是0。Nice值增加1，降低进程10%的CPU时间。</p>
+<p>priority(优先级，<code>PRI</code>)是Linux内核级的优先级，其代表动态优先级。该优先级范围从0到139，0到99表示实时进程，100到139表示用户空间进程优先级。</p>
+<p>你可以改变Nice值让内核考虑该进程优先级，但是不能改变priority。</p>
+<p>Nice值和priority之间的关系如下：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">PR = 20 + NI</div></pre></td></tr></table></figure>
+<p>所以 <code>PR = 20 + (-20 to +19)</code> 的值是0到39，映射为100到139。</p>
+<p>在启动进程前设置该进程的Nice值：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">nice -n niceness program</div></pre></td></tr></table></figure>
+<p>当程序已经正在运行，可用 <code>renice</code>改变其Nice值：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">renice -n niceness -p PID</div></pre></td></tr></table></figure>
+<p>下面是CPU使用颜色代表的意义：</p>
+<blockquote>
+<p>蓝色：低优先级线程（nice &gt; 0）</p>
+<p>绿色：常规优先级线程</p>
+<p>红色：内核线程</p>
+</blockquote>
+<ul>
+<li>内存使用 - VIRT/RES/SHR/MEM</li>
+</ul>
+<p>进程给人的假象是只有一个进程使用内存，其实这是通过虚拟内存实现的。</p>
+<p>进程没有直接访问物理内存，而是拥有虚拟地址空间，Linux内核将虚拟内存地址转换成物理内存或者映射到磁盘。这就是为什么看起来进程能够使用的内存比电脑真实的内存要多。</p>
+<p>这里说明的是，想准确计算一个进程占用多少内存并不是那么直观。你也想计算共享内存或者磁盘映射内存吗？<code>htop</code> 显示的一些信息能帮助你估计内存使用量。</p>
+<p>内存使用颜色代表的意义：</p>
+<blockquote>
+<p>绿色：Used memory</p>
+<p>蓝色：Buffers</p>
+<p>橘黄色：Cache</p>
+</blockquote>
+<p><strong>VIRT/VSZ - 虚拟内存</strong></p>
+<blockquote>
+<p>task使用的虚拟内存总量。它包含代码、数据和共享内存（加上调出内存到磁盘的分页和已映射但未使用的分页）。</p>
+</blockquote>
+<p><code>VIRT</code> 是虚拟内存使用量。它包括所有的内存，含内存映射文件。</p>
+<p>如果应用请求1GB内存，但是内存只有1MB，那 <code>VIRT</code>显示1GB。如果 <code>mmap</code>映射的是一个1GB 文件， <code>VIRT</code>也显示1GB。</p>
+<p>大部分情况下， <code>VIRT</code>并不是一个太有用的数字。</p>
+<p><strong>RES/RSS - 常驻内存大小</strong></p>
+<blockquote>
+<p>task使用的非交换的物理内存。</p>
+</blockquote>
+<p><code>RES</code>是常驻内存使用量。</p>
+<p><code>RES</code>相比于 <code>VIRT</code>，能更好的表征进程的内存使用量：</p>
+<blockquote>
+<p>不包含交换出的内存；</p>
+<p>不包含共享内存</p>
+</blockquote>
+<p>如果一个进程使用1GB内存，并调用<code>fork()</code>函数，fork的结果是两个进程的 <code>RES</code> 都是1GB，但是实际上只使用了1GB内存。因为Linux采用的是copy-on-write机制。</p>
+<p><strong>SHR - 共享内存大</strong></p>
+<blockquote>
+<p>task使用的共享内存总量。</p>
+<p>简单的反应进程间共享的内存。</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</div><div class="line">  <span class="built_in">printf</span>(<span class="string">"Started\n"</span>);</div><div class="line">  sleep(<span class="number">10</span>);</div><div class="line"></div><div class="line">  <span class="keyword">size_t</span> memory = <span class="number">10</span> * <span class="number">1024</span> * <span class="number">1024</span>; <span class="comment">// 10 MB</span></div><div class="line">  <span class="keyword">char</span>* buffer = <span class="built_in">malloc</span>(memory);</div><div class="line">  <span class="built_in">printf</span>(<span class="string">"Allocated 10M\n"</span>);</div><div class="line">  sleep(<span class="number">10</span>);</div><div class="line"></div><div class="line">  <span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">0</span>; i &lt; memory/<span class="number">2</span>; i++)</div><div class="line">    buffer[i] = <span class="number">42</span>;</div><div class="line">  <span class="built_in">printf</span>(<span class="string">"Used 5M\n"</span>);</div><div class="line">  sleep(<span class="number">10</span>);</div><div class="line"></div><div class="line">  <span class="keyword">int</span> pid = fork();</div><div class="line">  <span class="built_in">printf</span>(<span class="string">"Forked\n"</span>);</div><div class="line">  sleep(<span class="number">10</span>);</div><div class="line"></div><div class="line">  <span class="keyword">if</span> (pid != <span class="number">0</span>) &#123;</div><div class="line">    <span class="keyword">for</span> (<span class="keyword">size_t</span> i = memory/<span class="number">2</span>; i &lt; memory/<span class="number">2</span> + memory/<span class="number">5</span>; i++)</div><div class="line">      buffer[i] = <span class="number">42</span>;</div><div class="line">    <span class="built_in">printf</span>(<span class="string">"Child used extra 2M\n"</span>);</div><div class="line">  &#125;</div><div class="line">  sleep(<span class="number">10</span>);</div><div class="line"></div><div class="line">  <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">fallocate <span class="_">-l</span> 10G</div><div class="line">gcc -std=c99 mem.c -o mem</div><div class="line">./mem</div></pre></td></tr></table></figure>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">Process  Message               VIRT  RES SHR</div><div class="line">main     Started               4200  680 604</div><div class="line">main     Allocated 10M        14444  680 604</div><div class="line">main     Used 5M              14444 6168 1116</div><div class="line">main     Forked               14444 6168 1116</div><div class="line">child    Forked               14444 5216 0</div><div class="line">main     Child used extra 2M        8252 1116</div><div class="line">child    Child used extra 2M        5216 0</div></pre></td></tr></table></figure>
+<p><strong>MEM% - 内存使用量占比</strong></p>
+<blockquote>
+<p>task当前使用的内存占比。</p>
+</blockquote>
+<p>该值为 <code>RES</code> 除以RAM总量。</p>
+<p>如果 <code>RES</code> 是400M，你有8GB的RAM，<code>MEM%</code> 是 <code>400/8192*100</code> = <code>4.88%</code>。</p>
+<p>“庖丁解牛”式问诊Linux启动全过程</p>
+<p>本文使用Digital Ocean droplet Ubuntu服务器启动过程为“蓝本”，详细解说Linux启动涉及的所有进程。</p>
+<p>Ubuntu系统引导启动的进程都有哪些？你都需要它们吗？</p>
+<p>下面是在全新Digital Ocean droplet 的Ubuntu（16.04.1 LTS x64）服务器上启动系统。</p>
+<p><img src="https://peteris.rocks/blog/htop/canyoukillit-before.png" alt="image"></p>
+<ul>
+<li>/sbin/init</li>
+</ul>
+<blockquote>
+<p>/sbin/init程序，也称init，调度除boot进程外所有的进程，配置用户环境。</p>
+<p>init启动后，将成为所有系统自动启动进程的父进程或者祖父进程。</p>
+</blockquote>
+<p>它是systemd吗？</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ dpkg -S /sbin/init</div><div class="line">systemd-sysv: /sbin/init</div></pre></td></tr></table></figure>
+<p>答案是，yes。</p>
+<p>如果kill掉<code>/sbin/init</code>会发生什么呢？什么也不会发生，哈哈。</p>
+<blockquote>
+<ul>
+<li><a href="https://wiki.ubuntu.com/SystemdForUpstartUsers" target="_blank" rel="external">https://wiki.ubuntu.com/SystemdForUpstartUsers</a></li>
+<li><a href="https://www.centos.org/docs/5/html/5.1/Installation_Guide/s2-boot-init-shutdown-init.html" target="_blank" rel="external">https://www.centos.org/docs/5/html/5.1/Installation_Guide/s2-boot-init-shutdown-init.html</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/lib/systemd/systemd-journald</li>
+</ul>
+<blockquote>
+<p>systemd-journald进程是一个系统服务，其收集、存储log数据。它基于接收的log信息创建和维护结构化、索引journal。</p>
+</blockquote>
+<p>换句话讲。</p>
+<blockquote>
+<p>journald主要的变化之一，是采用优化的log存储替代简单文本log文件。使得系统管理员访问相应的log信息更有效。journald引入数据库式log的集中存储能力。</p>
+</blockquote>
+<p>你可以使用 <code>journalctl</code> 命令查询log文件。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">journalctl _COMM=sshd logs by sshd</div><div class="line">journalctl _COMM=sshd -o json-pretty logs by sshd in JSON</div><div class="line">journalctl --since &quot;2015-01-10&quot; --until &quot;2015-01-11 03:00&quot;</div><div class="line">journalctl --since 09:00 --until &quot;1 hour ago&quot;</div><div class="line">journalctl --since yesterday</div><div class="line">journalctl -b logs since boot</div><div class="line">journalctl -f to follow logs</div><div class="line">journalctl --disk-usage</div><div class="line">journalctl --vacuum-size=1G</div></pre></td></tr></table></figure>
+<p>相当酷有木有！</p>
+<p>看起来不能移除或者disable该服务，但是你可以关闭logging。</p>
+<blockquote>
+<ul>
+<li><a href="https://www.freedesktop.org/software/systemd/man/systemd-journald.service.html" target="_blank" rel="external">https://www.freedesktop.org/software/systemd/man/systemd-journald.service.html</a></li>
+<li><a href="https://www.digitalocean.com/community/tutorials/how-to-use-journalctl-to-view-and-manipulate-systemd-logs" target="_blank" rel="external">https://www.digitalocean.com/community/tutorials/how-to-use-journalctl-to-view-and-manipulate-systemd-logs</a></li>
+<li><a href="https://www.loggly.com/blog/why-journald/" target="_blank" rel="external">https://www.loggly.com/blog/why-journald/</a></li>
+<li><a href="https://ask.fedoraproject.org/en/question/63985/how-to-correctly-disable-journald/" target="_blank" rel="external">https://ask.fedoraproject.org/en/question/63985/how-to-correctly-disable-journald/</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/sbin/lvmetad -f</li>
+</ul>
+<blockquote>
+<p>lvmetad守护进程缓存LVM元数据（metadata），所以LVM命令不用扫描磁盘就能读取元数据。</p>
+<p>元数据缓存的优势，在于扫描磁盘是非常耗时的，并且可能中断系统和磁盘的正常工作。</p>
+</blockquote>
+<p>那什么才是LVM（Logical Volume Management，逻辑卷管理）呢？</p>
+<blockquote>
+<p>你可以认为逻辑卷管理LVM是动态分区（dynamic partitions），意味着你能在正在运行的系统上用命令行创建/重设大小/删除（create/resize/delete）LVM分区（用LVM的话讲是逻辑卷）：无须重启操作系统来让内核感知新建或者重设大小的分区。</p>
+</blockquote>
+<p>听起来像，如果你正在使用LVM服务，那得保留该服务。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ lvscan</div><div class="line">$ sudo apt remove lvm2 -y --purge</div></pre></td></tr></table></figure>
+<blockquote>
+<ul>
+<li><a href="http://manpages.ubuntu.com/manpages/xenial/man8/lvmetad.8.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man8/lvmetad.8.html</a></li>
+<li><a href="http://askubuntu.com/questions/3596/what-is-lvm-and-what-is-it-used-for" target="_blank" rel="external">http://askubuntu.com/questions/3596/what-is-lvm-and-what-is-it-used-for</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/lib/systemd/udevd</li>
+</ul>
+<blockquote>
+<p>systemd-udevd监听Linux内核uevent事件（uevent是内核空间和用户空间之间通信的机制，主要用于热插拔事件（hotplug））。对于每个事件，systemd-udevd都会根据udev规则执行匹配的指定设备。</p>
+<p>udev是Linux内核的设备管理器。其作为devfsd和hotplug的升级，udev主要管理/dev目录下的设备节点。</p>
+</blockquote>
+<p>所以该服务会管理 <code>/dev</code>。</p>
+<p>作者不太确定是否一定要运行在虚拟机上。</p>
+<blockquote>
+<ul>
+<li><a href="https://www.freedesktop.org/software/systemd/man/systemd-udevd.service.html" target="_blank" rel="external">https://www.freedesktop.org/software/systemd/man/systemd-udevd.service.html</a></li>
+<li><a href="https://wiki.archlinux.org/index.php/udev" target="_blank" rel="external">https://wiki.archlinux.org/index.php/udev</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/lib/systemd/timesyncd</li>
+</ul>
+<blockquote>
+<p>systemd-timesyncd是使用远程网络时间协议来同步本地系统时钟的系统服务。</p>
+</blockquote>
+<p>所以该服务是来替代<code>ntpd</code>的。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">$ timedatectl status</div><div class="line">      Local time: Fri 2016-08-26 11:38:21 UTC</div><div class="line">  Universal time: Fri 2016-08-26 11:38:21 UTC</div><div class="line">        RTC time: Fri 2016-08-26 11:38:20</div><div class="line">       Time zone: Etc/UTC (UTC, +0000)</div><div class="line"> Network time on: yes</div><div class="line">NTP synchronized: yes</div><div class="line"> RTC <span class="keyword">in</span> <span class="built_in">local</span> TZ: no</div></pre></td></tr></table></figure>
+<p>查看一下服务器上打开的端口：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ sudo netstat -nlput</div><div class="line">Active Internet connections (only servers)</div><div class="line">Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name</div><div class="line">tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      2178/sshd</div><div class="line">tcp6       0      0 :::22                   :::*                    LISTEN      2178/sshd</div></pre></td></tr></table></figure>
+<p>以前在Ubuntu 14.04上打开的端口如下：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">$ sudo apt-get install ntp -y</div><div class="line">$ sudo netstat -nlput</div><div class="line">Active Internet connections (only servers)</div><div class="line">Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name</div><div class="line">tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      1380/sshd</div><div class="line">tcp6       0      0 :::22                   :::*                    LISTEN      1380/sshd</div><div class="line">udp        0      0 10.19.0.6:123           0.0.0.0:*                           2377/ntpd</div><div class="line">udp        0      0 139.59.256.256:123      0.0.0.0:*                           2377/ntpd</div><div class="line">udp        0      0 127.0.0.1:123           0.0.0.0:*                           2377/ntpd</div><div class="line">udp        0      0 0.0.0.0:123             0.0.0.0:*                           2377/ntpd</div><div class="line">udp6       0      0 fe80::601:6aff:fxxx:123 :::*                                2377/ntpd</div><div class="line">udp6       0      0 ::1:123                 :::*                                2377/ntpd</div><div class="line">udp6       0      0 :::123                  :::*                                2377/ntpd</div></pre></td></tr></table></figure>
+<blockquote>
+<p><a href="https://www.freedesktop.org/software/systemd/man/systemd-timesyncd.service.html" target="_blank" rel="external">https://www.freedesktop.org/software/systemd/man/systemd-timesyncd.service.html</a></p>
+<p><a href="https://wiki.archlinux.org/index.php/systemd-timesyncd" target="_blank" rel="external">https://wiki.archlinux.org/index.php/systemd-timesyncd</a></p>
+</blockquote>
+<ul>
+<li>/usr/sbin/atd -f</li>
+</ul>
+<blockquote>
+<p>atd将作业加入队列稍后执行。atd通过<code>at</code>将业务加入队列。</p>
+<p><code>at</code>和批量从标准输入输出或者指定文件读命令并稍后执行。</p>
+</blockquote>
+<p><code>cron</code>命令调度作业周期性重复运行，<code>at</code>只在指定时间运行一次。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">$ <span class="built_in">echo</span> <span class="string">"touch /tmp/yolo.txt"</span> | at now + 1 minute</div><div class="line">job 1 at Fri Aug 26 10:44:00 2016</div><div class="line">$ atq</div><div class="line">1       Fri Aug 26 10:44:00 2016 a root</div><div class="line">$ sleep 60 &amp;&amp; ls /tmp/yolo.txt</div><div class="line">/tmp/yolo.txt</div></pre></td></tr></table></figure>
+<p>不需要使用的话可以卸载：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt remove at -y --purge</div></pre></td></tr></table></figure>
+<blockquote>
+<ul>
+<li><a href="http://manpages.ubuntu.com/manpages/xenial/man8/atd.8.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man8/atd.8.html</a></li>
+<li><a href="http://manpages.ubuntu.com/manpages/xenial/man1/at.1.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man1/at.1.html</a></li>
+<li><a href="http://askubuntu.com/questions/162439/why-does-ubuntu-server-run-both-cron-and-atd" target="_blank" rel="external">http://askubuntu.com/questions/162439/why-does-ubuntu-server-run-both-cron-and-atd</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/usr/lib/snapd/snapd</li>
+</ul>
+<blockquote>
+<p>Snappy Ubuntu Core是带有事务性更新的Ubuntu版本，其和当前的Ubuntu具有相同的library的最小服务器镜像，但是以更简单的机制来提供应用。</p>
+</blockquote>
+<p>很显然，它是一个简化版的deb包，分发的所有依赖都在单个snap中。</p>
+<p>作者从来不用snappy在服务器上发布或者分发应用，所以可以卸载：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt remove snapd -y --purge</div></pre></td></tr></table></figure>
+<blockquote>
+<ul>
+<li><a href="https://developer.ubuntu.com/en/snappy/" target="_blank" rel="external">https://developer.ubuntu.com/en/snappy/</a></li>
+<li><a href="https://insights.ubuntu.com/2016/06/14/universal-snap-packages-launch-on-multiple-linux-distros/" target="_blank" rel="external">https://insights.ubuntu.com/2016/06/14/universal-snap-packages-launch-on-multiple-linux-distros/</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/usr/bin/dbus-daemon</li>
+</ul>
+<blockquote>
+<p>在计算机中，D-Bus或者DBus是进程间通信（ inter-process communication，IPC）和远程过程调用（remote procedure call，RPC）机制，它允许在同一台机器上并发运行的多个计算机程序（进程）通信。</p>
+</blockquote>
+<p>作者觉得当你需要桌面环境时要启动该服务，当你只是在服务器上运行web应用则可以卸载：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt remove dbus -y --purge</div></pre></td></tr></table></figure>
+<p>然而，当你想看下时间是否通过NTP同步，发现了问题：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ timedatectl status</div><div class="line">Failed to create bus connection: No such file or directory</div></pre></td></tr></table></figure>
+<blockquote>
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/D-Bus" target="_blank" rel="external">https://en.wikipedia.org/wiki/D-Bus</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/lib/systemd/systemd-logind</li>
+</ul>
+<blockquote>
+<p>systemd-logind是管理用户登录的系统服务。</p>
+<ul>
+<li><a href="https://www.freedesktop.org/software/systemd/man/systemd-logind.service.html" target="_blank" rel="external">https://www.freedesktop.org/software/systemd/man/systemd-logind.service.html</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/usr/sbin/cron -f</li>
+</ul>
+<blockquote>
+<p><code>cron</code>守护进程执行调度计划命令。</p>
+<p><code>-f</code> 保持运行在前台，不以守护进程运行。</p>
+</blockquote>
+<p>你可以使用<code>cron</code>周期性调度任务运行。</p>
+<p> <code>crontab -e</code> 编辑cron的配置文件，在Ubuntu上可以用 <code>/etc/cron.hourly</code>，<code>/etc/cron.daily</code>等配置。</p>
+<p>你可以使用下面的方法查看cron的log文件：</p>
+<ul>
+<li><code>grep cron /var/log/syslog</code> </li>
+<li><code>journalctl _COMM=cron</code></li>
+<li><code>journalctl _COMM=cron --since=&quot;date&quot; --until=&quot;date&quot;</code></li>
+</ul>
+<p>如果你不想使用cron时，可以停止并disable该服务：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">sudo systemctl stop cron</div><div class="line">sudo systemctl <span class="built_in">disable</span> cron</div></pre></td></tr></table></figure>
+<p>当使用 <code>apt remove cron</code> 删除cron服务时，会发现其会安装postfix：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ sudo apt remove cron</div><div class="line">The following packages will be REMOVED:</div><div class="line">  cron</div><div class="line">The following NEW packages will be installed:</div><div class="line">  anacron bcron bcron-run fgetty libbg1 libbg1-doc postfix runit ssl-cert ucspi-unix</div></pre></td></tr></table></figure>
+<p>看起来cron服务需要邮件客户端（MTA）发送邮件：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">$ apt show cron</div><div class="line">Package: cron</div><div class="line">Version: 3.0pl1-128ubuntu2</div><div class="line">...</div><div class="line">Suggests: anacron (&gt;= 2.0-1), logrotate, checksecurity, exim4 | postfix | mail-transport-agent</div><div class="line"></div><div class="line">$ apt depends cron</div><div class="line">cron</div><div class="line">  ...</div><div class="line">  Suggests: anacron (&gt;= 2.0-1)</div><div class="line">  Suggests: logrotate</div><div class="line">  Suggests: checksecurity</div><div class="line"> |Suggests: exim4</div><div class="line"> |Suggests: postfix</div><div class="line">  Suggests: &lt;mail-transport-agent&gt;</div><div class="line">    ...</div><div class="line">    exim4-daemon-heavy</div><div class="line">    postfix</div></pre></td></tr></table></figure>
+<blockquote>
+<ul>
+<li><a href="https://help.ubuntu.com/community/CronHowto" target="_blank" rel="external">https://help.ubuntu.com/community/CronHowto</a></li>
+<li><a href="https://www.digitalocean.com/community/tutorials/how-to-use-cron-to-automate-tasks-on-a-vps" target="_blank" rel="external">https://www.digitalocean.com/community/tutorials/how-to-use-cron-to-automate-tasks-on-a-vps</a></li>
+<li><a href="http://unix.stackexchange.com/questions/212355/where-is-my-logfile-of-crontab" target="_blank" rel="external">http://unix.stackexchange.com/questions/212355/where-is-my-logfile-of-crontab</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/usr/sbin/rsyslogd -n</li>
+</ul>
+<blockquote>
+<p>Rsyslogd是提供消息日志的系统组件。</p>
+</blockquote>
+<p>换句话说，rsyslogd将日志写入 <code>/var/log/</code> 目录下，比如 <code>/var/log/auth.log</code> 是SSH登陆的权限日志。</p>
+<p>rsyslogd的配置文件是<code>/etc/rsyslog.d</code>。</p>
+<p>你也可以配置rsyslogd发送log文件到远程服务器，实现日志log中心化。</p>
+<p>你也可以在后台脚本中使用 <code>logger</code> 命令将消息日志写入 <code>/var/log/syslog</code> 。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#!/bin/bash</span></div><div class="line"></div><div class="line">logger Starting doing something</div><div class="line"><span class="comment"># NFS, get IPs, etc.</span></div><div class="line">logger Done doing something</div></pre></td></tr></table></figure>
+<p>但是，前面已经有 <code>systemd-journald</code> 服务在运行了，那还需 <code>rsyslogd</code> 吗？</p>
+<blockquote>
+<p>Rsyslog 和 Journal服务是存在于系统中的两个log日志应用，它们功能不同。大部分情况下，需要同时结合两者的功能。比如，创建结构化的消息并存储到文件数据库。通信接口需要Rsyslog提供输入和输出模块，通信socket由Journal提供。</p>
+</blockquote>
+<p>所以呢？看样子还是暂时保留吧。</p>
+<blockquote>
+<ul>
+<li><a href="http://manpages.ubuntu.com/manpages/xenial/man8/rsyslogd.8.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man8/rsyslogd.8.html</a></li>
+<li><a href="http://manpages.ubuntu.com/manpages/xenial/man1/logger.1.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man1/logger.1.html</a></li>
+<li><a href="https://wiki.archlinux.org/index.php/rsyslog" target="_blank" rel="external">https://wiki.archlinux.org/index.php/rsyslog</a></li>
+<li><a href="https://www.digitalocean.com/community/tutorials/how-to-centralize-logs-with-rsyslog-logstash-and-elasticsearch-on-ubuntu-14-04" target="_blank" rel="external">https://www.digitalocean.com/community/tutorials/how-to-centralize-logs-with-rsyslog-logstash-and-elasticsearch-on-ubuntu-14-04</a></li>
+<li><a href="https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/System_Administrators_Guide/s1-interaction_of_rsyslog_and_journal.html" target="_blank" rel="external">https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/System_Administrators_Guide/s1-interaction_of_rsyslog_and_journal.html</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/usr/sbin/acpid</li>
+</ul>
+<blockquote>
+<p>acpid，是高级配置与电源接口（Advanced Configuration and Power Interface，ACPI）事件守护进程。</p>
+<p>acpid设计用来通知ACPI事件的用户空间程序，其在系统启动时已启动，并默认以后台进程运行。</p>
+<p>计算机中的高级配置与电源接口，提供处理电源相关事件的开源标准。操作系统可以处理计算机硬件的发现和配置，可以进行电源管理。比如，将未使用的组件置为睡眠，进行状态监控。</p>
+</blockquote>
+<p>但是本例中使用的虚拟机，不需要挂起/继续。</p>
+<p>这里删除该服务，看下会发生什么。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt remove acpid -y --purge</div></pre></td></tr></table></figure>
+<p>作者可以成功执行 <code>reboot</code>重启 droplet，但是执行 <code>halt</code> 后必须通过web接口关闭虚拟机。</p>
+<blockquote>
+<ul>
+<li><a href="http://manpages.ubuntu.com/manpages/xenial/man8/acpid.8.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man8/acpid.8.html</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Advanced_Configuration_and_Power_Interface" target="_blank" rel="external">https://en.wikipedia.org/wiki/Advanced_Configuration_and_Power_Interface</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/usr/bin/lxcfs /var/lib/lxcfs/</li>
+</ul>
+<blockquote>
+<p>Lxcfs主要是以lxc容器为用户提供fuse文件系统。在Ubuntu 15.04上，默认提供两个功能：一是，一些/proc文件的视图；二是，过滤访问主机的cgroup文件系统。</p>
+<p>总之，在Ubuntu 15.04上你能用通用的方式（ lxc-create）创建容器。创建的容器使用uptime、top等能得出“正确”结果。</p>
+</blockquote>
+<p>不用LXC容器时可以移除该服务：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt remove lxcfs -y --purge</div></pre></td></tr></table></figure>
+<blockquote>
+<ul>
+<li><a href="https://insights.ubuntu.com/2015/03/02/introducing-lxcfs/" target="_blank" rel="external">https://insights.ubuntu.com/2015/03/02/introducing-lxcfs/</a></li>
+<li><a href="https://www.stgraber.org/2016/03/31/lxcfs-2-0-has-been-released/" target="_blank" rel="external">https://www.stgraber.org/2016/03/31/lxcfs-2-0-has-been-released/</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/usr/lib/accountservice/accounts-daemon</li>
+</ul>
+<blockquote>
+<p>账户管理AccountsService包提供一系列D-Bus接口查询和管理用户账户信息。其是基于usermod(8)，useradd(8) 和userdel(8) 命令实现的。</p>
+</blockquote>
+<p>作者想知道移除该服务会出现什么问题。当移除DBus时， <code>timedatectl</code>失效。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt remove accountsservice -y --purge</div></pre></td></tr></table></figure>
+<blockquote>
+<ul>
+<li><a href="http://www.linuxfromscratch.org/blfs/view/systemd/gnome/accountsservice.html" target="_blank" rel="external">http://www.linuxfromscratch.org/blfs/view/systemd/gnome/accountsservice.html</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/sbin/mdadm</li>
+</ul>
+<blockquote>
+<p>Linux组件mdadm是管理RAID设备的管理和监控软件。</p>
+<p>其名字是源于md（multiple device，多设备）节点管理（administers），它替代之前的mdctl。原始的名字是 “Mirror Disk”，随着功能的增加名字随之改变。</p>
+<p>RAID是将多块硬盘看作是一块硬盘的方法。RAID的目的有两个：1)扩展磁盘驱动容量：RAID 0。如果你有2个500GB的HDD，则总的容量即为1TB；2)防止驱动失败时数据丢失。比如RAID 1，RAID 5， RAID 6和RAID 10。</p>
+</blockquote>
+<p>可以用如下命令移除：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt remove mdadm -y --purge</div></pre></td></tr></table></figure>
+<blockquote>
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/Mdadm" target="_blank" rel="external">https://en.wikipedia.org/wiki/Mdadm</a></li>
+<li><a href="https://help.ubuntu.com/community/Installation/SoftwareRAID" target="_blank" rel="external">https://help.ubuntu.com/community/Installation/SoftwareRAID</a></li>
+<li><a href="http://manpages.ubuntu.com/manpages/xenial/man8/mdadm.8.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man8/mdadm.8.html</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/usr/lib/policykit-1/polkitd –no-debug</li>
+</ul>
+<blockquote>
+<p>polkitd：PolicyKit守护进程。</p>
+<p>polkit：授权管理。</p>
+</blockquote>
+<p>有点类似是细粒度的sudo权限控制。你能允许非权限用户做某些root用户的操作。比如，桌面计算机中的Linux重启计算机。</p>
+<p>这里是运行的服务器，可以移除该服务：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt remove policykit-1 -y --purge</div></pre></td></tr></table></figure>
+<blockquote>
+<ul>
+<li><a href="http://manpages.ubuntu.com/manpages/xenial/man8/polkitd.8.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man8/polkitd.8.html</a></li>
+<li><a href="http://manpages.ubuntu.com/manpages/xenial/man8/polkit.8.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man8/polkit.8.html</a></li>
+<li><a href="http://www.admin-magazine.com/Articles/Assigning-Privileges-with-sudo-and-PolicyKit" target="_blank" rel="external">http://www.admin-magazine.com/Articles/Assigning-Privileges-with-sudo-and-PolicyKit</a></li>
+<li><a href="https://wiki.archlinux.org/index.php/Polkit#Configuration" target="_blank" rel="external">https://wiki.archlinux.org/index.php/Polkit#Configuration</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/usr/sbin/sshd -D</li>
+</ul>
+<blockquote>
+<p>sshd（OpenSSH Daemon），ssh的守护进程。</p>
+<p>指定-D选项时，sshd不断开，也不成为守护进程。这样会更容易监控sshd。</p>
+<ul>
+<li><a href="http://manpages.ubuntu.com/manpages/xenial/man8/sshd.8.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man8/sshd.8.html</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/sbin/iscsid</li>
+</ul>
+<p>iscsid是系统守护进程，处理iSCSI配置和管理连接。从帮助页看到：</p>
+<blockquote>
+<p>iscsid实现iSCSI协议的控制路径，和一些设备管理。比如，守护进程能配置成在服务器启动时自动重启，该功能基于持久化iSCSI数据库。</p>
+</blockquote>
+<p>可以移除该服务：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt remove open-iscsi -y --purge</div></pre></td></tr></table></figure>
+<ul>
+<li>/sbin/agetty –noclear tty1 linux</li>
+</ul>
+<blockquote>
+<p>agetty是alternative Linux getty的缩写。</p>
+<p>getty，是”get tty”的简写，通常从 <code>/etc/inittab</code> 启动，允许用户从终端 (TTYs)登录。它会提示输入用户名，运行’login’ 程序授权用户登录。</p>
+<p>早期getty存在传统Unix系统，其管理一系列连接到主机上的终端（电传打字机，Teletype machine）连接。其中tty是Teletype的缩写，后来代指各种文字终端。</p>
+</blockquote>
+<p>如果在物理服务器上，你可以使用getty登录。在Digital Ocean，你可以点击droplet详情上的<em>Console</em>，通过浏览器和终端交互（可能是VNC连接）。</p>
+<p>在过去，系统启动后你会看到一大泼tty启动（一般配置在/etc/inittab）；不过现在都用systemd代替。</p>
+<p>下面移除 <code>agetty</code>启动的配置文件：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">sudo rm /etc/systemd/system/getty.target.wants/getty@tty1.service</div><div class="line">sudo rm /lib/systemd/system/getty@.service</div></pre></td></tr></table></figure>
+<p>然后重启服务器，仍然可以通过SSH连接服务器，但是不能通过Digital Ocean的web控制台登录服务器啦。</p>
+<p><img src="http://img0.ph.126.net/QQy2chIVliRMwjpAkvKNZQ==/6632514723004686312.png" alt="image"></p>
+<blockquote>
+<ul>
+<li><a href="http://manpages.ubuntu.com/manpages/xenial/man8/getty.8.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man8/getty.8.html</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Getty_(Unix" target="_blank" rel="external">https://en.wikipedia.org/wiki/Getty_(Unix)</a>)</li>
+<li><a href="http://0pointer.de/blog/projects/serial-console.html" target="_blank" rel="external">http://0pointer.de/blog/projects/serial-console.html</a></li>
+<li><a href="http://unix.stackexchange.com/questions/56531/how-to-get-fewer-ttys-with-systemd" target="_blank" rel="external">http://unix.stackexchange.com/questions/56531/how-to-get-fewer-ttys-with-systemd</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>sshd: root@pts/0 &amp; -bash &amp; htop</li>
+</ul>
+<p><code>sshd: root@pts/0</code> 意味着root用户在#<code>0</code>伪终端 (<code>pts</code>)创建啦SSH会话。</p>
+<p><code>bash</code> 是指使用的shell。</p>
+<p>但是为啥<code>bash</code> 开头有个破折号呢？Reddit上有解释：</p>
+<blockquote>
+<p><code>bash</code> 开头的破折号是因为<code>bash</code> 以login shell模式启动时（取得<code>bash</code> 时需要完整的登录流程）。启动login shell模式有两种方式：使用“-”参数启动；使用”—login”选项启动。它们都会加载配置文件。</p>
+</blockquote>
+<p><code>htop</code> 是交互式进程查看工具。</p>
+<p>接着移除下面的服务：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">sudo apt remove lvm2 -y --purge</div><div class="line">sudo apt remove at -y --purge</div><div class="line">sudo apt remove snapd -y --purge</div><div class="line">sudo apt remove lxcfs -y --purge</div><div class="line">sudo apt remove mdadm -y --purge</div><div class="line">sudo apt remove open-iscsi -y --purge</div><div class="line">sudo apt remove accountsservice -y --purge</div><div class="line">sudo apt remove policykit-1 -y --purge</div></pre></td></tr></table></figure>
+<p>用<code>htop</code>查看会出现如下图：</p>
+<p><img src="http://img0.ph.126.net/ts_inlBS6JC-agpy9WFyPw==/3081869520024393963.png" alt="image"></p>
+<p>再次挑战“极限”情况：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">sudo apt remove dbus -y --purge</div><div class="line">sudo apt remove rsyslog -y --purge</div><div class="line">sudo apt remove acpid -y --purge</div><div class="line">sudo systemctl stop cron &amp;&amp; sudo systemctl <span class="built_in">disable</span> cron</div><div class="line">sudo rm /etc/systemd/system/getty.target.wants/getty@tty1.service</div><div class="line">sudo rm /lib/systemd/system/getty@.service</div></pre></td></tr></table></figure>
+<p>再用<code>htop</code>查看：</p>
+<p><img src="http://img2.ph.126.net/6Y5YnkSZ7ci07ByX1GhT_g==/6632304716283782948.png" alt="image"></p>
+<p>未完待续。。。</p>
+<p>Enjoy!</p>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/12/28/deep-learning-with-python-chapter-1-1.1/" itemprop="url">
+                  《Deep Learning with Python》第一章 1.1 人工智能、机器学习和深度学习
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-12-28T15:00:15+08:00" content="2017-12-28">
+              2017-12-28
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>第一章 什么是深度学习？</p>
+<p>本章涉及的知识点：</p>
+<ul>
+<li>基本概念的高层次（High-level）定义</li>
+<li>机器学习的发展历程</li>
+<li>深度学习兴起背后的关键因素以及未来的展望</li>
+</ul>
+<p>过去几十年，人工智能（artificial intelligence，AI）一直是媒体强烈炒作的主题。机器学习、深度学习和人工智能也经常出现在无数非技术刊物上。人们构想将来智能聊天机器人、自动驾驶汽车和虚拟助理的工作生活的画面——在昏暗的灯光下，人类的工作很少，而大部分经济活动都有机器人或者AI智能实体。对于当前或者未来机器学习的从业者来讲，需要从吹捧过度的新闻中意识到改变世界的新产品。你们的将来将承担重要的任务：读完本书后，你将会成为开发AI智能实体的开发者。接着解决这几个问题：目前深度学习能实现什么？深度学习的意义如何？人类下一步该如何做？你相信关于人工智能的宣传吗？</p>
+<p>本章介绍人工智能、机器学习和深度学习相关知识。</p>
+<h5 id="1-1-人工智能、机器学习和深度学习"><a href="#1-1-人工智能、机器学习和深度学习" class="headerlink" title="1.1 人工智能、机器学习和深度学习"></a>1.1 人工智能、机器学习和深度学习</h5><p>首先，当人们讨论AI时要清楚谈论的是什么？什么是人工智能、机器学习和深度学习（见图1.1）？它们之间又有什么关系呢？</p>
+<p><img src="http://img2.ph.126.net/_vMUT5Tf4E2AW8xp0PwRSQ==/3083558369884862744.jpg" alt="image"></p>
+<p>图1.1 人工智能、机器学习和深度学习</p>
+<h6 id="1-1-1-人工智能"><a href="#1-1-1-人工智能" class="headerlink" title="1.1.1 人工智能"></a>1.1.1 人工智能</h6><p>人工智能诞生于1950年代，当时少数计算机科学的先行者开始探讨计算机是否能够像人类一样“思考”——这个问题到现在还在探索。其简明的定义如下：像人类一样自动化完成智力任务。比如，AI通常认为包括机器学习和深度学习的领域，但是也包含许多非学习的方法。例如，早期的棋类程序只涉及程序设定的硬编码规则，没用到机器学习。在相当长一段时期内，许多专家相信：程序处理足够大的基于知识的显式规则集合能达到人类水平的智能。这种方法称之为符号型AI（symbolic AI），它是1950年代到1980年代主流的AI，并在1980年代专家系统方面快速达到巅峰。</p>
+<p>虽然符号型AI能解决定义明确的、逻辑性的问题，比如棋类问题，但是却不能解决更复杂、模糊类的问题，比如，图像分类、语音识别和语言翻译。随之而来的是机器学习这种新方法取代了符号型AI。</p>
+<h6 id="1-1-2-机器学习"><a href="#1-1-2-机器学习" class="headerlink" title="1.1.2 机器学习"></a>1.1.2 机器学习</h6><p>在英国维多利亚时代，埃达·洛夫莱斯伯爵夫人（Ada Lovelace）是查尔斯·巴贝奇（Charles Babbage）的好友和合作者。巴贝奇是分析机（<em>Analytical Engine</em>）的发明者。该分析机是公认的第一个机械式通用电脑。虽然预言性的远见超越了当时的时代，但是，在1830年代到1840年代设计的分析机并不是真正意义上的通用电脑。因为通用计算机的概念那时尚未出现，它仅仅是一种自动的数学计算分析，因此命名为分析机。在1843年，埃达注记分析机，“分析机谈不上能创造什么东西。但是能做我们命令它做的任何工作……它的职责是帮助我们去实现已知的事情。”</p>
+<p>在1950年，AI先行者阿兰·图灵（Alan Turing）在他的著作《计算机器和智能》中引用这个注记作为“洛夫莱斯伯爵夫人的异议”，并提出图灵测试（<em>Turing test</em>）的概念。图灵思考通用计算机是否有学习和创造的能力，并得出下面的结论：</p>
+<p>机器学习起因于以下问题：对于计算机来说，除“我们命令它做的任务”之外，它能自我学习完成特定任务吗？计算机能做的工作会让我们感到意外吗？除了程序员人为制定规则的数据处理外，计算机从数据中能自我学习出规则吗？</p>
+<p>上述问题打开了新编程范式的大门。在经典编程中，即符号型AI范式，人们输入规则（即为程序）和数据，根据这些规则处理数据，输出答案（见图1.2）；在机器学习中，人们输入数据和该数据对应的答案，输出的是程序规则。这些学习来的规则能应用到新的数据上，并产生原创性的答案。</p>
+<p><img src="http://img2.ph.126.net/zS-WEc-ALKQMRPfBMCdxDw==/1277896394286009152.jpg" alt="image"></p>
+<p>图1.2 机器学习：新的编程范式</p>
+<p>机器学习系统是训练得到的，而不是用显式的编制。给机器学习一个任务相关的许多例子，它能发现这些例子的统计性的结构，并形成规则自动完成任务。例如，如果想给假期照片自动化打标签，你需要提出一个机器学习系统，输入许多打好标签的照片，该系统学习统计性规则并为指定的照片打标签。</p>
+<p>虽然机器学习在1990年代才开始繁荣，但是由于硬件性能和数据大小的提升，机器学习很快变得非常流行，并成为AI最成功的子领域。机器学习与数学统计紧密相关，但是它在许多方面又有别于统计学。不像统计学，机器学习试图处理海量、复杂的数据集（比如，数百万张图片，包含数以万计的像素），然而经典统计分析（比如贝叶斯分析）将对此无能为力。因此，机器学习，特别是深度学习，展现相对较少的数学理论，更多的是工程化导向。</p>
+<h6 id="1-1-3-数据的特征学习"><a href="#1-1-3-数据的特征学习" class="headerlink" title="1.1.3 数据的特征学习"></a>1.1.3 数据的特征学习</h6><p>为了定义深度学习，以及理解深度学习和其它机器学习方法的不同，首先，需要知道机器学习算法在做什么。这里仅仅讲述机器学习在给定期望的数据例子下发现规则，执行数据处理的任务。所以为了实现机器学习，需要知道下面三件事：</p>
+<ul>
+<li>输入数据点（<em>Input data points</em>）：例如，如果是语音识别的任务，这些数据点应该是语音文件。如果是图标标注的任务，数据点应该是图片；</li>
+<li>期望的输出样例（<em>Examples of the expected output</em>）：语音识别的任务中，期望的输出样例是语音的手写文本；图像标注的任务中，期望的输出样例是“狗”，“猫”等等的标签；</li>
+<li>算法的评估标准：算法的评估标准是为了判断当前算法的输出值与期望的输出值之间的距离。评估标准可以反馈调节算法的工作，这个调节的步骤经常成为学习（<em>learning</em>）。</li>
+</ul>
+<p>机器学习模型将输入数据集转化成有意义的输出，这个过程是从已有的输入和输出对的例子中学习到的。因此，机器学习和深度学习的中心问题是可读性的转化数据（<em>transform data</em>）：换句话说，学习输入数据的有用的表征（<em>representations</em>）。数据表征使得数据更接近期望的输出。</p>
+<p>那什么是数据的表征？其核心是数据的表现形式——表示（<em>represent</em>）或者编码（<em>encode</em>）数据。例如，彩色图片可以编码为RGB格式（红－绿－蓝）或者HSV格式（色相，饱和度，色调）。机器学习模型就是为了找到输入数据的合适表征——数据的转换是为了任务的更容易处理，比如，分类任务。</p>
+<p>下面举一个例子。假设有x轴，y轴和一些数据点坐标（x，y），见图1.3：</p>
+<p><img src="http://img0.ph.126.net/04Sz9oujEoWniyq8hB1c5Q==/6632724729723197958.jpg" alt="image"></p>
+<p>图1.3 样本数据点</p>
+<p>正如你所见，有一些白色的数据点，一些黑色的数据点。本例假设想实现一个算法：输入数据点的坐标（x，y），输出该数据点是黑色还是白色的。在本例中，</p>
+<ul>
+<li>输入是数据点的坐标；</li>
+<li>期望输出是数据点的颜色；</li>
+<li>算法评估标准：判断正确的数据点的百分比</li>
+</ul>
+<p>此处的首要任务是数据集的新表征，该数据表征需要能清晰分离白色的点和黑色的点。本例使用的数据转换是坐标变换，见图1.4：</p>
+<p><img src="http://img2.ph.126.net/ozi-X0Uo6GzqaInar-PlBQ==/6632474041074666089.jpg" alt="image"></p>
+<p>图1.4 坐标变换</p>
+<p>在新的坐标系统中，数据点的坐标可以看成是数据集的一个新表征。并且效果非常棒！使用了数据集的新表征，黑/白分类问题就可以用很简单的规则解决了：“黑色数据点的x &gt; 0，或者”白色数据点的x &lt; 0“。”这个新表征方法基本解决了分类问题。</p>
+<p>在本例中，人工定义了坐标变换。但是，如果尝试系统性地搜索所有不同的可能的坐标变换，并将正确分类数据点的百分比作为反馈，那就是在做机器学习。机器学习中的“学习”，是描述自动搜索更优的数据表征的过程。</p>
+<p>所有机器学习算法都包含自动化寻找这么一个转换：该转换能根据给定的任务将数据集转化成有用的特征表示。这个操作可能是坐标变换，如前所见，或者线性投影（线性投影可能损失有用的信息），翻译，非线性操作（比如，当x &gt; 0时，选中所有数据点），等等。机器学习算法通常不能创造性地搜索到这些转换；它们仅仅通过预定义的操作集合进行搜索，此过程也称为超参数空间（<em>hypothesis space</em>）。</p>
+<p>那究什么是竟机器学习呢？从技术上来讲，在预定义的参数空间内，自动搜索输入数据集有效的表征，并以反馈信号做引导。这个简单的理念可以解决广大的人工职能任务，从语音识别到自动驾驶。</p>
+<p>现在理解完机器学习的学习，下面开始探索是什么让深度学习比较特别。</p>
+<h6 id="1-1-4-何为深度学习的“深度”"><a href="#1-1-4-何为深度学习的“深度”" class="headerlink" title="1.1.4 何为深度学习的“深度”"></a>1.1.4 何为深度学习的“深度”</h6><p>深度学习是机器学习的一个特定子领域，其数据集的学习表征强调学习一系列连续的表征层，这些逐层的表征层不断地增加了有效的数据表征。深度学习的“深度”并不涉及更深度的学习方法；而是表示一系列连续的特征层的理念。数据模型的层数称为模型的深度（<em>depth</em>）。深度学习的其它叫法有，分层表征学习和多级表征学习。当前的深度学习经常涉及十层甚至上百层的连续特征表示层，它们都是从训练数据集自动学习的。其它机器学习的方法一般倾向于从训练数据学习一层或者两层的表征，因此，这种机器学习也称为浅层学习（<em>shallow learning</em>）。</p>
+<p>在深度学习中，这些表征层通常是通过多层神经网络（<em>neural network</em>）模型学习得到的。神经网络来源于生物科学，深度学习的核心概念启发自对人类大脑的理解，但是深度学习模型并不是大脑的模型。没有证据表明大脑实现的学习机制被用在了当前的深度学习模型。你可能偶然发现某些顶级科学文章宣称深度学习像大脑一样工作或者模拟大脑，但是实际情况不是这样的。这可能对该领域的新人在理解深度学习上带来疑惑和困扰。你不需要搞得像大脑一样神秘，只管忘掉看到的关于深度学习和生物相关的假设。深度学习是一个从训练数据学习表征的数学框架。</p>
+<p>深度学习算法到底如何进行表征学习呢？下面看一个几层深度网络的例子，其转换数字图片来识别图片中的数字，见图1.5：</p>
+<p><img src="http://img1.ph.126.net/zcurzP-FbaeciNhnqPCh-A==/6632257437283995751.jpg" alt="image"></p>
+<p>图1.5 图片识别数字的分类神经网络</p>
+<p>如图1.6所示，神经网络将数字图片转换为学习特征，对原始图片进行图像增强，从而识别出最终的结果。你可以认为神经网络经过多层连续的过滤器进行信息提取，最后得到结果。</p>
+<p><img src="http://img0.ph.126.net/GBppKkcw7ElSMkcN1nBC8A==/2590132735711099905.jpg" alt="image"></p>
+<p>图1.6 数字分类模型的深度学习表征</p>
+<p>所以，什么是深度学习呢？从技术性上讲，深度学习是多级数据集表征学习。就这么简单的机制，经过足够多层的扩展，能够魔术般的解决问题。</p>
+<h6 id="1-1-5-三张图理解深度学习工作原理"><a href="#1-1-5-三张图理解深度学习工作原理" class="headerlink" title="1.1.5 三张图理解深度学习工作原理"></a>1.1.5 三张图理解深度学习工作原理</h6><p>此时，你已经知道机器学习是通过观察样本数据集的输入和目标，进而学习将输入（比如，图片）和目标（比如，“cat”标签）映射。你也知道深度神经网络是从样本数据集中学习数据转换（也即学习表征），通过多层数据转换层实现输入和目标的映射。下面看下这个学习过程具体是如何工作的？</p>
+<p>layer处理输入数据的规范要求存储在layer的权重（<em>weights</em>）中，这些权重其实是一堆数值。从技术术语上讲，layer通过权重参数化实现了数据转换（权重有时也称layer的参数），见图1.7。本文中，学习（learning）意味着寻找神经网络中所有layer的权重值的集合，比如正确地将样本数据集的输入和相关的目标映射。这里需要注意的是，一个神经网络可能包含成千上万个参数。修改某个参数可能会影响其它所有的参数，那找到所有参数的正确值看似是个相当艰巨的任务。</p>
+<p><img src="http://img1.ph.126.net/qscFw2XAikKq0BnRFpyIpQ==/6632556504446747512.jpg" alt="image"></p>
+<p>图1.7  权重参数化的神经网络</p>
+<p>为了控制神经网络的输出，需要度量模型输出和期望值之间的距离。这部分是神经网络模型的损失函数（<em>loss function</em>）的工作，有时也称观察函数（<em>objective function</em>）。损失函数输入神经网络模型的预测值和实际目标（期望输出），计算两者之间的距离值，评估神经网络在训练模型上的效果，见图1.8。</p>
+<p><img src="http://img0.ph.126.net/WKE1LCZ2BbXaYf3mNGaejA==/6632287124097945627.jpg" alt="image"></p>
+<p>图1.8 度量神经网络模型输出的损失函数</p>
+<p>深度学习的主要诀窍是，使用损失函数值作为反馈信号微调权重值，降低训练数据在某个方向上的损失值，见图1.9。前面的调节过程是神经网络的优化器（<em>optimizer</em>）的工作。优化器是由后向传播算法（<em>Backpropagation</em>）实现的，其是深度学习的核心算法，下一章惠详细讲解向传播算法是如何工作的。</p>
+<p><img src="http://img2.ph.126.net/Vt1sOr95zZ_p5MSEzRD7yQ==/6632646664397631389.jpg" alt="image"></p>
+<p>图1.9 损失函数值调节权重值</p>
+<p>一般神经网络权重值先随机初始化，这时神经网络完成的看起来仅仅是些随机数据转换，它输出的结果自然地远离理想值，损失函数值也相应很高。但是随着神经网络数据处理的推进，权重值也在正确的方向上逐步微调，损失值也在降低。前面描述的过程称为迭代训练（<em>training loop</em>）。重复迭代足够的训练次数后得到的权重值会最小化损失函数值。具有最小化损失值的神经网络模型输出与期望的目标值几乎相同。</p>
+<h6 id="1-16-深度学习的应用场景"><a href="#1-16-深度学习的应用场景" class="headerlink" title="1.16 深度学习的应用场景"></a>1.16 深度学习的应用场景</h6><p>虽然深度学习是机器学习中早期的子领域，但是其也就在2010年代才稍微兴盛起来。过去几十年，深度学习没什么进展，只在感知学习问题上有点成绩。</p>
+<p>深度学习当前已经在机器学习难以出成绩的领域有了以下突破：</p>
+<ul>
+<li>图像分类</li>
+<li>语音识别</li>
+<li>手写字识别</li>
+<li>机器翻译</li>
+<li>文本语音转换</li>
+<li>智能数字设备，比如 Google Now和Amazon Alexa</li>
+<li>自动驾驶</li>
+<li>广告投放，比如Google，百度和微软的Bing</li>
+<li>网站搜索</li>
+<li>自然语言的问答</li>
+<li>AlphaGo</li>
+</ul>
+<p>人们仍在探索深度学习更广泛的领域，如果成功的话，深度学习可能在科学、软件开发等方面帮助人类开辟新世纪。</p>
+<p>未完待续。。。</p>
+<p>Enjoy!</p>
+<blockquote>
+<p>翻译本书系列的初衷是，觉得其中把深度学习讲解的通俗易懂。不光有实例，也包含作者多年实践对深度学习概念、原理的深度理解。最后说不重要的一点，François Chollet是Keras作者。</p>
+<h2 id="声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。"><a href="#声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。" class="headerlink" title="声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。"></a>声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。</h2><p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+</blockquote>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2017/05/19/distribute-frame-hsf-not-dubbo/" itemprop="url">
                   分布式服务框架选型：面对Dubbo，阿里巴巴为什么选择了HSF？
                 </a>
@@ -914,798 +2496,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/09/20/streaming-process-data-access/" itemprop="url">
-                  流式处理架构的“瓶颈”：数据访问（上）
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-09-20T11:31:42+08:00" content="2016-09-20">
-              2016-09-20
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p><em>写在之前：这是用微软输入法打出来的一篇文章。</em></p>
-<h5 id="背景"><a href="#背景" class="headerlink" title="背景"></a><em>背景</em></h5><p>在Linkedin，大体架构是：ApacheSamza作为流式处理框架，Apache Kafka作为持久化的订阅/发布消息中间件，Databus监控数据库的变化。</p>
-<h5 id="数据访问（Data-access）的两种模式"><a href="#数据访问（Data-access）的两种模式" class="headerlink" title="数据访问（Data access）的两种模式"></a><em>数据访问（Data access）的两种模式</em></h5><p>为什么数据访问是规模化的挑战？我们处理的数据访问模式主要分两种：</p>
-<p><em>Read/write data：</em><br>这里给出一个在Linkedin中使用read-write数据访问模式的场景。Linkedin许多应用需要推送信息给会员，不管通过email还是通知。为了保证更好的用户体验，尽量不多给会员发email。Linkedin开发一个基于Samza的ATC（Air Traffic Control ）应用来控制email和通知送达终端用户。ATC追踪每个会员收到的最后一封邮件的时间，以及所有新的邮件请求的时间。ATC维护着每个会员的状态信息（read/write）。</p>
-<p><em>Read-only data：</em><br>同样，给出一个只读数据访问的场景。Linkedin开发一个应用监听会员点击某条广告的事件的时间。这个应用会生成一个AdQuality事件，并高亮点击某些特定广告的会员特征。AdQuality事件会用来训练广告推荐机器学习模型。应用处理AdQuality事件会去查询点击广告的会员的画像。</p>
-<h5 id="数据访问的关键特征"><a href="#数据访问的关键特征" class="headerlink" title="数据访问的关键特征"></a><em>数据访问的关键特征</em></h5><p>除了以上描述的两种访问模式，以下两种数据访问的关键特征也将会极大地影响事件流式处理的架构。</p>
-<p><em>数据访问是否分区？</em><br>上面的场景，Kafka的topic是以MemberId分区的。输入事件已经按会员信息（MemberId）分区，那每个事件处理节点仅仅需要访问一个不变的会员数据集。后续我们会看到，如何对已经分区过的数据访问进行缓存优化。<br>另外一种场景，假设处理每个事件都需要查询Company库获取会员的更多信息，那每个事件处理节点就得查询可能的每个公司。这是访问未分区数据的例子。</p>
-<p><em>数据集的大小</em><br>后面会看到，访问一个5M数据集的解决方案跟访问一个5 TB数据集的方案完全不同。比如，你可以把5M数据集完整的存储到每个节点上，然而很显然你不可能对5 TB的数据集做同样的操作。</p>
-<h5 id="数据访问的解决方案"><a href="#数据访问的解决方案" class="headerlink" title="数据访问的解决方案"></a><em>数据访问的解决方案</em></h5><p>下面是展示的是两种常用的数据访问解决方案。</p>
-<p><em>远程存储</em>：这是开发应用的传统的方式。当一个应用处理一个事件，它会远程调用一个隔离的SQL或者No-SQL数据库。这种方法中，写操作总是采用远程调用，但是读数据可以通过本地缓存进行一定程度上的优化。LinkedIn有大量的应用采用这种方法。<br>另外一种模式，在远程数据库（比如，Oracle）前面前置一个远程缓存（比如，Couchbase）。远程缓存主要用来数据读操作，应用通过Databus之类的工具追踪数据库变化，并替代远程缓存。</p>
-<p><em>本地存储（嵌入式）</em>：这种方法是要求事件处理结果存储的位置和事件处理的地方在同一台机器上。极端的情况是所有数据存储访问都是本地，这样效率最高。<br>Samza天生就是支持嵌入式本地数据库，它支持把RocksDB嵌入你的事件处理器。它是通过Kafka log compacted topic做备份。</p>
-<p>也有其它框架，比如Microsoft ServiceFabric，它本身内建支持本地应用存储。ServiceFabric支持持久化数据到本地磁盘，并把备份持久化到其它处理器实例。ServiceFabric持久化会自动备份到Azure storage。</p>
-<h5 id="事件到达点-VS-事件处理点"><a href="#事件到达点-VS-事件处理点" class="headerlink" title="事件到达点 VS 事件处理点"></a><em>事件到达点 VS 事件处理点</em></h5><p>本地存储和远程存储的讨论是相对于事件处理的位置。在选择使用的框架时，事件到达的位置可能与事件处理的位置不在同一位置。</p>
-<p>像GoogleDataflow这类框架支持从未分区的输入源（GooglePub-Sub）读取数据。这种模型中，当事件到达时，处理器会先找出当前事件应该归哪个处理器处理，并转发到对应的实际处理器处理。</p>
-<p>而Samza、Spark Streaming和Flink之类的流处理框架《<a href="http://mp.weixin.qq.com/s?__biz=MzI0MDIxMDM0MQ==&amp;mid=2247483679&amp;idx=1&amp;sn=5e544ae789c8773f73b9e1d552e5f991#wechat_redirect" target="_blank" rel="external">实时流处理框架选型：就应该这样“拉出来遛遛”</a>》天然就支持事件的分区（Kafka，Kinesis等），因此不会再做一步转发处理。</p>
-<p>如果你的应用得瓶颈是网络带宽或者计算能力，那处理事件的节点和事件的到达在同一个节点不会出现转发，将会极大的提高性能。</p>
-<p>抛开在事件处理之前进行事件转发的情况，本文讨论的在事件处理过程中考虑数据访问这些依然对所有的事件处理框架适用。</p>
-<h5 id="在路上"><a href="#在路上" class="headerlink" title="在路上"></a><em>在路上</em></h5><p>海量流式处理没有一个完美的方案，大家可以根据公司的场景进行平衡取舍。</p>
-<p>本文主要讲了两种数据访问的模式，以及数据访问关键特征对架构的影响，并给出了相应的解决方案。最后讨论了事件到达和事件处理位置不同带来的解决方案不同。下期更精彩，敬请关注。</p>
-<p><em>PS：最近更新较少，说声抱歉了。这几周工作较忙，主要涉及到的知识点有：CDH集群、Hue、Zeppelin、Caravel for Hive、elasticsearch on hadoop/Hive、Gobblin、Neo4j等，可以后台留言交流。</em></p>
-<p><em>参考</em>：<br>[1] <a href="https://engineering.linkedin.com/blog/2016/08/stream-processing-hard-problems-part-ii--data-access" target="_blank" rel="external">https://engineering.linkedin.com/blog/2016/08/stream-processing-hard-problems-part-ii--data-access</a></p>
-<hr>
-<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
-<p>若发现以上文章有任何不妥，请联系我。</p>
-<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/09/20/visual-tools-for-machine-learning-part-2/" itemprop="url">
-                  机器学习模型选择如此简单
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-09-20T11:26:21+08:00" content="2016-09-20">
-              2016-09-20
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p><em>写在之前：有些概念跟平时你见过的机器学习文章描述的可能不太一样，但是它会给你一种“心里一颤“的感觉</em>。</p>
-<p>机器学习的讨论经常会涉及到的问题是：什么机器学习模型才是最好的？是逻辑回归模型，随机森林模型，贝叶斯方法模型，支持向量机模型？抑或是神经网络模型？每个人似乎都有自己心中最爱！但这些讨论试图把机器学习的挑战缩减为单个问题，而这对机器学习的初学者带来了特别严重的误解。</p>
-<p>选择一个好的机器学习模型固然重要，但这远远不够。在缺乏领域知识，基本假设，数据选型和实际的应用的情况下，还是值得商榷的。关于机器学习模型评价这部分将留在下一篇文章阐述。</p>
-<p> feature engineering (FE)，algorithm selection (AS)，and parameter tuning (PT)；</p>
-<h5 id="模型选择"><a href="#模型选择" class="headerlink" title="模型选择"></a>模型选择</h5><p>能训练一个“合适”的模型和预测是相当依赖特征工程、参数调优和模型选择。模型选择是机器学习过程比较难的部分，复杂、迭代，经常不断的去“试错”和重复。</p>
-<h6 id="模型选择实战"><a href="#模型选择实战" class="headerlink" title="模型选择实战"></a>模型选择实战</h6><p>相信大家对Scikit-Learn“<a href="http://scikit-learn.org/stable/tutorial/machine_learning_map" target="_blank" rel="external">如何选择Estimator</a>”里的流程图非常熟悉了，不熟悉的点开链接读读。这个流程图是给初学者一个选择机器学习算法的最佳实践的参考手册。</p>
-<p><img src="http://scikit-learn.org/stable/_static/ml_map.png" alt="image"></p>
-<p>首先，看下我们的数据集（三个数据集参考上篇《<a href="http://mp.weixin.qq.com/s?__biz=MzI0MDIxMDM0MQ==&amp;mid=2247483684&amp;idx=1&amp;sn=428cf35632b2408e1dc7d36dff497c53&amp;scene=21#wechat_redirect" target="_blank" rel="external">可视化图表让机器学习“biu”的一样简单：特征分析</a>》）的样本数是否够50。</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">print</span> len(occupancy) <span class="comment"># 8,143</span></div><div class="line"><span class="keyword">print</span> len(credit)    <span class="comment"># 30,000</span></div><div class="line"><span class="keyword">print</span> len(concrete)  <span class="comment"># 1,030</span></div></pre></td></tr></table></figure>
-<p>很显然这个条件是满足的。接着看下是否我们是否预测类别。对于房屋入住和信用卡数据集来说是判断类别；而混凝土数据集，缓凝土的抗压强度是连续数据，所以预测的是数量。因此，为前两个数据集选择分类器（classifier）；为后者选择回归模型（regressor）。</p>
-<p>因为我们的两个判断类别的数据集都小于100K，接着按图选择<em>sklearn.svm.LinearSVC</em>（其会将数据集映射到高维特征空间）；如果失败，就再选择<em>sklearn.neighbors.KNeighborsClassifier</em>（其会分配样本到它的K领域）。你应该还记得房屋入住数据集单位不统一，所以这里引入<em>scale</em>进行归一化：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> scale</div><div class="line"></div><div class="line"><span class="keyword">from</span> sklearn.svm <span class="keyword">import</span> LinearSVC</div><div class="line"><span class="keyword">from</span> sklearn.neighbors <span class="keyword">import</span> KNeighborsClassifier</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">classify</span><span class="params">(attributes, targets, model)</span>:</span></div><div class="line">    <span class="comment"># Split data into 'test' and 'train' for cross validation</span></div><div class="line">    splits = cv.train_test_split(attributes, targets, test_size=<span class="number">0.2</span>)</div><div class="line">    X_train, X_test, y_train, y_test = splits</div><div class="line"></div><div class="line">    model.fit(X_train, y_train)</div><div class="line">    y_true = y_test</div><div class="line">    y_pred = model.predict(X_test)</div><div class="line">    print(confusion_matrix(y_true, y_pred))</div><div class="line"></div><div class="line"><span class="comment"># Divide data frame into features and labels</span></div><div class="line">features = occupancy[[<span class="string">'temp'</span>, <span class="string">'humid'</span>, <span class="string">'light'</span>, <span class="string">'co2'</span>, <span class="string">'hratio'</span>]]</div><div class="line">labels   = occupancy[<span class="string">'occupied'</span>]</div><div class="line"></div><div class="line"><span class="comment"># Scale the features</span></div><div class="line">stdfeatures = scale(features)</div><div class="line"></div><div class="line">classify(stdfeatures, labels, LinearSVC())</div><div class="line">classify(stdfeatures, labels, KNeighborsClassifier())</div></pre></td></tr></table></figure>
-<p>对于信用卡数据集使用相同的<em>classify</em>，根据上篇的特征分析经验，我们这里需要先进行数据缺失处理。</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">features = credit[[</div><div class="line">    <span class="string">'limit'</span>, <span class="string">'sex'</span>, <span class="string">'edu'</span>, <span class="string">'married'</span>, <span class="string">'age'</span>, <span class="string">'apr_delay'</span>, <span class="string">'may_delay'</span>,</div><div class="line">    <span class="string">'jun_delay'</span>, <span class="string">'jul_delay'</span>, <span class="string">'aug_delay'</span>, <span class="string">'sep_delay'</span>, <span class="string">'apr_bill'</span>, <span class="string">'may_bill'</span>,</div><div class="line">    <span class="string">'jun_bill'</span>, <span class="string">'jul_bill'</span>, <span class="string">'aug_bill'</span>, <span class="string">'sep_bill'</span>, <span class="string">'apr_pay'</span>, <span class="string">'may_pay'</span>,</div><div class="line">    <span class="string">'jun_pay'</span>, <span class="string">'jul_pay'</span>, <span class="string">'aug_pay'</span>, <span class="string">'sep_pay'</span></div><div class="line">]]</div><div class="line">labels   = credit[<span class="string">'default'</span>]</div><div class="line"></div><div class="line">stdfeatures = scale(features)</div><div class="line"></div><div class="line">classify(stdfeatures, labels, LinearSVC())</div><div class="line">classify(stdfeatures, labels, KNeighborsClassifier())</div></pre></td></tr></table></figure>
-<p>对于混凝土数据集，我们得决定是否所有的特征都重要，或者只有一部分重要。如果选择所有的特征都很重要，那根据流程图手册路线应该选择<em>sklearn.linear_model.RidgeRegression</em>或者<em>sklearn.svm.SVR</em>（有点类似LinearSVC classifier）；如果觉得只有部分特征重要，那就选择<em>sklearn.linear_model.Lasso</em>（其会在预测时舍弃部分特征）或者<em>sklearn.linear_model.ElasticNet</em>（其介入 Lasso方法和Ridge方法之间，L1和 L2惩罚的线性组合）。</p>
-<p>下面来试试看咯：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">from</span> sklearn.linear_model <span class="keyword">import</span> Ridge, Lasso, ElasticNet</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">regress</span><span class="params">(attributes, targets, model)</span>:</span></div><div class="line">    splits = cv.train_test_split(attributes, targets, test_size=<span class="number">0.2</span>)</div><div class="line">    X_train, X_test, y_train, y_test = splits</div><div class="line"></div><div class="line">    model.fit(X_train, y_train)</div><div class="line">    y_true = y_test</div><div class="line">    y_pred = model.predict(X_test)</div><div class="line">    print(<span class="string">'Mean squared error = &#123;:0.3f&#125;'</span>.format(mse(y_true, y_pred)))</div><div class="line">    print(<span class="string">'R2 score = &#123;:0.3f&#125;'</span>.format(r2_score(y_true, y_pred)))</div><div class="line"></div><div class="line">features = concrete[[</div><div class="line">    <span class="string">'cement'</span>, <span class="string">'slag'</span>, <span class="string">'ash'</span>, <span class="string">'water'</span>, <span class="string">'splast'</span>, <span class="string">'coarse'</span>, <span class="string">'fine'</span>, <span class="string">'age'</span></div><div class="line">]]</div><div class="line">labels   = concrete[<span class="string">'strength'</span>]</div><div class="line"></div><div class="line">regress(features, labels, Ridge())</div><div class="line">regress(features, labels, Lasso())</div><div class="line">regress(features, labels, ElasticNet())</div></pre></td></tr></table></figure>
-<p>正如上面代码展示的那样，Scikit-Learn API使得我们可以快速的发布我们需要的模型，这是Scikit-Learn一个强有力的魔力。</p>
-<h5 id="可视化模型"><a href="#可视化模型" class="headerlink" title="可视化模型"></a>可视化模型</h5><p>Scikit-Learn流程图非常有用是因为其提供了使用路径地图，但是它不能提供各种模型的函数。因而另外两幅图成为Scikit-Learn的权威：<a href="http://scikit-learn.org/stable/auto_examples/classification/plot_classifier_comparison.html" target="_blank" rel="external">分类器比较</a>和<a href="http://scikit-learn.org/stable/auto_examples/cluster/plot_cluster_comparison.html" target="_blank" rel="external">聚类比较</a>。</p>
-<p>多个小图形很容易比较出不同的数据集适合的聚类算法：</p>
-<p><img src="http://scikit-learn.org/stable/_images/plot_classifier_comparison_001.png" alt="image"></p>
-<p>类似的，分类器比较图很好的帮助我们对不同的数据集选择哪种合适的分类器：</p>
-<p><img src="http://scikit-learn.org/stable/_images/plot_cluster_comparison_001.png" alt="image"></p>
-<p>一般来说，这些图形仅仅是证明了各种模型对不同数据集的优化；但我相信大家都希望有一种可视化工具可以对同一个数据集使用不同的模型的情况进行比较。</p>
-<h5 id="模型簇"><a href="#模型簇" class="headerlink" title="模型簇"></a>模型簇</h5><p>首先给出“模型”这个词的定义，它包括三方面：</p>
-<ul>
-<li>模型簇：比如，linear model，nearest neighbors，SVM，Bayes等模型；</li>
-<li>模型形式：比如，sklearn.linear_model.Ridge()，sklearn.linear_model.Lasso()，sklearn.linear_model.ElasticNet等；</li>
-<li>拟合模型：比如，Ridge().fit(X_train, y_train)。</li>
-</ul>
-<p>模型簇是由特征空间决定的；模型形式是通过试验和统计检验来选择的；拟合模型是由参数调优和机器计算生成的。</p>
-<p>我们讨论的这些，模型形式的试验会在后续文章中讲到，这部分是我们期望能够得到回报的想象空间。模型形式是指出我们的特征是如何和模型簇相关。</p>
-<p>我喜欢的模型展示工具之一是Dr. Saed Sayad的可交互的“<a href="http://www.saedsayad.com/data_mining_map.htm" target="_blank" rel="external">数据挖掘地图</a>”。它比Scikit-Learn的流程图手册综合性更高，并且结合里模型簇和模型形式的概念。除了预测方法外，Sayad地图也包含了统计方法部分。</p>
-<p>这里给出一个普适的流程图，它旨在结合Sayad地图和 Scikit-Learn流程图。颜色和等级代表模型形式和模型簇：</p>
-<p><img src="http://img1.ph.126.net/xsHUK3F6SKjQtXUHzDliYA==/6631651606375660672.png" alt="image"></p>
-<h5 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h5><p>通过在同一个数据集上比较和对比不同模型的性能，我们能从模型簇中直观的选取模型形式。</p>
-<p>下期将会讲解拟合模型和调参的可视化工具。</p>
-<p><em>PS：这周深入的“研究”了下Flume，日志收集利器，但是对Hadoop版本的支持太低，填了不少坑……</em></p>
-<p><em>希望我写的对部分人有用，如果是这样，请让我知道，谢谢。</em></p>
-<hr>
-<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
-<p>若发现以上文章有任何不妥，请联系我。</p>
-<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/08/21/spark-two-series-part-2/" itemprop="url">
-                  【Spark 2.0系列】：Catalog和自定义Optimizer
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-08-21T23:37:48+08:00" content="2016-08-21">
-              2016-08-21
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h4 id="Catalog和自定义Optimizer"><a href="#Catalog和自定义Optimizer" class="headerlink" title="Catalog和自定义Optimizer"></a>Catalog和自定义Optimizer</h4><p>Spark 2.0系列第一篇见<a href="http://mp.weixin.qq.com/s?__biz=MzI0MDIxMDM0MQ==&amp;mid=2247483729&amp;idx=1&amp;sn=22c40fd932ba7ffc3684a45e1861dd27#wechat_redirect" target="_blank" rel="external">Spark 2.0系列】：Spark Session API和Dataset API</a>，本文将讲解Spark 2.0 的Catalog 和Custom Optimizer。</p>
-<p>首先，先了解下RDD 和Dataset 在开发中使用对比。</p>
-<h5 id="RDD-和Dataset-使用对比"><a href="#RDD-和Dataset-使用对比" class="headerlink" title="RDD 和Dataset 使用对比"></a>RDD 和Dataset 使用对比</h5><p>Dataset API 是RDD 和DataFrame API 的统一，但大部分Dataset API 与RDD API使用方法看起来是相似的（其实实现方法是不同的）。所以RDD代码很容易转换成Dataset API。下面直接上代码：</p>
-<h6 id="WordCount"><a href="#WordCount" class="headerlink" title="WordCount"></a>WordCount</h6><ul>
-<li>RDD</li>
-</ul>
-<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> rdd = sparkContext.textFile(<span class="string">"src/main/resources/data.txt"</span>)</div><div class="line">  </div><div class="line"><span class="keyword">val</span> wordsRDD = rdd.flatMap(value =&gt; value.split(<span class="string">"\\s+"</span>))</div><div class="line"><span class="keyword">val</span> wordsPair = wordsRDD.map(word =&gt; (word,<span class="number">1</span>))</div><div class="line"><span class="keyword">val</span> wordCount = wordsPair.reduceByKey(_+_)</div></pre></td></tr></table></figure>
-<ul>
-<li>Dataset</li>
-</ul>
-<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> ds = sparkSession.read.text(<span class="string">"src/main/resources/data.txt"</span>)</div><div class="line"></div><div class="line"><span class="keyword">import</span> sparkSession.implicits._</div><div class="line"><span class="keyword">val</span> wordsDs = ds.flatMap(value =&gt; value.split(<span class="string">"\\s+"</span>))</div><div class="line"><span class="keyword">val</span> wordsPairDs = wordsDs.groupByKey(value =&gt; value)</div><div class="line"><span class="keyword">val</span> wordCountDs = wordsPairDs.count()</div></pre></td></tr></table></figure>
-<h6 id="其它"><a href="#其它" class="headerlink" title="其它"></a>其它</h6><table>
-<thead>
-<tr>
-<th></th>
-<th>RDD</th>
-<th>Dataset</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Caching</td>
-<td>rdd.cache()</td>
-<td>ds.cache()</td>
-</tr>
-<tr>
-<td>Filter</td>
-<td>val filteredRDD = wordsRDD.filter(value =&gt; value ==”hello”)</td>
-<td>val filteredDS = wordsDs.filter(value =&gt; value ==”hello”)</td>
-</tr>
-<tr>
-<td>Map Partition</td>
-<td>val mapPartitionsRDD = rdd.mapPartitions(iterator =&gt; List(iterator.count(value =&gt; true)).iterator)</td>
-<td>val mapPartitionsDs = ds.mapPartitions(iterator =&gt; List(iterator.count(value =&gt; true)).iterator)</td>
-</tr>
-<tr>
-<td>reduceByKey</td>
-<td>val reduceCountByRDD = wordsPair.reduceByKey(<em>+</em>)</td>
-<td>val reduceCountByDs = wordsPairDs.mapGroups((key,values) =&gt;(key,values.length))</td>
-</tr>
-</tbody>
-</table>
-<h6 id="Dataset-和RDD-相互转换"><a href="#Dataset-和RDD-相互转换" class="headerlink" title="Dataset 和RDD 相互转换"></a>Dataset 和RDD 相互转换</h6><ul>
-<li>RDD</li>
-</ul>
-<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> dsToRDD = ds.rdd</div></pre></td></tr></table></figure>
-<ul>
-<li>Dataset</li>
-</ul>
-<p>RDD 转换成Dataframe稍麻烦，需要指定schema。</p>
-<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> rddStringToRowRDD = rdd.map(value =&gt; <span class="type">Row</span>(value))</div><div class="line"><span class="keyword">val</span> dfschema = <span class="type">StructType</span>(<span class="type">Array</span>(<span class="type">StructField</span>(<span class="string">"value"</span>,<span class="type">StringType</span>)))</div><div class="line"><span class="keyword">val</span> rddToDF = sparkSession.createDataFrame(rddStringToRowRDD,dfschema)</div><div class="line"><span class="keyword">val</span> rDDToDataSet = rddToDF.as[<span class="type">String</span>]</div></pre></td></tr></table></figure>
-<h5 id="Catalog-API"><a href="#Catalog-API" class="headerlink" title="Catalog API"></a>Catalog API</h5><p>DataSet 和Dataframe API 支持结构化数据分析，而结构化数据重要的是管理metadata。这里的metadata包括temporary metadata（临时表）；registered udfs；permanent metadata（Hive metadata或HCatalog）。</p>
-<p>早期Spark版本并未提供标准的API访问metadata，开发者需要使用类似<em>show tables</em>的查询来查询metadata；而Spark 2.0 在Spark SQL中提供标准API 调用catalog来访问metadata。</p>
-<h6 id="访问Catalog"><a href="#访问Catalog" class="headerlink" title="访问Catalog"></a>访问Catalog</h6><p>建立SparkSession，然后调用Catalog：</p>
-<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> catalog = sparkSession.catalog</div></pre></td></tr></table></figure>
-<h6 id="查询数据库"><a href="#查询数据库" class="headerlink" title="查询数据库"></a>查询数据库</h6><figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">catalog.listDatabases().select(<span class="string">"name"</span>).show()</div></pre></td></tr></table></figure>
-<p><em>listDatabases</em>可查询所有数据库。在Hive中，Catalog可以访问Hive metadata中的数据库。<em>listDatabases</em>返回一个dataset，所以你可以使用适用于dataset的所有操作去处理metadata。</p>
-<h6 id="用createTempView-注册Dataframe"><a href="#用createTempView-注册Dataframe" class="headerlink" title="用createTempView 注册Dataframe"></a>用createTempView 注册Dataframe</h6><p>早期版本Spark用<em>registerTempTable</em>注册dataframe，而Spark 2.0 用<em>createTempView</em>替代。</p>
-<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">df.createTempView(<span class="string">"sales"</span>)</div></pre></td></tr></table></figure>
-<p>一旦注册视图，即可使用<em>listTables</em>访问所有表。</p>
-<h6 id="查询表"><a href="#查询表" class="headerlink" title="查询表"></a>查询表</h6><figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">catalog.listTables().select(<span class="string">"name"</span>).show()</div></pre></td></tr></table></figure>
-<h6 id="检查表缓存"><a href="#检查表缓存" class="headerlink" title="检查表缓存"></a>检查表缓存</h6><p>通过Catalog可检查表是否缓存。访问频繁的表缓存起来是非常有用的。</p>
-<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">catalog.isCached(<span class="string">"sales"</span>)</div></pre></td></tr></table></figure>
-<p>默认表是不缓存的，所以你会得到false。</p>
-<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">df.cache()</div><div class="line">catalog.isCached(<span class="string">"sales"</span>)</div></pre></td></tr></table></figure>
-<p>现在将会打印true。</p>
-<h6 id="删除视图"><a href="#删除视图" class="headerlink" title="删除视图"></a>删除视图</h6><figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">catalog.dropTempView(<span class="string">"sales"</span>)</div></pre></td></tr></table></figure>
-<h6 id="查询注册函数"><a href="#查询注册函数" class="headerlink" title="查询注册函数"></a>查询注册函数</h6><figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">catalog.listFunctions().</div><div class="line">select(<span class="string">"name"</span>,<span class="string">"description"</span>,<span class="string">"className"</span>,<span class="string">"isTemporary"</span>).show(<span class="number">100</span>)</div></pre></td></tr></table></figure>
-<p>Catalog不仅能查询表，也可以访问UDF。上面代码会显示Spark Session中所有的注册函数（包括内建函数）。</p>
-<h5 id="自定义-Optimizer"><a href="#自定义-Optimizer" class="headerlink" title="自定义 Optimizer"></a>自定义 Optimizer</h5><h6 id="Catalyst-optimizer"><a href="#Catalyst-optimizer" class="headerlink" title="Catalyst optimizer"></a>Catalyst optimizer</h6><p>Spark SQL使用Catalyst优化所有的查询，优化之后的查询比直接操作RDD速度要快。Catalyst是基于rule的，每个rule都有一个特定optimization，比如，<em>ConstantFolding</em> rule用来移除常数表达式，具体可直接看Spark SQL源代码。</p>
-<p>在早期版本Spark中，如果想自定义optimization，需要开发者修改Spark源代码。操作起来麻烦，而且要求开发者能读懂源码。在Spark 2.0中，已提供API自定义optimization。</p>
-<h6 id="访问Optimized-plan"><a href="#访问Optimized-plan" class="headerlink" title="访问Optimized plan"></a>访问Optimized plan</h6><p>在开始编写自定义optimization之前，先来看看如何访问optimized plan：</p>
-<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> df = sparkSession.read.option(<span class="string">"header"</span>,<span class="string">"true"</span>).csv(<span class="string">"src/main/resources/data.csv"</span>)</div><div class="line"><span class="keyword">val</span> multipliedDF = df.selectExpr(<span class="string">"amountPaid * 1"</span>)</div><div class="line">println(multipliedDF.queryExecution.optimizedPlan.numberedTreeString)</div></pre></td></tr></table></figure>
-<p>上面的代码是加载一个csv文件，并对某一行所有值乘以1。<em>queryExecution</em> 可访问查询相关的所有执行信息。 <em>queryExecution</em> 的<em>optimizedPlan</em>对象可以访问dataframe的optimized plan。</p>
-<p>Spark中的执行计划以tree表示，所以用<em>numberedTreeString</em>打印optimized plan。打印结果如下：</p>
-<blockquote>
-<p>00 Project [(cast(amountPaid#3 as double) <em> 1.0) AS (amountPaid </em> 1)#5]<br>01 +- Relation[transactionId#0,customerId#1,itemId#2,amountPaid#3] csv</p>
-</blockquote>
-<p>所有执行计划是由底向上读取：</p>
-<ul>
-<li>01 Relation - 从csv 文件建立一个dataframe</li>
-<li>00 Project - 投影操作</li>
-</ul>
-<h6 id="编写自定义optimizer-rule"><a href="#编写自定义optimizer-rule" class="headerlink" title="编写自定义optimizer rule"></a>编写自定义optimizer rule</h6><p>从上面的执行计划可以清晰的看到：对一列的每个值乘以1 这里并没有优化。我们知道，乘以1 这个操作应该返回的是值本身，所以可以利用这个特点来增加只能点的optimizer。代码如下：</p>
-<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">object</span> <span class="title">MultiplyOptimizationRule</span> <span class="keyword">extends</span> <span class="title">Rule</span>[<span class="type">LogicalPlan</span>] </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">apply</span></span>(plan: <span class="type">LogicalPlan</span>): <span class="type">LogicalPlan</span> = plan transformAllExpressions &#123;</div><div class="line">      <span class="keyword">case</span> <span class="type">Multiply</span>(left,right) <span class="keyword">if</span> right.isInstanceOf[<span class="type">Literal</span>] &amp;&amp;</div><div class="line">        right.asInstanceOf[<span class="type">Literal</span>].value.asInstanceOf[<span class="type">Double</span>] == <span class="number">1.0</span> =&gt;</div><div class="line">        println(<span class="string">"optimization of one applied"</span>)</div><div class="line">        left</div><div class="line">    &#125;</div><div class="line">  &#125;</div></pre></td></tr></table></figure>
-<p>这里MultiplyOptimizationRule扩展自Rule类，采用Scala的模式匹配编写。检测右操作数是否是 1，如果是1 则直接返回左节点。</p>
-<p>把MultiplyOptimizationRule加入进optimizer：</p>
-<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sparkSession.experimental.extraOptimizations = <span class="type">Seq</span>(<span class="type">MultiplyOptimizationRule</span>)</div></pre></td></tr></table></figure>
-<p>你可以使用<em>extraOptimizations</em>将定义好的Rule加入 catalyst。</p>
-<p>下面实际使用看看效果：</p>
-<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> multipliedDFWithOptimization = df.selectExpr(<span class="string">"amountPaid * 1"</span>)</div><div class="line">println(<span class="string">"after optimization"</span>)</div><div class="line">println(multipliedDFWithOptimization.queryExecution.</div><div class="line">optimizedPlan.numberedTreeString)</div></pre></td></tr></table></figure>
-<p>我们看到打印结果：</p>
-<blockquote>
-<p>00 Project [cast(amountPaid#3 as double) AS (amountPaid * 1)#7]<br>01 +- Relation[transactionId#0,customerId#1,itemId#2,amountPaid#3] csv</p>
-</blockquote>
-<p>说明自定义Optimizer已生效。</p>
-<hr>
-<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
-<p>若发现以上文章有任何不妥，请联系我。</p>
-<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/08/21/spark_and_redis_connector/" itemprop="url">
-                  Spark借助Redis提升45倍处理效率！
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-08-21T19:57:36+08:00" content="2016-08-21">
-              2016-08-21
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p><em>摘要</em>:时常采用内存数据结构会使得程序更加高效，比如，Spark借助Redis可以提速45倍。</p>
-<p>Spark代表着下一代大数据处理技术，并且，借着开源算法和计算节点集群分布式处理，Spark和Hadoop在执行的方式和速度已经远远的超过传统单节点的技术架构。但Spark利用内存进行数据处理，这让Spark的处理速度超过基于磁盘的Hadoop 100x 倍。</p>
-<p>但Spark和内存数据库<a href="http://www.redislabs.com" target="_blank" rel="external">Redis</a>结合后可显著的提高Spark运行任务的性能，这源于Redis优秀的数据结构和执行过程，从而减小数据处理的复杂性和开销。Spark通过一个Redis连接器可以访问Redis的数据和API，加速Spark处理数据。</p>
-<p>Spark和Redis结合使用到底有多大的性能提升呢？结合这两者来处理时序数据时可以提高46倍以上——而不是提高百分之四十五。</p>
-<p>为什么这些数据处理速度的提升是很重要的呢？现在，越来越多的公司期望在交易完成的同时完成对应的数据分析。公司的决策也需要自动化，而这些需要数据分析能够实时的进行。Spark是一个用的较多的数据处理框架，但它不能做到百分之百实时，要想做到实时处理Spark还有很大一步工作需要做。<br><img src="http://img2.ph.126.net/QalVm_AuA5Vx7x2lxXEWbw==/6598067023763790131.png" alt="此处输入图片的描述"><br>图1</p>
-<h3 id="Spark-RDD"><a href="#Spark-RDD" class="headerlink" title="Spark RDD"></a>Spark RDD</h3><p>Spark采用弹性分布式数据集（RDD），可将数据存在易变的内存中或持久化到磁盘上。 RDD具有不可变化性，分布式存储在Spark集群的各节点，RDD经过tansform操作后创建出一个新的RDD。RDD是Spark中数据集的一种重要抽象，具有良好的容错性、高效的迭代处理。</p>
-<h3 id="Redis"><a href="#Redis" class="headerlink" title="Redis"></a>Redis</h3><p>Redis天生为高性能设计，通过良好的数据存储结构能达到亚毫秒级的延迟。Redis的数据存储结构不仅仅提高内存的利用和减小应用的复杂性，也降低了网络负载、带宽消耗和处理时间。Redis数据结构包括字符串（strings）， 散列（hashes）， 列表（lists）， 集合（sets）， 有序集合（sorted sets）， bitmaps， hyperloglogs 和 地理空间（geospatial）索引半径查询。</p>
-<p>下面来展示Redis的数据结构如何来简化应用的处理时间和复杂度。这里用有序集合来举例，一个以评分（score）大小排序的元素集合。<br><img src="http://img2.ph.126.net/MatkU-NaQLLkh2i_OdRhtw==/6598097810089184567.png" alt="此处输入图片的描述"><br>图2</p>
-<p>Redis能存储多种数据类型，并自动的以评分（score）排序。常见的例子有，按价格排序的商品，以阅读数排序的文章名，股票价格时序数据，带时间戳的传感器读数。<br>有序集合依赖Redis优秀的内建操作可以实现范围查询、求交集，可以非常快地（O(log(N))）完成添加，删除和更新元素的操作。Redis内建函数不仅减少代码开发，在内存中执行也减小了网络延时和带宽消耗，可达到亚毫秒级的吞吐延迟。特别地，对时序数据集合来讲，有序集合数据结构比使用内存键值对或使用磁盘的数据库，能给数据分析带来数量级上的性能提升。</p>
-<h3 id="Spark-Redis-connector"><a href="#Spark-Redis-connector" class="headerlink" title="Spark-Redis connector"></a>Spark-Redis connector</h3><p>为了提高Spark数据分析的能力，Redis团队开发了一个<a href="https://github.com/RedisLabs/spark-redis" target="_blank" rel="external">Spark-Redis connector</a>，它使得Spark可以直接使用Redis作为数据源，顺理成章的Spark也能使用Redis的各数据结构，进而显著的提升Spark分析数据的速度。<br><img src="http://img2.ph.126.net/EjDbOsyQrDo6nRi2gkM66w==/6598082416926397895.png" alt="此处输入图片的描述"><br>图3</p>
-<p>为了展示Spark结合Redis所产生的效果，Redis团队拿时序数据集合做基准测试，测试了Spark在不同情况下执行时间范围查询：Spark使用堆外内存；Spark使用Tachyon作为堆外缓存；Spark使用HDFS存储；Spark结合Redis使用。</p>
-<p>Redis团队改进了Cloudera的Spark分析时序数据的包，采用<a href="https://github.com/RedisLabs/spark-timeseries/blob/redis/src/main/scala/com/redislabs/provider/redis/rdd/RedisRDD.scala#L26" target="_blank" rel="external">Redis有序集合数据结构加速时序数据分析</a>，并且实现Spark访问Redis各类数据结构的接口。此Spark-Redis时序开发包主要做了两件事：</p>
-<ol>
-<li>它让Redis节点与Spark集群的节点自动匹配，确保每个Spark节点都使用本地Redis节点，这样可以明显的优化延迟时间；</li>
-<li>集成Spark DataFrame和Spark读取数据源，使得Spark SQL查询可自动转化，并能借助Redis能有效的恢复数据。</li>
-</ol>
-<p>换句话说，使用Spark-Redis时序开发包意味着用户无需担心Spark和Redis两者如何使用。用户使用Spark SQL进行数据分析可以获得极大的查询性能提升。</p>
-<h3 id="基准测试"><a href="#基准测试" class="headerlink" title="基准测试"></a>基准测试</h3><p>基准测试的时序数据集是跨度32年的1024个股票交易市场按天随机生成的数据。每个股票交易所都有有序数据集，以日期和元素属性（开盘价、最高价、最低价、收盘价等）排序，在Redis中以有序数据结构存储，采用Spark进行数据分析，描述如图4<br><img src="http://img2.ph.126.net/heSh9IpGiauqBoZqf9egyg==/6598076919368260259.png" alt="此处输入图片的描述"><br>图4</p>
-<p>在上述列子中，就有序集合AAPL来看，有序数据集合以天为评分（score，以蓝色表示），每天相关的值为一行（Member，以灰色表示）。在Redis中，只要执行一个ZRANGEBYSCORE操作就可以获取一个指定时间范围内的所有股票数据，并且Redis执行此查询要比其他Key/Value数据库快100倍。<br>从图x可以看到，横向比较各种情况的基准测试，Spark结合Redis执行时间片的查询速度比Spark使用HDFS快135倍、比Spark使用堆内内存或Spark使用Tachyon作为堆外内存要快45倍。<br><img src="http://img1.ph.126.net/UieEUHKoGh9ex9aJiMHPZQ==/6598192368089172532.png" alt="此处输入图片的描述"><br>图5</p>
-<h3 id="Spark-Redis其它应用"><a href="#Spark-Redis其它应用" class="headerlink" title="Spark-Redis其它应用"></a>Spark-Redis其它应用</h3><p>按照“<a href="https://redislabs.com/solutions/spark-and-redis" target="_blank" rel="external">Getting Started with Spark and Redis</a>”指南，你可以一步步安装Spark集群和使用Spark-Redis包。它提供一个简单的wordcount的例子展示如何使用Spark结合Redis。待你熟练使用后可以自己进一步挖掘、优化其他的Redis数据结构。<br>Redis的有序集合数据结构很适合时序数据集合，而Redis其他数据结构（比如，列表（lists）， 集合（sets）和 地理空间（geospatial）索引半径查询）也能进一步丰富Spark的数据分析。当使用Spark抽取地理空间信息来获取新产品的人群偏好和邻近中心的位置，可结合Redis的地理空间（geospatial）索引半径查询来优化。</p>
-<p>Spark支持一系列的数据分析，包括SQL、机器学习、图计算和流式数据。Spark本身的内存数据处理能力有一定的限制，而借着Redis可以让Spark更快的做数据分析。其实Spark的DataFrame和Datasets已经在做类似的优化，先把数据进行结构化放在内存里进行计算，并且Datasets可以省掉序列化和反序列化的消耗。结合Spark和Redis，借助Redis的共享分布式内存数据存储机制，可以处理数百万个记录乃至上亿的记录<br>时序数据的分析仅仅是一个开始，更多的性能优化可以参见：<a href="https://github.com/RedisLabs/spark-timeseries" target="_blank" rel="external">Spark-Redis</a>。</p>
-<h4 id="参考"><a href="#参考" class="headerlink" title="参考;"></a><em>参考</em>;</h4><hr>
-<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
-<p>若发现以上文章有任何不妥，请联系我。</p>
-<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"><br>~</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/08/21/use_spark_sql_or_dataframe_for_query_graphgrame/" itemprop="url">
-                  基于Spark DataFrame的图数据库GraphFrame：用Spark SQL查询Graph
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-08-21T19:52:22+08:00" content="2016-08-21">
-              2016-08-21
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="GraphFrame发布"><a href="#GraphFrame发布" class="headerlink" title="GraphFrame发布"></a><strong>GraphFrame发布</strong></h3><p>GraphFrame基于Spark SQL的DataFrame，继承了DataFrame扩展性和高性能。并且可以提供支持Scala、Java和Python等语言的统一API。</p>
-<h3 id="什么是GraphFrame"><a href="#什么是GraphFrame" class="headerlink" title="什么是GraphFrame"></a><strong>什么是GraphFrame</strong></h3><p>GraphFrame是类似于Spark的GraphX库，支持图处理。但GraphFrame建立在Spark DataFrame之上，具有以下重要的优势：<br>支持Scala ，Java 和Python API：GraphFrame提供统一的三种编程语言APIs，而GraphX的所有算法支持Python和Java<br>方便、简单的图查询：GraphFrame允许用户使用Spark SQL和DataFrame的API查询<br>支持导出和导入图：GraphFrame支持DataFrame数据源，使得可以读取和写入多种格式的图，比如，Parquet、JSON和CSV格式。</p>
-<h3 id="社交网络的列子"><a href="#社交网络的列子" class="headerlink" title="社交网络的列子"></a><strong>社交网络的列子</strong></h3><p>社交网络中的人是以关系来互相连接的，我们能把这个网络看成一幅图，其中人看成顶点，人与人之间的关系看作是边，如图1所示：<br><img src="http://img0.ph.126.net/7NaiyaPFpW3oxa26wNb0SQ==/4856287773289568868.jpg" alt="此处输入图片的描述"><br>图1<br>在社交网络上，每个人可能由年龄和名字，每个人之间的关系也有不同类型。如表1和表2<br>表1<br><img src="http://img0.ph.126.net/VHcML9Lw9s0HThseBKZFIQ==/6631272274867367835.png" alt="此处输入图片的描述"></p>
-<p>表2<br><img src="http://img2.ph.126.net/QX3apWm32f7AHBbYV8-kXA==/6631388823099920156.png" alt="此处输入图片的描述"></p>
-<h3 id="图查询示列"><a href="#图查询示列" class="headerlink" title="图查询示列"></a><strong>图查询示列</strong></h3><p>由于GraphFrame的顶点和边存储为DataFrame，可以用DataFrame或SQL来很简单的查询图。<br>比如，查询有多少年龄大于35的人？<br>g.vertices.filtr(“age &gt; 35”)<br>比如，有多少人至少被2个人关注？<br>g.inDegrees.filter(“inDegree &gt;=2”)</p>
-<p>GraphFrames支持所有GraphX的算法，包括PageRank、Shortest Paths、Connected components、Strongly Connected components、Triangle count 和Label Propagation Algorithm（LPA）</p>
-<p>GraphFrame和GraphX之间可以无损的来回转换。<br>val gx: Graph[Row, Row] = g.toGraphX()<br>val g2: GraphFrame = GraphFrame.fromGraphX(gx)<br>更相信的GraphFrame API文档见<a href="http://graphframes.github.io/api/scala/index.html#org.graphframes.GraphFrames" target="_blank" rel="external">这里</a>。</p>
-<h3 id="参考"><a href="#参考" class="headerlink" title="参考:"></a><em>参考</em>:</h3><hr>
-<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
-<p>若发现以上文章有任何不妥，请联系我。</p>
-<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"><br>~</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/08/21/tiwtter_discover_and_consume_data/" itemprop="url">
-                  Twitter数据平台的架构演化：分析数据的数据发现和消费
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-08-21T19:42:48+08:00" content="2016-08-21">
-              2016-08-21
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p><em>导读</em>：本文详细讲述Twitter数据平台的架构演化：分析数据的数据发现和消费。</p>
-<h4 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h4><p> Twitter数据平台维护数据系统来支持和管理各种业务的数据生产和消费，包括，公用报表指标（比如，月活跃或者天活跃），个性化推荐，A/B测试，广告营销等。 Twitter数据平台运维着一些全球最大的Hadoop集群，其中有几个集群超过1万个节点，存储着数百PB级数据集，每天有超过10万个日常job作业处理数十PB级数据量。<a href="http://github.com/twitter/scalding" target="_blank" rel="external">Scalding</a>用来在HDFS上进行数据清洗（ETL：Extract，Transform和Load），数据科学家和数据分析师使用<a href="https://github.com/prestodb/presto" target="_blank" rel="external">Presto</a>进行交互式查询。MySQL或者Vertica用来作普通的数据集聚合，然后Tableau仪表板展示。<a href="https://blog.twitter.com/2014/manhattan-our-real-time-multi-tenant-distributed-database-for-twitter-scale" target="_blank" rel="external">Manhattan</a>是Twitter的分布式数据库，其为实时服务服务。</p>
-<p>Twitter数据平台团队从刚开始的单个数据分析组，其仅仅拥有核心的数据集，到成百上千的员工（团队）产生和消费这些数据集。这意味着：数据源发现，数据源的完成链（例如，这些数据源是如何产生和消费的）的获取，不考虑数据源的格式、位置和工具的数据集消费和它们整个生命周期内的一致性管理，将成为一个比较现实的问题。</p>
-<p>为了满足这些需求，数据平台团队开发出数据访问层（Data Access Layer (DAL)）：</p>
-<ul>
-<li>数据发现：如何发现最重要的数据集？谁拥有这些数据集？数据集的语义和其它相关的元数据是什么？</li>
-<li>数据审计：数据集的创建这或者消费者是哪位？数据集是如何创建这些数据的？数据集的依赖和服务等级协议（SLAs）是什么？数据集的报警规则是什么？数据集和它们的依赖是否一致？数据集的生命周期是如何管理的？</li>
-<li>数据抽象：数据的逻辑描述是什么？数据的物理描述是什么？数据存储在哪里？数据副本在哪里？数据格式是什么？</li>
-<li>数据消费：各种客户端（比如，Scalding，Presto，Hive等等）是如何交互地使用数据平台的各数据集？</li>
-</ul>
-<p>本文中将讨论DAL更高层次的设计和使用，DAL是如何符合整个大数据平台生态，以及分析一些实践和经验教训。</p>
-<h4 id="DAL架构设计"><a href="#DAL架构设计" class="headerlink" title="DAL架构设计"></a>DAL架构设计</h4><p>为了让数据抽象，DAL有一个逻辑数据集和物理数据集的概念。逻辑数据集代表着数据集要独立于存储类型、存储位置、存储格式和存储副本之外。一个逻辑数据集可以物化到多个存储位置，甚至可以存储到不同的存储系统上，比如，HDFS或者Vertica。物理数据集是和物理存储位置（比如，HDFS namenode，像Vertica或MySQL这样的数据库等）关联的，所有的分片（物理数据块）在物理存储上。根据它们的类型，分片可以是分区或者快照。消费的数据集的元数据（Metadata）存储在物理数据集层。<br>这种抽象的好处：<br>a）：跨多种物理实现，分组聚合相同的逻辑数据集，更易数据集发现；<br>b）：提供消费数据集所需要的所有信息，包括数据集存储格式，数据集存储位置，以及调用的客户端（比如，Scalding或者Presto）。DAL数据集附加元数据，使得数据发现和数据消费更容易（如下所示）。因为所有的数据访问都通过DAL层，我们使用DAL层获取所有数据集的生产和消费的完整链。（其实跟阿里内部的数据地图差不多的意义）。</p>
-<p>下面的架构图显示DAL层是如何配合数据平台的架构：<br><img src="http://img1.ph.126.net/FEKRG1rW3QV61GWGt6PdKg==/6631557048373689499.jpg" alt="此处输入图片的描述"></p>
-<p>在技术栈的底层，核心基础设施包括Hadoop集群和数据库（比如，Vertica，MySQL和Manhattan）。核心数据服务层包括数据访问层（DAL），checkpoit作业状态和依赖的应用状态管理服务，以及job作业延迟报警服务。建立在核心数据服务层之上的是数据生命周期管理，包括数据复制服务和数据删除服务，数据复制服务会管理跨Hadoop集群的数据复制；数据删除服务会根据数据过期策略来删除数据。数据处理工具包括前面提到的Scalding和Presto，也包括自建的ETL工具来实现不同后端（比如，HDFS，Vertica或者MySQL）间的数据转换。</p>
-<p>数据展示的UI（外界称为EagleEye）通过核心数据服务层聚合元数据（Metadata），也作为Twitter数据入口的控制。EagleEye用来发现数据集和应用，以及展示它们之间依赖的关系图。</p>
-<h4 id="如何发现和消费数据集？"><a href="#如何发现和消费数据集？" class="headerlink" title="如何发现和消费数据集？"></a>如何发现和消费数据集？</h4><p>像前面涉及到的，DAL数据集带有额外的元数据，可以轻松做到数据发现和消费。Twitter数据平台团队使用下面的数据资源管理来发现和消费数据集。</p>
-<h5 id="发现一个数据集"><a href="#发现一个数据集" class="headerlink" title="发现一个数据集"></a>发现一个数据集</h5><p>数据平台提供的数据资源管理中 “Discover Data Sources”模块能发现使用过的数据集，或者搜索感兴趣的数据集。数据资源管理通过DAL层搜索这个数据集。<br><img src="http://img2.ph.126.net/rDzMYLctfac6cUUkbZjHQA==/6631478983048121372.jpg" alt="此处输入图片的描述"></p>
-<h5 id="数据集的预览信息"><a href="#数据集的预览信息" class="headerlink" title="数据集的预览信息"></a>数据集的预览信息</h5><p>如果数据资源管理找到了我们想查询的数据集，它将展示给使用者预览信息。如下图，数据集在HDFS上被找到，数据资源管理中可以看到数据拥有者的描述，以及通过一定的启发式计算数据集的整体健康状态。我们也能预览的元数据字段有数据集的拥有者，数据集的访问频率，代表数据schema的thrift类，HDFS上的物理位置。<br><img src="http://img2.ph.126.net/JzYMozxQTLRtmOK7x8j26A==/6631502072792305004.jpg" alt="此处输入图片的描述"></p>
-<p>我们也可以检验数据集的schema，包括用户对特殊字段添加的评论。类似的，schema也可以让其它系统（Vertica或者MySQL）发现。<br><img src="http://img0.ph.126.net/tPUwFyvntZgM4T4hmJr4GA==/6631754960466694542.jpg" alt="此处输入图片的描述"></p>
-<p>接下来给个例子，下面给出的代码截图是使用Scalding的例子。注意到，对读者来说，数据存储格式和位置都经过抽象。当通过Scalding运行下面的代码，时间范围提供给DAL，DAL提供数据分片的位置和格式。DAL的Scalding客户端接收刚才的信息，以Hadoop的合适的split数目来构造合适的Cascading Tap。</p>
-<p><img src="http://img0.ph.126.net/q0EO2PDu337DcBl_QLCtuQ==/6631602128350431009.jpg" alt="此处输入图片的描述"></p>
-<h5 id="数据集的完整链和依赖"><a href="#数据集的完整链和依赖" class="headerlink" title="数据集的完整链和依赖"></a>数据集的完整链和依赖</h5><p>数据集资源管理也可以查看生产和消费数据集的作业和作业的完整链。从图中可以看出，有一个job作业产生数据集（图中红框），同时有好几个job作业在消费这个数据集。红框中的数据的生成依赖HDFS上的好几个数据集。并且，如果其中的某个job作业生成数据集延迟了，将会发出告警。<br><img src="http://img0.ph.126.net/gKCb7V9eheRIf62pZGTdHQ==/6631780249234131459.png" alt="此处输入图片的描述"></p>
-<h4 id="实践-amp-经验教训"><a href="#实践-amp-经验教训" class="headerlink" title="实践 &amp; 经验教训"></a>实践 &amp; 经验教训</h4><p>在这样Twitter体量的公司，想简化数据集跨所有数据格式和存储系统进行消费是很难的。也有一些像<a href="https://cwiki.apache.org/confluence/display/Hive/Design#Design-Metastore" target="_blank" rel="external">Hive Metastore</a>这样开源的工具可以解决数据抽象，但其只有一部分功能。其它功能，比如数据集的审计和依赖链，管理数据集过期和复制和数据更易消费，也是很重要。</p>
-<p>在实现DAL时做出了设计上的选择：把DAL设计成一个抽象和消费层，而不是仅仅聚焦在数据发现和审计。这么做的目的是为了让DAL成为数据集真实的来源，这将帮助我们透明的转换数据格式（比如，从lzo压缩的Thrift转换到Parquet格式），帮助我们使用相同的元数据从各种工具中产生和消费数据（比如，Scalding和Presto），帮助我们进行job作业角色的迁移（因为job作业的所有者和团队角色的不断演化，发生的相当频繁），让数据集的过期管理和复制管理在同一个地方完成。</p>
-<p>在DAL刚开始实现阶段，Twitter团队把DAL作为一种library，并且DAL可以直接喝后端数据库会话。这是相当脆弱的，有这么几个原因：安全很弱，因为证书不得不分发到各个客户端；每个客户端都直接连接到数据库是相当困难的；由于客户端的重新发布对所有用户来说，更新是非常缓慢的。数据平台团队移除了这个模块，构建了服务层。</p>
-<p>数据平台团队开发DAL涉及到成千上万的job作业需要重新部署依赖（例如，从HDFS到DAL），这个过程中却有正在线上运行的产品。需要严密和严谨的工作而不中断这些job作业。如果仅仅在意数据依赖链和审计，那这个实现将是相当的简单和安全，因为作者可以通过异步或者离线处理。迁移是困难的，耗时的，做好的做法是增量式迁移。但作者知道元数据服务是每个数据平台都需要的，所以，强烈推荐首先要做的是构建一个数据平台基础。</p>
-<h4 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h4><hr>
-<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
-<p>若发现以上文章有任何不妥，请联系我。</p>
-<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"><br>~</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1751,7 +2541,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">21</span>
+              <span class="site-state-item-count">27</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>

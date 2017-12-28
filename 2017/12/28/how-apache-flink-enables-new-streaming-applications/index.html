@@ -1,0 +1,654 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="神机喵算" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="写在之前：此文翻译自：how-apache-flink-enables-new-streaming-applications，做了少许改动，感谢原作者。
+速度是成功的一重要要素，流处理技术的速度使得其越来越受青睐。在现实世界中，数据产品总是以持续不断的处理面目示人，比如，web服务日志，移动应用用户行为，或者传感器数据。
+到目前为止，大部分数据处理架构技术栈都建立在有限的、静态的数据假设之上。现代">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Flink开启流处理技术新潮流：解决流处理event time和消息乱序">
+<meta property="og:url" content="http://yoursite.com/2017/12/28/how-apache-flink-enables-new-streaming-applications/index.html">
+<meta property="og:site_name" content="神机喵算">
+<meta property="og:description" content="写在之前：此文翻译自：how-apache-flink-enables-new-streaming-applications，做了少许改动，感谢原作者。
+速度是成功的一重要要素，流处理技术的速度使得其越来越受青睐。在现实世界中，数据产品总是以持续不断的处理面目示人，比如，web服务日志，移动应用用户行为，或者传感器数据。
+到目前为止，大部分数据处理架构技术栈都建立在有限的、静态的数据假设之上。现代">
+<meta property="og:image" content="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg">
+<meta property="og:updated_time" content="2017-12-28T07:24:57.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Flink开启流处理技术新潮流：解决流处理event time和消息乱序">
+<meta name="twitter:description" content="写在之前：此文翻译自：how-apache-flink-enables-new-streaming-applications，做了少许改动，感谢原作者。
+速度是成功的一重要要素，流处理技术的速度使得其越来越受青睐。在现实世界中，数据产品总是以持续不断的处理面目示人，比如，web服务日志，移动应用用户行为，或者传感器数据。
+到目前为止，大部分数据处理架构技术栈都建立在有限的、静态的数据假设之上。现代">
+<meta name="twitter:image" content="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/12/28/how-apache-flink-enables-new-streaming-applications/"/>
+
+  <title> Flink开启流处理技术新潮流：解决流处理event time和消息乱序 | 神机喵算 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">神机喵算</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Flink开启流处理技术新潮流：解决流处理event time和消息乱序
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-12-28T15:24:57+08:00" content="2017-12-28">
+              2017-12-28
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><em>写在之前：此文翻译自：<a href="http://data-artisans.com/how-apache-flink-enables-new-streaming-applications-part-1" target="_blank" rel="external">how-apache-flink-enables-new-streaming-applications</a>，做了少许改动，感谢原作者。</em></p>
+<p>速度是成功的一重要要素，流处理技术的速度使得其越来越受青睐。在现实世界中，数据产品总是以持续不断的处理面目示人，比如，web服务日志，移动应用用户行为，或者传感器数据。</p>
+<p>到目前为止，大部分数据处理架构技术栈都建立在有限的、静态的数据假设之上。现代流处理技术在不断地努力，通过模拟和处理现实世界的event，而最理想的模拟情况是把数据看作“streams”。Flink不但实现“streams”流，而且具有开创性的技术点。本篇先来讲述Flink解决消息乱序和event time窗口。</p>
+<h5 id="消息乱序和event-time窗口"><a href="#消息乱序和event-time窗口" class="headerlink" title="消息乱序和event time窗口"></a>消息乱序和event time窗口</h5><p>在讨论解决消息乱序问题之前，需先定义时间和顺序。在流处理中，时间的概念有两个：</p>
+<ul>
+<li><strong>Event time </strong>：Event time是事件发生的时间，经常以时间戳表示，并和数据一起发送。带时间戳的数据流有，Web服务日志、监控agent的日志、移动端日志等；</li>
+<li><strong>Processing time </strong> ：Processing time是处理事件数据的服务器时间，一般是运行流处理应用的服务器时钟。</li>
+</ul>
+<p>许多流处理场景中，事件发生的时间和事件到达待处理的消息队列时间有各种延迟：</p>
+<ol>
+<li>各种网络延迟；</li>
+<li>数据流消费者导致的队列阻塞和反压影响；</li>
+<li>数据流毛刺，即，数据波动；</li>
+<li>事件生产者（移动设备、传感器等）离线；</li>
+</ol>
+<p>上述诸多原因会导致队列中的消息频繁乱序。事件发生的时间和事件到达待处理的消息队列时间的不同随着时间在不断变化，这常被称为时间偏移（<em>event time skew</em>），表示成：<em>“processing time – event time”</em>。</p>
+<p>对大部分应用来讲，基于事件的创建时间分析数据比基于事件的处理时间分析数据要更有意义。Flink允许用户定义基于事件时间（event time）的窗口，而不是处理时间。</p>
+<p>Flink使用<em>事件时间 clock</em> 来跟踪事件时间，其是以<em>watermarks</em>来实现的。<em>watermarks</em>是Flink 源流基于事件时间点生成的特殊事件。 <em>T</em> 时间点的<em>watermarks</em>意味着，小于 T 的时间戳的事件不会再到达。Flink的所有操作都基于<em>watermarks</em>来跟踪事件时间。</p>
+<p>下图描述Flink是如何计算事件时间窗口。当<em>watermarks</em>到达时窗口计算会被触发，并更新事件时间clock：</p>
+<p>很明显，左上角<em>watermarks</em> W(4)快要到达，出现计算窗口T1-T4；右上角因为消息有乱序（事件时间为3的事件排在事件时间为7的后面），同时出现两个计算窗口T1-T4和T4-T8；左下角<em>watermarks</em> W(4)触发计算窗口演化，小于事件时间4的事件不再到达；右下角参考前面解读。</p>
+<p>基于事件时间的Pipeline会产生更精确的结果，因为一旦有相应事件时间的事件到达会尽快计算；而相对于周期性的批量处理来讲，基于事件时间的数据流pipeline会更早的计算出结果，并且更精确（批量处理不能很好的处理跨batch的消息乱序）。</p>
+<h5 id="结合事件时间和实时pipeline"><a href="#结合事件时间和实时pipeline" class="headerlink" title="结合事件时间和实时pipeline"></a>结合事件时间和实时pipeline</h5><p>事件时间pipeline会因为必要的事件时间过程而导致一定的延迟。有时延迟太大导致无法获得实时结果，这时就得增加延迟短的结果。</p>
+<p>Flink是一个流处理框架，能毫秒级处理事件，它能在同一个应用中综合低延迟的实时pipeline和事件时间pipeline，列子如下：</p>
+<ol>
+<li>基于单个事件的低延迟报警。如果某类事件被识别，需要发出报警信息；</li>
+<li>基于处理时间窗口的实时dashboard，能够聚合秒级的事件数；</li>
+<li>基于事件时间的精确统计</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line">    * Main entry point.</div><div class="line">    */</div><div class="line">   <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</div><div class="line">       </div><div class="line">       <span class="comment">// create environment and configure it</span></div><div class="line">       <span class="keyword">final</span> StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();</div><div class="line">       env.registerType(Statistic.class);</div><div class="line">       env.registerType(SensorReading.class);</div><div class="line">       </div><div class="line">       env.setParallelism(<span class="number">4</span>);</div><div class="line">       env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);</div><div class="line">       </div><div class="line">       </div><div class="line">       <span class="comment">// create a stream of sensor readings, assign timestamps, and create watermarks</span></div><div class="line">       DataStream&lt;SensorReading&gt; readings = env</div><div class="line">               .addSource(<span class="keyword">new</span> SampleDataGenerator())</div><div class="line">               .assignTimestamps(<span class="keyword">new</span> ReadingsTimestampAssigner());</div><div class="line">       </div><div class="line">       <span class="comment">// path (1) - low latency event-at a time filter</span></div><div class="line">       readings</div><div class="line">               .filter(reading -&gt; reading.reading() &gt; <span class="number">100.0</span>)</div><div class="line">               .map( reading -&gt; <span class="string">"-- ALERT -- Reading above threshold: "</span> + reading )</div><div class="line">               .print();</div><div class="line">       </div><div class="line">       <span class="comment">// path (2) - processing time windows: Compute max readings per sensor group</span></div><div class="line">       </div><div class="line">       <span class="comment">// because the default stream time is set to Event Time, we override the trigger with a</span></div><div class="line">       <span class="comment">// processing time trigger</span></div><div class="line">       </div><div class="line">       readings</div><div class="line">               .keyBy( reading -&gt; reading.sensorGroup() )</div><div class="line">               .window(TumblingTimeWindows.of(Time.seconds(<span class="number">5</span>)))</div><div class="line">               .trigger(ProcessingTimeTrigger.create())</div><div class="line">               .fold(<span class="keyword">new</span> Statistic(), (curr, next) -&gt;</div><div class="line">                       <span class="keyword">new</span> Statistic(next.sensorGroup(), next.timestamp(), Math.max(curr.value(), next.reading())))</div><div class="line">               </div><div class="line">               .map(stat -&gt; <span class="string">"PROC TIME - max for "</span> + stat)</div><div class="line">               .print();</div><div class="line">       </div><div class="line">       <span class="comment">// path (3) - event time windows: Compute average reading over sensors per minute</span></div><div class="line">       </div><div class="line">       <span class="comment">// we use a WindowFunction here, to illustrate how to get access to the window object</span></div><div class="line">       <span class="comment">// that contains bounds, etc.</span></div><div class="line">       <span class="comment">// Pre-aggregation is possible by adding a pre-aggregator ReduceFunction</span></div><div class="line">       </div><div class="line">       readings</div><div class="line">               <span class="comment">// group by, window and aggregate </span></div><div class="line">               .keyBy(reading -&gt; reading.sensorId() )</div><div class="line">               .timeWindow(Time.minutes(<span class="number">1</span>), Time.seconds(<span class="number">10</span>))</div><div class="line">               .apply(<span class="keyword">new</span> WindowFunction&lt;SensorReading, Statistic, String, TimeWindow&gt;() &#123;</div><div class="line"></div><div class="line">                   <span class="meta">@Override</span></div><div class="line">                   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">apply</span><span class="params">(String id, TimeWindow window, Iterable&lt;SensorReading&gt; values, Collector&lt;Statistic&gt; out)</span> </span>&#123;</div><div class="line">                       <span class="keyword">int</span> count = <span class="number">0</span>;</div><div class="line">                       <span class="keyword">double</span> agg = <span class="number">0.0</span>;</div><div class="line">                       <span class="keyword">for</span> (SensorReading r : values) &#123;</div><div class="line">                           agg += r.reading();</div><div class="line">                           count++;</div><div class="line">                       &#125;</div><div class="line">                       out.collect(<span class="keyword">new</span> Statistic(id, window.getStart(), agg / count));</div><div class="line">                   &#125;</div><div class="line">               &#125;)</div><div class="line">               </div><div class="line">               .map(stat -&gt; <span class="string">"EVENT TIME - avg for "</span> + stat)</div><div class="line">               .print();</div><div class="line">       </div><div class="line">       env.execute(<span class="string">"Event time example"</span>);</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
+<p>Flink提供的窗口触发条件包括处理时间clock，事件时间clock，以及数据流内容。</p>
+<h5 id="Flink是如何度量时间？"><a href="#Flink是如何度量时间？" class="headerlink" title="Flink是如何度量时间？"></a>Flink是如何度量时间？</h5><p>下面看下Flink是如何处理时间的，在这点上与其它老的流处理系统有啥不同。</p>
+<p>一般意义上讲，时间是用clock度量的。最简单的clock称为<em>wall clock</em>，它是集群中服务器执行流处理作业的间隔clock。<em>wall clock</em>是用来跟踪处理时间的。</p>
+<p>为了跟踪事件时间，我们需要集群机器间相同的clock。Flink是通过<em>watermarks</em>机制实现的。一个<em>watermarks</em>是指在真实事件流时间点发生的事件（比如，上午10点），那么到现在为止上午10点前的事件不会再到达。事件时间clock（<em>event time clock</em>）跟踪时间比wall clock要粗粒度，但是更准确。</p>
+<p>还有第三种clock，叫做<em>system clock</em>。它是用来保证流处理系统的“exactly-once“语义的。Flink跟踪作业的处理是通过<em>barriers</em>（栏栅），并进行snapshot。<em>barriers</em>与<em>watermarks</em>类似，不同之处在于，<em>barriers</em>是由Flink的master机器的<em>wall clock</em> 生成， 而<em>watermarks</em>是由真实世界的时间生成。同样，Spark Streaming的micro-batche schedule是基于Spark receiver的<em>wall clock</em> 。</p>
+<p>下图完美展现刚才讲的各种时间：</p>
+<p>Worker 1和Worker 2机器上并行执行对数据源和窗口的操作作业。事件上的数字代表时间戳，方块的颜色代表不同的key（灰色流向窗口1，紫色流向窗口2）。数据源从队列中读取事件（有分区，通过key分区），把他们分发到正确的窗口。窗口定义为基于事件时间的时间窗口（Flink包含时间窗口和count窗口）。我能看到Worker 1、Worker 2和Master机器的<em>wall clock</em>不同（缺乏时间同步，具体看ntp），分别为10，8，7。数据源发出<em>watermarks</em>，当前的<em>watermarks</em>时间戳为4。这意味着，event time clock是4，这时进行并行计算。Master（JobManager）对数据源做<em>barriers</em>，并对计算做snapshot。系统时间此时为7，checkpoint为第七个。</p>
+<p>下面对流处理框架中的三种clock进行总结：</p>
+<ul>
+<li><strong>event time clock</strong>：度量事件流的时间，粗粒度；</li>
+<li><strong>system clock</strong>：度量计算的过程。实际上是协调者机器的<em>wall clock</em>；</li>
+<li><strong>wall clock </strong>：度量处理时间。</li>
+</ul>
+<p>下面也给出老的流处理系统的弊端：</p>
+<ol>
+<li>计算不准确：因为真实世界的事件发生顺序与处理的顺序经常不一致；</li>
+<li>计算结果强依赖当前时间；</li>
+<li>系统参数配置会影响程序的语义：比如，增加checkpoin的间隔。</li>
+</ol>
+<p>老的流处理系统的这些缺点让它们没法获得准确的结果（至少是可控的准确度）。</p>
+<p>而Flink完全分离这三种clock：</p>
+<ol>
+<li>基于<em>event time clock</em>的<em>watermarks</em>跟踪事件流时间，允许用户定义基于事件时间的窗口；</li>
+<li><em>system clock</em>与<em>event time clock</em>完全解藕，跟踪计算过程和全局snapshot，不对外暴露api，仅仅用来分布式系统的协调；</li>
+<li>处理时间是用的机器的<em>wall clock</em>，暴露给用户支持处理时间窗口。</li>
+</ol>
+<p>相关文章：</p>
+<p>Enjoy!</p>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/12/28/kafka-cluster-producer/" rel="next" title="Kafka使用总结：Producer">
+                <i class="fa fa-chevron-left"></i> Kafka使用总结：Producer
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/12/28/BeautifulSoup-scrap/" rel="prev" title="Python:BeautifulSoup爬虫手把手实例教程">
+                Python:BeautifulSoup爬虫手把手实例教程 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="http://img0.ph.126.net/3vPAbMoh_6fH3-g_I0zo-w==/6631748363397501906.jpg"
+               alt="侠天" />
+          <p class="site-author-name" itemprop="name">侠天</p>
+          <p class="site-description motion-element" itemprop="description">侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">27</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/1333564335" target="_blank" title="微博">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  微博
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://www.infoq.com/cn/author/%E4%BE%A0%E5%A4%A9" target="_blank" title="InfoQ">
+                  
+                    <i class="fa fa-fw fa-infoq"></i>
+                  
+                  InfoQ
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#消息乱序和event-time窗口"><span class="nav-number">1.</span> <span class="nav-text">消息乱序和event time窗口</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#结合事件时间和实时pipeline"><span class="nav-number">2.</span> <span class="nav-text">结合事件时间和实时pipeline</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Flink是如何度量时间？"><span class="nav-number">3.</span> <span class="nav-text">Flink是如何度量时间？</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">侠天</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+  </script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+    });
+  </script>
+  <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+  
+
+  
+
+</body>
+</html>

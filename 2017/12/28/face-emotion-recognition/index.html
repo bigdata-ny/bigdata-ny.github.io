@@ -1,0 +1,657 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="神机喵算" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="动机人类面部表情丰富，但可以总结归纳为7类基本表情： happy, sad, surprise, fear, anger, disgust, and neutral。面部表情是通过面部肌肉活动表达出来，有些比较微妙且复杂，包含了大量内心活动信息。通过面部表情识别，我们能简单而低成本地度量出观众/用户对内容和服务的态度。例如，零售商使用这些度量评估客户的满意度。健康医疗提供商能在治疗的过程根据病人的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="面部表情（表情包）识别">
+<meta property="og:url" content="http://yoursite.com/2017/12/28/face-emotion-recognition/index.html">
+<meta property="og:site_name" content="神机喵算">
+<meta property="og:description" content="动机人类面部表情丰富，但可以总结归纳为7类基本表情： happy, sad, surprise, fear, anger, disgust, and neutral。面部表情是通过面部肌肉活动表达出来，有些比较微妙且复杂，包含了大量内心活动信息。通过面部表情识别，我们能简单而低成本地度量出观众/用户对内容和服务的态度。例如，零售商使用这些度量评估客户的满意度。健康医疗提供商能在治疗的过程根据病人的">
+<meta property="og:image" content="https://github.com/JostineHo/mememoji/blob/master/figures/fer2013.png">
+<meta property="og:image" content="https://github.com/JostineHo/mememoji/blob/master/figures/trainval_distribution.png">
+<meta property="og:updated_time" content="2017-12-28T07:24:11.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="面部表情（表情包）识别">
+<meta name="twitter:description" content="动机人类面部表情丰富，但可以总结归纳为7类基本表情： happy, sad, surprise, fear, anger, disgust, and neutral。面部表情是通过面部肌肉活动表达出来，有些比较微妙且复杂，包含了大量内心活动信息。通过面部表情识别，我们能简单而低成本地度量出观众/用户对内容和服务的态度。例如，零售商使用这些度量评估客户的满意度。健康医疗提供商能在治疗的过程根据病人的">
+<meta name="twitter:image" content="https://github.com/JostineHo/mememoji/blob/master/figures/fer2013.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/12/28/face-emotion-recognition/"/>
+
+  <title> 面部表情（表情包）识别 | 神机喵算 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">神机喵算</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                面部表情（表情包）识别
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-12-28T15:24:11+08:00" content="2017-12-28">
+              2017-12-28
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h5 id="动机"><a href="#动机" class="headerlink" title="动机"></a>动机</h5><p>人类面部表情丰富，但可以总结归纳为7类基本表情： happy, sad, surprise, fear, anger, disgust, and neutral。面部表情是通过面部肌肉活动表达出来，有些比较微妙且复杂，包含了大量内心活动信息。通过面部表情识别，我们能简单而低成本地度量出观众/用户对内容和服务的态度。例如，零售商使用这些度量评估客户的满意度。健康医疗提供商能在治疗的过程根据病人的表情状态来提高服务。娱乐厂商能够监控观众的喜欢来持续的生产优质的内容。</p>
+<p>训练过的人类很容易读懂其他人的情绪。事实上，只有14个月大的婴儿就可以区别出happy和sad的区别。但是计算机能够比人类在识别情绪上做的更好吗？为了找到答案，我们设计一个深度神经网络使得机器可以读懂人类情绪。换句话说，给机器以“眼”识别面部表情。</p>
+<h5 id="语料数据"><a href="#语料数据" class="headerlink" title="语料数据"></a>语料数据</h5><p>训练模型的数据集使用的是Kaggle面部识别挑战赛的数据集（2013年）。它由35887张面部图片组成，48x48像素灰度图片，标注为7类基本表情： happy, sad, surprise, fear, anger, disgust, and neutral。</p>
+<p><img src="https://github.com/JostineHo/mememoji/blob/master/figures/fer2013.png" alt="An overview of FER2013"></p>
+<p>当作者分析语料数据集时，发现“disgust”分类相对于其它分类不均衡（只有113张样本）。作者将两类相似的情感（disgust和anger）合并起来。为了防止数据倾斜，作者构建一个数据生成器 <a href="https://github.com/JostineHo/mememoji/blob/master/src/fer2013datagen.py" target="_blank" rel="external">fer2013datagen.py</a>，该生成器很容易分割训练集和保留数据集。本例使用28709张面部图片作为训练集，余下的图片作为测试集和验证集（每个数据集3589张）。这样我们获得了6类均衡的数据集，见图2，包含happy, sad, surprise, fear, anger, and neutral。</p>
+<p>Figure 2. Training and validation data distribution.</p>
+<p><img src="https://github.com/JostineHo/mememoji/blob/master/figures/trainval_distribution.png" alt=""></p>
+<h5 id="算法模型"><a href="#算法模型" class="headerlink" title="算法模型"></a>算法模型</h5><p>Figure 3. Mr. Bean, the model for the model.</p>
+<p>深度学习在计算机视觉上是非常流行的技术。本文选择卷积神经网络（CNN）层作为构建基础创建模型架构。CNN是有名的模仿人脑工作的模型。本文使用憨豆先生的图片作为示例来解释如何将图像赋值给卷积神经网络模型。</p>
+<p>典型的卷积神经网络包涵输入层，卷积层，稠密层（比如，全联接层）和输出层（见图4）。这些层按序组合，在 <a href="https://keras.io/models/sequential/" target="_blank" rel="external">Keras</a>中，使用Sequential()函数创建模型，再把其它层加入进来。</p>
+<p>Figure 4. Facial Emotion Recognition CNN Architecture (modification from Eindhoven University of Technology-PARsE).</p>
+<h6 id="输入层"><a href="#输入层" class="headerlink" title="输入层"></a>输入层</h6><ul>
+<li>输入层需要预处理，输入固定维度的数据。所以图片需先预处理再传入输入层。作者使用 <a href="http://docs.opencv.org/3.1.0/d7/d8b/tutorial_py_face_detection.html#gsc.tab=0" target="_blank" rel="external">OpenCV</a>（计算机视觉库）做图像面部识别。OpenCV的haar-cascade_frontalface_default.xml文件包含预训练的过滤器，使用Adaboost算法能快速找到面部并裁剪。</li>
+<li>使用cv2.cvtColor函数将裁剪面部图片转化为灰度图，并使用cv2.resize改变图片大小为48x48像素。处理完的面部图片，相比于原始的（3，48，48）三色RGB格式“瘦身”不少。同时也确保传入输入层的图片是（1，48，48）的numpy数组。</li>
+</ul>
+<h6 id="卷积层"><a href="#卷积层" class="headerlink" title="卷积层"></a>卷积层</h6><ul>
+<li>numpy数组传入Convolution2D层，指定过滤层的数量作为超参数。过滤层（比如，核函数）是随机生成权重。每个过滤层，（3，3）的感受野，采用权值共享与原图像卷积生成feature map。</li>
+<li>卷积层生成的feature map代表像素值的强度。例如，图5，通过过滤层1和原始图像卷积生成一个feature map，其它过滤层紧接着进行卷积操作生成一系列feature map。</li>
+</ul>
+<p>Figure 5. Convolution and 1st max-pooling used in the network</p>
+<ul>
+<li>池化（Pooling）是一种降低维度的技术，常用于一个或者多个卷积层之后。池化操作是构建CNN的重要步骤，因为增加的多个卷积层会极大的影响计算时间。本文使用流行的池化方法MaxPooling2D，其使用（2，2）窗口作用于feature map求的最大像素值。池化后图像降低4个维度。</li>
+</ul>
+<h6 id="稠密层"><a href="#稠密层" class="headerlink" title="稠密层"></a>稠密层</h6><ul>
+<li>稠密层（比如，全联接层）是模仿人脑传输神经元的方式。它输入大量输入特征和变换特征，通过联接层与训练权重相连。</li>
+</ul>
+<p>Figure 6. Neural network during training: Forward propagation (left) to Backward propagation (right).</p>
+<ul>
+<li>模型训练时权重前向传播，而误差是反向传播。反向传播起始与预测值和实际值的差值，计算所需的权重调整大小反向传回到每层。采用超参数调优手段（比如，学习率和网络密度）控制训练速度和架构的复杂度。随着灌入更多的训练数据，神经网络能够使得误差最小化。</li>
+<li>一般，神经网络层/节点数越多，越能捕捉到足够的信号。但是，也会造成算法模型训练过拟合。应用dropout可以防止训练模型过拟合。Dropout随机选择部分节点（通常，占总节点数的百分比不超过50%），并将其权重置为0。该方法能有效的控制模型对噪声对敏感度，同时也保留架构的复杂度。</li>
+</ul>
+<h6 id="输出层"><a href="#输出层" class="headerlink" title="输出层"></a>输出层</h6><ul>
+<li>本文的输出层使用softmax激励函数代替sigmoid函数，将输出每类表情的概率。</li>
+<li>因此，本文的算法模型能显示出人脸表情组成的详细组成概率。随后会发现没必要将人类表情表示为单个表情。本文采用的是混合表情来精确表示特定情感</li>
+</ul>
+<blockquote>
+<p>注意，没有特定的公式能建立一个神经网络保证对各种场景都有效。不同的问题需要不同的模型架构，产生期待的验证准确度。这也是为什么说神经网络是个“黒盒算法”。但是也不要太气馁，模型训练的时间会让你找到最佳模型，获得最大价值。</p>
+</blockquote>
+<h6 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h6><p>刚开始创建了一个简单的CNN深度学习模型，包括一个输入层，三个卷积层和一个输出层。事实证明，简单的算法模型效果比较差。准确度0.1500意味着仅仅是随机猜测的结果（1/6）。简单的网络结构导致不能有效的判别面部表情，那只能说明要“深挖”。。。</p>
+<p>下面稍微修改下三部分的组合，增加模型的复杂度：</p>
+<ul>
+<li>卷积层的数量和配置</li>
+<li>稠密层的数量和配置</li>
+<li>稠密层的dropout占比</li>
+</ul>
+<p>使用AWS的GPU计算（g2.2xlarge）训练和评估组合的算法模型。这次极大的减少了训练时间和模型调优的效率。最后的网络模型是九层，每三层卷积层接着一个max-pooling层，见图7。</p>
+<p>Figure 7. Final model CNN architecture.</p>
+<h5 id="模型验证"><a href="#模型验证" class="headerlink" title="模型验证"></a>模型验证</h5><h6 id="结果"><a href="#结果" class="headerlink" title="结果"></a>结果</h6><p>最后的CNN模型交叉验证准确度是58%，其具有积极意义。因为人类面部表情经常由多个基本表情组合，仅仅用单一表情是很难描述。本例中，当训练模型预测不准确时，正确的标签一般是第二相似的表情，见图8（浅蓝色标签）。</p>
+<p>Figure 8. Prediction of 24 example faces randomly selected from test set.</p>
+<h6 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h6><p>Figure 9. Confusion matrix for true and prediction emotion counts.</p>
+<p>仔细看下每个表情的预测结果。图9是测试集的模型预测的混淆矩阵。矩阵给出表情预测的数量和多分类模型的效果展示：</p>
+<ul>
+<li>该模型很好的鉴别出正表情（happy和surprised），预测准确度高。大约7000张训练集中，happy表情的准确度达到76.7%。surprised表情预测准确度为69.3%。</li>
+<li>平均意义上讲，本例的神经网络模型对负表情的预测效果较差。sad表情只有39.7%的准确度，并且该网络模型频繁的误判别angry、fear和neutral表情。另外，当预测sad表情和neutral表情时经常搞混，可能是因为这两个表情很少出现。</li>
+<li>误分类预测小于3的频率</li>
+</ul>
+<p>Figure 10. Correct predictions on 2nd and 3rd highest probable emotion.</p>
+<h6 id="计算机视觉"><a href="#计算机视觉" class="headerlink" title="计算机视觉"></a>计算机视觉</h6><p>随着池化层数量的增加，下游神经网络管道的feature map越来越抽象。图11和图12可视化第二次和第三次max-pooling池化层后的feature map。</p>
+<p>分析和可视化卷积神经网络内层输出的代码见，<a href="https://github.com/JostineHo/mememoji/blob/master/data_visualization.ipynb" target="_blank" rel="external">https://github.com/JostineHo/mememoji/blob/master/data_visualization.ipynb</a>。</p>
+<p>Figure 11. 第二个max-pooling池化层后的CNN (64-filter) feature maps。</p>
+<p>Figure 12. 第三个max-pooling池化层后的CNN (128-filter) feature maps。</p>
+<h5 id="关于作者"><a href="#关于作者" class="headerlink" title="关于作者"></a>关于作者</h5><p><strong>Jostine Ho</strong>是数据科学家和深度学习研究者。她感兴趣于计算机视觉和自动化解决现实世界中具体问题。她毕业于德克萨斯大学奥斯汀分校，取得石油系统工程专业硕士学位。</p>
+<h5 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h5><ol>
+<li><a href="https://www.kaggle.com/c/challenges-in-representation-learning-facial-expression-recognition-challenge/data" target="_blank" rel="external"><em>“Dataset: Facial Emotion Recognition (FER2013)”</em></a> ICML 2013 Workshop in Challenges in Representation Learning, June 21 in Atlanta, GA.</li>
+<li><a href="http://cs231n.github.io/convolutional-networks/" target="_blank" rel="external"><em>“Andrej Karpathy’s Convolutional Neural Networks (CNNs / ConvNets)”</em></a> Convolutional Neural Networks for Visual Recognition (CS231n), Stanford University.</li>
+<li>Srivastava et al., 2014. <em>“Dropout: A Simple Way to Prevent Neural Networks from Overfitting”</em>, Journal of Machine Learning Research, 15:1929-1958.</li>
+<li>Duncan, D., Shine, G., English, C., 2016. <a href="http://cs231n.stanford.edu/reports2016/022_Report.pdf" target="_blank" rel="external"><em>“Report: Facial Emotion Recognition in Real-time”</em></a> Convolutional Neural Networks for Visual Recognition (CS231n), Stanford University.</li>
+</ol>
+<p><a href="https://github.com/JostineHo/mememoji#33-dense-layers" target="_blank" rel="external">https://github.com/JostineHo/mememoji#33-dense-layers</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/12/28/htop-tools/" rel="next" title="Linux性能利器Htop：完胜top、strace">
+                <i class="fa fa-chevron-left"></i> Linux性能利器Htop：完胜top、strace
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/12/28/kafka-cluster-producer/" rel="prev" title="Kafka使用总结：Producer">
+                Kafka使用总结：Producer <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="http://img0.ph.126.net/3vPAbMoh_6fH3-g_I0zo-w==/6631748363397501906.jpg"
+               alt="侠天" />
+          <p class="site-author-name" itemprop="name">侠天</p>
+          <p class="site-description motion-element" itemprop="description">侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">27</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/1333564335" target="_blank" title="微博">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  微博
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://www.infoq.com/cn/author/%E4%BE%A0%E5%A4%A9" target="_blank" title="InfoQ">
+                  
+                    <i class="fa fa-fw fa-infoq"></i>
+                  
+                  InfoQ
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#动机"><span class="nav-number">1.</span> <span class="nav-text">动机</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#语料数据"><span class="nav-number">2.</span> <span class="nav-text">语料数据</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#算法模型"><span class="nav-number">3.</span> <span class="nav-text">算法模型</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#输入层"><span class="nav-number">3.1.</span> <span class="nav-text">输入层</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#卷积层"><span class="nav-number">3.2.</span> <span class="nav-text">卷积层</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#稠密层"><span class="nav-number">3.3.</span> <span class="nav-text">稠密层</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#输出层"><span class="nav-number">3.4.</span> <span class="nav-text">输出层</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#小结"><span class="nav-number">3.5.</span> <span class="nav-text">小结</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#模型验证"><span class="nav-number">4.</span> <span class="nav-text">模型验证</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#结果"><span class="nav-number">4.1.</span> <span class="nav-text">结果</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#分析"><span class="nav-number">4.2.</span> <span class="nav-text">分析</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#计算机视觉"><span class="nav-number">4.3.</span> <span class="nav-text">计算机视觉</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#关于作者"><span class="nav-number">5.</span> <span class="nav-text">关于作者</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#参考"><span class="nav-number">6.</span> <span class="nav-text">参考</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">侠天</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+  </script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+    });
+  </script>
+  <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+  
+
+  
+
+</body>
+</html>

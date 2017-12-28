@@ -1,0 +1,678 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="神机喵算" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="Web爬虫能自动抽取数据，并以人们容易理解的方式展现。本文章将举个金融市场的例子，但是Web爬虫能做的远不止于此。
+如果你是一个狂热的投资者，当你需要的股票价格跨多个网站，那获取每天的股票价格是相当痛苦。本文通过创建一个Web爬虫自动从互联网上检索股指数据。
+开始我们将使用Python和BeautifulSoup编写爬虫：
+
+对于Mac用户，Python已预装好。打开终端，输入python —ve">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Python:BeautifulSoup爬虫手把手实例教程">
+<meta property="og:url" content="http://yoursite.com/2017/12/28/BeautifulSoup-scrap/index.html">
+<meta property="og:site_name" content="神机喵算">
+<meta property="og:description" content="Web爬虫能自动抽取数据，并以人们容易理解的方式展现。本文章将举个金融市场的例子，但是Web爬虫能做的远不止于此。
+如果你是一个狂热的投资者，当你需要的股票价格跨多个网站，那获取每天的股票价格是相当痛苦。本文通过创建一个Web爬虫自动从互联网上检索股指数据。
+开始我们将使用Python和BeautifulSoup编写爬虫：
+
+对于Mac用户，Python已预装好。打开终端，输入python —ve">
+<meta property="og:image" content="https://cdn-images-1.medium.com/max/1600/1*KOJCuAYQyMIC8QdQyXERyw.png">
+<meta property="og:image" content="https://cdn-images-1.medium.com/max/1600/1*T0t6G2tawfTtKHR4yY_iVQ.png">
+<meta property="og:image" content="https://cdn-images-1.medium.com/max/1600/1*ga5bmPtLDdWUTvL-pNxBgg.png">
+<meta property="og:image" content="https://cdn-images-1.medium.com/max/1600/1*8sCE0XTu0Q0iHi2-QLpgXg.png">
+<meta property="og:image" content="http://img1.ph.126.net/7RTZNqWxEwVnVHR6LIA8Aw==/6632293721166253840.png">
+<meta property="og:image" content="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg">
+<meta property="og:updated_time" content="2017-12-28T07:25:17.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Python:BeautifulSoup爬虫手把手实例教程">
+<meta name="twitter:description" content="Web爬虫能自动抽取数据，并以人们容易理解的方式展现。本文章将举个金融市场的例子，但是Web爬虫能做的远不止于此。
+如果你是一个狂热的投资者，当你需要的股票价格跨多个网站，那获取每天的股票价格是相当痛苦。本文通过创建一个Web爬虫自动从互联网上检索股指数据。
+开始我们将使用Python和BeautifulSoup编写爬虫：
+
+对于Mac用户，Python已预装好。打开终端，输入python —ve">
+<meta name="twitter:image" content="https://cdn-images-1.medium.com/max/1600/1*KOJCuAYQyMIC8QdQyXERyw.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/12/28/BeautifulSoup-scrap/"/>
+
+  <title> Python:BeautifulSoup爬虫手把手实例教程 | 神机喵算 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">神机喵算</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Python:BeautifulSoup爬虫手把手实例教程
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-12-28T15:25:17+08:00" content="2017-12-28">
+              2017-12-28
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>Web爬虫能自动抽取数据，并以人们容易理解的方式展现。本文章将举个金融市场的例子，但是Web爬虫能做的远不止于此。</p>
+<p>如果你是一个狂热的投资者，当你需要的股票价格跨多个网站，那获取每天的股票价格是相当痛苦。本文通过创建一个Web爬虫自动从互联网上检索股指数据。</p>
+<h5 id="开始"><a href="#开始" class="headerlink" title="开始"></a>开始</h5><p>我们将使用Python和BeautifulSoup编写爬虫：</p>
+<ul>
+<li>对于Mac用户，Python已预装好。打开终端，输入python —version，你回看到Python版本是2.7.x；</li>
+<li>对于Windows用户，请按官方文档安装Python</li>
+</ul>
+<p>接下来使用<code>pip</code>安装BeautifulSoup库，在terminal中执行：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">easy_install pip  </div><div class="line">pip install BeautifulSoup4</div></pre></td></tr></table></figure>
+<p><strong>Note</strong>：如果执行以上命令失败，请尝试加上<code>sudo</code>再次执行。</p>
+<h5 id="基础知识"><a href="#基础知识" class="headerlink" title="基础知识"></a>基础知识</h5><p>在看代码之前，先理解一下HTML网页基本知识和爬取规则。</p>
+<h6 id="HTML标签"><a href="#HTML标签" class="headerlink" title="HTML标签"></a>HTML标签</h6><p>如果你已经熟悉HTML标签，可以跳过此部分。</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&lt;!DOCTYPE html&gt;</span>  </div><div class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span>  </div><div class="line">    <span class="tag">&lt;<span class="name">head</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">head</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">body</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">h1</span>&gt;</span> First Scraping <span class="tag">&lt;/<span class="name">h1</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">p</span>&gt;</span> Hello World <span class="tag">&lt;/<span class="name">p</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">body</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></div></pre></td></tr></table></figure>
+<p>上面是HTML网页基本的语法，网页中的每个<tag>代表一个功能块：</tag></p>
+<ol>
+<li><code>&lt;!DOCTYPE html&gt;</code>：HTML文档必须以&lt;!DOCTYPE html&gt;标签为起点；</li>
+<li>HTML文档包含在<code>&lt;html&gt;</code> 和<code>&lt;/html&gt;</code>标签之间；</li>
+<li>HTML文档的元数据和脚本声明放在<code>&lt;head&gt;</code> 和 <code>&lt;/head&gt;</code>标签之间；</li>
+<li>HTML文档的正文部分放在 <code>&lt;body&gt;</code> 和 <code>&lt;/body&gt;</code>标签内；</li>
+<li><code>&lt;h1&gt;</code> 到 <code>&lt;h6&gt;</code>标签定义标题；</li>
+<li><code>&lt;p&gt;</code> 标签定义段落； </li>
+</ol>
+<p>其它常用的标签有，<code>&lt;a&gt;</code> ：超链接，<code>&lt;table&gt;</code> ：表格；<code>&lt;tr&gt;</code> 表格的行，<code>&lt;td&gt;</code>表格的列。</p>
+<p>有时，HTML标签也带有 <code>id</code> 或者 <code>class</code>  属性。 <code>id</code> 属性是指定HTML标签的唯一id，其在HTML文档内取值唯一。 <code>class</code> 属性是表示同一类HTML标签。我们可以使用两个属性进行数据定位。</p>
+<p>W3Schools上可以学到更多关于HTML tag，id和class的知识。</p>
+<h6 id="爬取规则"><a href="#爬取规则" class="headerlink" title="爬取规则"></a>爬取规则</h6><ul>
+<li>爬取网站的第一步是，阅读网站的爬取协议或者声明。一般情况，爬取的数据不能用于商业目的。</li>
+<li>不能太频繁的请求网站数据，不然会被列入黑名单。最好能让你的程序模拟人的行为。一般设为每秒访问一个页面为最佳。</li>
+<li>网站的布局会随时改变，确保改写你的代码能重新爬取该网页。</li>
+</ul>
+<h5 id="检查（Inspect）网页"><a href="#检查（Inspect）网页" class="headerlink" title="检查（Inspect）网页"></a>检查（Inspect）网页</h5><p>下面拿<a href="http://www.bloomberg.com/quote/SPX:IND" target="_blank" rel="external">Bloomberg Quote</a>网站举例：</p>
+<p>当前炒股非常火，假设某个炒股者关注股票市场，想得到股指（S&amp;P 500）名字和价格。首先在浏览器打开该网页，使用浏览器的检查器（inspector）来检查网页。</p>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*KOJCuAYQyMIC8QdQyXERyw.png" alt="imge"></p>
+<p>鼠标悬停在价格的位置，你会看到价格周围蓝色的方框。当点击它时，相关的网页在浏览器控制台上显示被选中。</p>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*T0t6G2tawfTtKHR4yY_iVQ.png" alt="image"></p>
+<p>上面的结果显示，该股指的价格包含在HTML标签的一级， <code>&lt;div class=&quot;basic-quote&quot;&gt;</code> → <code>&lt;div class=&quot;price-container up&quot;&gt;</code> → <code>&lt;div class=&quot;price&quot;&gt;</code>。</p>
+<p>相似的，如果将鼠标悬停在“S&amp;P 500 Index”并点击名字，会看到它包含在<code>&lt;div class=&quot;basic-quote&quot;&gt;</code> 和 <code>&lt;h1 class=&quot;name&quot;&gt;</code>。</p>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*ga5bmPtLDdWUTvL-pNxBgg.png" alt="imge"></p>
+<p>现在我们知道可以通过<code>class</code> 标签辅助定位所需爬取的数据。</p>
+<h5 id="代码实践"><a href="#代码实践" class="headerlink" title="代码实践"></a>代码实践</h5><p>知道所要爬取的数据位置，那就动起手来开始爬虫。</p>
+<p>首先，导入所需的编程库：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># import libraries</span></div><div class="line"><span class="keyword">import</span> urllib2</div><div class="line"><span class="keyword">from</span> bs4 <span class="keyword">import</span> BeautifulSoup</div></pre></td></tr></table></figure>
+<p>接着，声明网页URL变量：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># specify the url</span></div><div class="line">quote_page = ‘http://www.bloomberg.com/quote/SPX:IND<span class="string">'</span></div></pre></td></tr></table></figure>
+<p>然后，使用Python urllib2获取HTML网页：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># query the website and return the html to the variable ‘page’</span></div><div class="line">page = urllib2.urlopen(quote_page)</div></pre></td></tr></table></figure>
+<p>最后，把网页解析成BeautifulSoup格式：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># parse the html using beautiful soap and store in variable `soup`</span></div><div class="line">soup = BeautifulSoup(page, ‘html.parser’)</div></pre></td></tr></table></figure>
+<p>上面<code>soup</code>变量获得网页的HTML内容。我们将从其中抽取数据。</p>
+<p>还记得所需爬取数据的唯一层吗？BeautifulSoup能帮我们获取这些层，并使用<code>find()</code>抽取其内容。因为HTML的class标签是唯一的，所以可简单的查询 <code>&lt;div class=&quot;name&quot;&gt;</code>。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># Take out the &lt;div&gt; of name and get its value</span></div><div class="line">name_box = soup.find(‘h1’, attrs=&#123;‘<span class="class"><span class="keyword">class</span>’:</span> ‘name’&#125;)</div></pre></td></tr></table></figure>
+<p>通过 <code>text</code>函数获取数据：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">name = name_box.text.strip() <span class="comment"># strip() is used to remove starting and trailing</span></div><div class="line"><span class="keyword">print</span> name</div></pre></td></tr></table></figure>
+<p>同样地，我们获取股指价格：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># get the index price</span></div><div class="line">price_box = soup.find(‘div’, attrs=&#123;‘<span class="class"><span class="keyword">class</span>’:</span>’price’&#125;)</div><div class="line">price = price_box.text</div><div class="line"><span class="keyword">print</span> price</div></pre></td></tr></table></figure>
+<p>当运行程序，将会打印S&amp;P 500股指。</p>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*8sCE0XTu0Q0iHi2-QLpgXg.png" alt="image"></p>
+<h5 id="导出Excel-CSV文件"><a href="#导出Excel-CSV文件" class="headerlink" title="导出Excel CSV文件"></a>导出Excel CSV文件</h5><p>获取数据之后进行存储，Excel逗号分隔的格式看起来不错。你能用Excel打开查看数据。</p>
+<p>首先，导入Python的csv模块和datetime模块：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> csv</div><div class="line"><span class="keyword">from</span> datetime <span class="keyword">import</span> datetime</div></pre></td></tr></table></figure>
+<p>将爬取的数据存储到一个csv文件：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># open a csv file with append, so old data will not be erased</span></div><div class="line"><span class="keyword">with</span> open(‘index.csv’, ‘a’) <span class="keyword">as</span> csv_file:</div><div class="line"> writer = csv.writer(csv_file)</div><div class="line"> writer.writerow([name, price, datetime.now()])</div></pre></td></tr></table></figure>
+<p>执行程序后，你可以打开一个index.csv文件，看到如下内容：</p>
+<p><img src="http://img1.ph.126.net/7RTZNqWxEwVnVHR6LIA8Aw==/6632293721166253840.png" alt="image"></p>
+<p>如果每天执行该程序，你无需打开网站即可获得S&amp;P 500股指价格。</p>
+<h5 id="进阶使用"><a href="#进阶使用" class="headerlink" title="进阶使用"></a>进阶使用</h5><p>这时你可以轻松爬取一个股指，下面举例一次抽取多个股指数据。</p>
+<p>首先，更新quote_page变量为一个URL数组：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">quote_page = [‘http://www.bloomberg.com/quote/SPX:IND<span class="string">', ‘http://www.bloomberg.com/quote/CCMP:IND'</span>]</div></pre></td></tr></table></figure>
+<p>然后，将爬取代码加一个for循环，其处理每个URL并将数据存储到data：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># for loop</span></div><div class="line">data = []</div><div class="line"><span class="keyword">for</span> pg <span class="keyword">in</span> quote_page:</div><div class="line"> <span class="comment"># query the website and return the html to the variable ‘page’</span></div><div class="line"> page = urllib2.urlopen(pg)</div><div class="line"><span class="comment"># parse the html using beautiful soap and store in variable `soup`</span></div><div class="line"> soup = BeautifulSoup(page, ‘html.parser’)</div><div class="line"><span class="comment"># Take out the &lt;div&gt; of name and get its value</span></div><div class="line"> name_box = soup.find(‘h1’, attrs=&#123;‘<span class="class"><span class="keyword">class</span>’:</span> ‘name’&#125;)</div><div class="line"> name = name_box.text.strip() <span class="comment"># strip() is used to remove starting and trailing</span></div><div class="line"><span class="comment"># get the index price</span></div><div class="line"> price_box = soup.find(‘div’, attrs=&#123;‘<span class="class"><span class="keyword">class</span>’:</span>’price’&#125;)</div><div class="line"> price = price_box.text</div><div class="line"><span class="comment"># save the data in tuple</span></div><div class="line"> data.append((name, price))</div></pre></td></tr></table></figure>
+<p>同时，更改存储csv文件部分代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># open a csv file with append, so old data will not be erased</span></div><div class="line"><span class="keyword">with</span> open(‘index.csv’, ‘a’) <span class="keyword">as</span> csv_file:</div><div class="line"> writer = csv.writer(csv_file)</div><div class="line"> <span class="comment"># The for loop</span></div><div class="line"> <span class="keyword">for</span> name, price <span class="keyword">in</span> data:</div><div class="line"> writer.writerow([name, price, datetime.now()])</div></pre></td></tr></table></figure>
+<p>现在实现一次爬取两个股指价格。</p>
+<p>Enjoy!</p>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/12/28/how-apache-flink-enables-new-streaming-applications/" rel="next" title="Flink开启流处理技术新潮流：解决流处理event time和消息乱序">
+                <i class="fa fa-chevron-left"></i> Flink开启流处理技术新潮流：解决流处理event time和消息乱序
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="http://img0.ph.126.net/3vPAbMoh_6fH3-g_I0zo-w==/6631748363397501906.jpg"
+               alt="侠天" />
+          <p class="site-author-name" itemprop="name">侠天</p>
+          <p class="site-description motion-element" itemprop="description">侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">27</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/1333564335" target="_blank" title="微博">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  微博
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://www.infoq.com/cn/author/%E4%BE%A0%E5%A4%A9" target="_blank" title="InfoQ">
+                  
+                    <i class="fa fa-fw fa-infoq"></i>
+                  
+                  InfoQ
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#开始"><span class="nav-number">1.</span> <span class="nav-text">开始</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#基础知识"><span class="nav-number">2.</span> <span class="nav-text">基础知识</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#HTML标签"><span class="nav-number">2.1.</span> <span class="nav-text">HTML标签</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#爬取规则"><span class="nav-number">2.2.</span> <span class="nav-text">爬取规则</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#检查（Inspect）网页"><span class="nav-number">3.</span> <span class="nav-text">检查（Inspect）网页</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#代码实践"><span class="nav-number">4.</span> <span class="nav-text">代码实践</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#导出Excel-CSV文件"><span class="nav-number">5.</span> <span class="nav-text">导出Excel CSV文件</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#进阶使用"><span class="nav-number">6.</span> <span class="nav-text">进阶使用</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">侠天</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+  </script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+    });
+  </script>
+  <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+  
+
+  
+
+</body>
+</html>

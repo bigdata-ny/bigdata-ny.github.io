@@ -1,0 +1,1279 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="神机喵算" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="写在之前：此文翻译自：https://peteris.rocks/blog/htop，做了少许改动，感谢原作者。
+长久以来，我只知Linux有个神器htop，却不知道htop的各项指标的内涵。
+比如，2核的服务器 CPU利用率为 50%，那为啥load average 却显示 1.0？那接下来开始捋捋。。。
+俗话说得好，好记性不如个烂笔头。
+Htop on CentOS来个htop全身照：
+
+
+U">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux性能利器Htop：完胜top、strace">
+<meta property="og:url" content="http://yoursite.com/2017/12/28/htop-tools/index.html">
+<meta property="og:site_name" content="神机喵算">
+<meta property="og:description" content="写在之前：此文翻译自：https://peteris.rocks/blog/htop，做了少许改动，感谢原作者。
+长久以来，我只知Linux有个神器htop，却不知道htop的各项指标的内涵。
+比如，2核的服务器 CPU利用率为 50%，那为啥load average 却显示 1.0？那接下来开始捋捋。。。
+俗话说得好，好记性不如个烂笔头。
+Htop on CentOS来个htop全身照：
+
+
+U">
+<meta property="og:image" content="http://img2.ph.126.net/r9cGoR7qNxoukqdaBRgBAQ==/6632126595396926285.png">
+<meta property="og:image" content="https://peteris.rocks/blog/htop/canyoukillit-before.png">
+<meta property="og:image" content="http://img0.ph.126.net/QQy2chIVliRMwjpAkvKNZQ==/6632514723004686312.png">
+<meta property="og:image" content="http://img0.ph.126.net/ts_inlBS6JC-agpy9WFyPw==/3081869520024393963.png">
+<meta property="og:image" content="http://img2.ph.126.net/6Y5YnkSZ7ci07ByX1GhT_g==/6632304716283782948.png">
+<meta property="og:image" content="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg">
+<meta property="og:updated_time" content="2017-12-28T07:07:52.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Linux性能利器Htop：完胜top、strace">
+<meta name="twitter:description" content="写在之前：此文翻译自：https://peteris.rocks/blog/htop，做了少许改动，感谢原作者。
+长久以来，我只知Linux有个神器htop，却不知道htop的各项指标的内涵。
+比如，2核的服务器 CPU利用率为 50%，那为啥load average 却显示 1.0？那接下来开始捋捋。。。
+俗话说得好，好记性不如个烂笔头。
+Htop on CentOS来个htop全身照：
+
+
+U">
+<meta name="twitter:image" content="http://img2.ph.126.net/r9cGoR7qNxoukqdaBRgBAQ==/6632126595396926285.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/12/28/htop-tools/"/>
+
+  <title> Linux性能利器Htop：完胜top、strace | 神机喵算 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">神机喵算</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Linux性能利器Htop：完胜top、strace
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-12-28T15:07:52+08:00" content="2017-12-28">
+              2017-12-28
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><em>写在之前：此文翻译自：<a href="https://peteris.rocks/blog/htop，做了少许改动，感谢原作者。" target="_blank" rel="external">https://peteris.rocks/blog/htop，做了少许改动，感谢原作者。</a></em></p>
+<p>长久以来，我只知Linux有个神器htop，却不知道htop的各项指标的内涵。</p>
+<p>比如，2核的服务器 CPU利用率为 50%，那为啥load average 却显示 1.0？那接下来开始捋捋。。。</p>
+<p>俗话说得好，好记性不如个烂笔头。</p>
+<h5 id="Htop-on-CentOS"><a href="#Htop-on-CentOS" class="headerlink" title="Htop on CentOS"></a>Htop on CentOS</h5><p>来个htop全身照：</p>
+<p><img src="http://img2.ph.126.net/r9cGoR7qNxoukqdaBRgBAQ==/6632126595396926285.png" alt="image"></p>
+<ul>
+<li>Uptime</li>
+</ul>
+<p>uptime：系统运行的时长。</p>
+<p>当然，你可以用<code>uptime</code>：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ uptime</div><div class="line"> 12:17:58 up 111 days, 31 min,  1 user,  load average: 0.00, 0.01, 0.05</div></pre></td></tr></table></figure>
+<p><code>uptime</code>从 <code>/proc/uptime</code>文件获取信息：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">9592411.58 9566042.33</div></pre></td></tr></table></figure>
+<p>前者数字（9592411.58）代表系统运行的秒值，后者（9566042.33）代表服务器空闲秒数。一般多核系统后者秒值会比系统的uptime值大，因为它是取和。作者是怎么知道这个原因的呢？通过跟踪 <code>uptime</code> 程序运行打开的文件，这里是用的 <code>strace</code> 工具：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">strace uptime</div></pre></td></tr></table></figure>
+<p>从strace输出中<code>grep</code>查找系统调用的<code>open</code> 函数。由于strace标准输出内容较多，可以使用<code>2&gt;&amp;1</code>重定向：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ strace uptime 2&gt;&amp;1 | grep open</div><div class="line">...</div><div class="line">open(&quot;/proc/uptime&quot;, O_RDONLY)          = 3</div><div class="line">open(&quot;/var/run/utmp&quot;, O_RDONLY|O_CLOEXEC) = 4</div><div class="line">open(&quot;/proc/loadavg&quot;, O_RDONLY)         = 4</div></pre></td></tr></table></figure>
+<p>其中，包括前面提到的 <code>/proc/uptime</code>文件。这说明我们可以使用 <code>strace -e open uptime</code>来代替<code>strace uptime 2&gt;&amp;1 | grep open</code>。Linux的<code>uptime</code>命令提供易读、宜用的方法。</p>
+<ul>
+<li>Load average</li>
+</ul>
+<p>除了uptime，有三个数字表示 load average：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ uptime</div><div class="line"> 12:59:09 up 32 min,  1 user,  load average: 0.00, 0.01, 0.03</div></pre></td></tr></table></figure>
+<p>load average值是从 <code>/proc/loadavg</code>文件获得，同时你也可以用 <code>strace</code> 验证。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ cat /proc/loadavg</div><div class="line">0.00 0.01 0.03 1/120 1500</div></pre></td></tr></table></figure>
+<p>前三个数字分别表示最近1分钟、5分钟、15分钟的CPU和IO的利用率。第四行显示当前正在运行的进程数和进程总数，最后一行显示最近使用的进程ID。</p>
+<p>下面讲下进程ID。当你启动一个新进程，它将会分到一个ID数字。进程ID通常是递增的，除非进程退出后进程ID重新复用。特殊进程ID <strong>1</strong> 是属于<code>/sbin/init</code> ，系统启动时即分配。</p>
+<p>让我们再来看下 <code>/proc/loadavg</code>文件的内容，然后后台启动 <code>sleep</code> 命令，这时会输出进程ID。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ cat /proc/loadavg</div><div class="line">0.00 0.01 0.03 1/123 1566</div><div class="line">$ sleep 10 &amp;</div><div class="line">[1] 1567</div></pre></td></tr></table></figure>
+<p>所以，<em>1/123</em> 代表一个进程正在运行，总共有123个进程运行过。</p>
+<p>当运行<code>cat /dev/urandom &gt; /dev/null</code> （重复生成随机数）时，你会发现有 2 个进程在运行：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ cat /dev/urandom &gt; /dev/null &amp;</div><div class="line">[1] 1639</div><div class="line">$ cat /proc/loadavg</div><div class="line">1.00 0.69 0.35 2/124 1679</div></pre></td></tr></table></figure>
+<p>这里的两个进程是：随机数生成、<code>cat /proc/loadavg</code>，同时load average值也在增加。</p>
+<p>System load average是runnable或uninterruptable状态的进程数的平均数。所以上面的 load average为 1（平均1个运行的进程），是因为作者演示的服务器是单核CPU，一次跑一个进程那CPU的利用率是100%。如果服务器是双核，那CPU利用率就是50%。双核CPU的利用率如果是100%，那load average 将会是2.0。CPU的核数可以从htop的左上角看到，或者运行 <code>nproc</code>。</p>
+<ul>
+<li>Processes</li>
+</ul>
+<p>在htop的右上角显示进程数和多少个进程正在运行。但是htop使用 <em>Tasks</em> 代表进程（注：<em>Tasks</em> 是进程的一个别名）。</p>
+<p>在htop中，使用键盘上的<code>Shift</code>+<code>H</code>组合键也可轻松看到线程数<em>Tasks: 23, 10 thr</em>，使用<code>Shift</code>+<code>K</code>组合键可以看到内核线程数，<em>Tasks: 23, 40 kthr</em>。</p>
+<ul>
+<li>Process ID / PID</li>
+</ul>
+<p>每个进程启动都会分配一个唯一的进程ID，称作进程ID或者PID。如果你在<em>bash</em>中使用 (<code>&amp;</code>)在后台执行，你将会看到输出的PID。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ sleep 1000 &amp;</div><div class="line">[1] 12503</div></pre></td></tr></table></figure>
+<p>如果你手滑没看到，那也可以在<em>bash</em>中使用 <code>$!</code>内建变量查看到最近一次后台运行的PID：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ echo $!</div><div class="line">12503</div></pre></td></tr></table></figure>
+<p>进程ID是非常有用的，具体为什么可以看维基百科。</p>
+<p><code>procfs</code>是伪文件系统，procfs可以让用户的程序通过读取文件的方法从Linux内核中获取信息。它经常被挂载在 <code>/proc/</code>下，伪装的看起来像个正规文件目录，你也可以使用 <code>ls</code> 和 <code>cd</code>命令。</p>
+<p>某进程相关的所有信息都放在 <code>/proc/&lt;pid&gt;/</code>下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">$ ls /proc/12503</div><div class="line">attr        coredump_filter  fdinfo     maps        ns             personality  smaps    task</div><div class="line">auxv        cpuset           gid_map    mem         numa_maps      projid_map   stack    uid_map</div><div class="line">cgroup      cwd              io         mountinfo   oom_adj        root         stat     wchan</div><div class="line">clear_refs  environ          limits     mounts      oom_score      schedstat    statm</div><div class="line">cmdline     exe              loginuid   mountstats  oom_score_adj  sessionid    status</div><div class="line">comm        fd               map_files  net         pagemap        setgroups    syscall</div></pre></td></tr></table></figure>
+<p>比如，  /proc/\<pid>/cmdline  会让你知道这个进程是如何启动的：</pid></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ cat /proc/12503/cmdline</div><div class="line">sleep1000$</div></pre></td></tr></table></figure>
+<p>正确的查看姿势是（因为命令是用<em>\0</em> 分隔）：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ od -c /proc/12503/cmdline</div><div class="line">0000000   s   l   e   e   p  \0   1   0   0   0  \0</div><div class="line">0000013</div></pre></td></tr></table></figure>
+<p>或者：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">$ tr &apos;\0&apos; &apos;\n&apos; &lt; /proc/12503/cmdline</div><div class="line">sleep</div><div class="line">1000</div><div class="line">$ strings /proc/12503/cmdline</div><div class="line">sleep</div><div class="line">1000</div></pre></td></tr></table></figure>
+<p>进程的进程目录还包含有链接（link），比如： <code>cwd</code>指向工作目录，<code>exe</code>指向可执行的二进制文件：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ ls -l /proc/12503/&#123;cwd,exe&#125;</div><div class="line">lrwxrwxrwx 1 ubuntu ubuntu 0 Jul  6 10:10 /proc/12503/cwd -&gt; /home/username</div><div class="line">lrwxrwxrwx 1 ubuntu ubuntu 0 Jul  6 10:10 /proc/12503/exe -&gt; /bin/sleep</div></pre></td></tr></table></figure>
+<p>以上就是<code>htop</code>，<code>top</code>， <code>ps</code>这些诊断工具是为啥可以获取到一个进程的详细信息的，/proc/\<pid>/\<file>。</file></pid></p>
+<ul>
+<li>Process tree</li>
+</ul>
+<p>在htop中使用<code>F5</code> 即可看到进程树，当然也可以用<code>ps f</code>：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ ps f</div><div class="line">  PID TTY      STAT   TIME COMMAND</div><div class="line">12472 pts/0    Ss     0:00 -bash</div><div class="line">12684 pts/0    R+     0:00  \_ ps f</div></pre></td></tr></table></figure>
+<p>或者 <code>pstree</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">$ pstree -a</div><div class="line">init</div><div class="line">  ├─atd</div><div class="line">  ├─cron</div><div class="line">  ├─sshd -D</div><div class="line">  │   └─sshd</div><div class="line">  │       └─sshd</div><div class="line">  │           └─bash</div><div class="line">  │               └─pstree -a</div><div class="line">...</div></pre></td></tr></table></figure>
+<p>从这里你就可以知道为啥 <code>bash</code> 或者 <code>sshd</code> 是其它进程的父进程。</p>
+<p> <code>/sbin/init</code> 作为系统启动进程，进程ID为1，接着是SSH的守护进程 <code>sshd</code>（当你用ssh连接到服务器），接着是 <code>bash</code> shell。</p>
+<ul>
+<li>Process user</li>
+</ul>
+<p>每个进程属于一个user，user以数值ID代表：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ sleep 1000 &amp;</div><div class="line">[1] 2045</div><div class="line">$  grep Uid /proc/2045/status</div><div class="line">Uid:    1000    1000    1000    1000</div></pre></td></tr></table></figure>
+<p>可以用<code>id</code>命令发现更多关于此user的信息：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ id 1000</div><div class="line">uid=1000(ubuntu) gid=1000(ubuntu) groups=1000(ubuntu),4(adm)</div></pre></td></tr></table></figure>
+<p>通过如下证明<code>id</code>是从<code>/etc/passwd</code> 和 <code>/etc/group</code> 文件获取信息的：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ strace -e open id 1000</div><div class="line">open(&quot;/etc/passwd&quot;, O_RDONLY|O_CLOEXEC) = 3</div><div class="line">open(&quot;/etc/group&quot;, O_RDONLY|O_CLOEXEC)  = 3</div></pre></td></tr></table></figure>
+<p>查看<code>/etc/passwd</code> 和 <code>/etc/group</code> 文件的内容：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">$ cat /etc/passwd</div><div class="line">root:x:0:0:root:/root:/bin/bash</div><div class="line">daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin</div><div class="line">xxx:x:1000:1000:Ubuntu:/home/ubuntu:/bin/bash</div><div class="line">$ cat /etc/group</div><div class="line">root:x:0:</div><div class="line">adm:x:4:syslog,ubuntu</div><div class="line">xxx:x:1000:</div></pre></td></tr></table></figure>
+<p>passwd文件内没有密码，那密码存储在哪里呢？实际存在<code>/etc/shadow</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ sudo cat /etc/shadow</div><div class="line">root:$6$mS9o0QBw$P1ojPSTexV2PQ.Z./rqzYex.k7TJE2nVeIVL0dql/:17126:0:99999:7:::</div><div class="line">daemon:*:17109:0:99999:7:::</div><div class="line">ubuntu:$6$GIfdqlb/$ms9ZoxfrUq455K6UbmHyOfz7DVf7TWaveyHcp.:17126:0:99999:7:::</div></pre></td></tr></table></figure>
+<p>如果你想以root用户来运行程序，得用<code>sudo</code>：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">$ id</div><div class="line">uid=1000(ubuntu) gid=1000(ubuntu) groups=1000(ubuntu),4(adm)</div><div class="line">$ sudo id</div><div class="line">uid=0(root) gid=0(root) groups=0(root)</div><div class="line">$ sudo -u ubuntu id</div><div class="line">uid=1000(ubuntu) gid=1000(ubuntu) groups=1000(ubuntu),4(adm)</div><div class="line">$ sudo -u daemon id</div><div class="line">uid=1(daemon) gid=1(daemon) groups=1(daemon)</div></pre></td></tr></table></figure>
+<p>如果你想登录到另外一个用户并启动各种命令，使用<code>sudo bash</code> 或者 <code>sudo -u user bash</code>。</p>
+<p>当你不想输入密码登录服务器，则可以增加user到 <code>/etc/sudoers</code> 文件。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ echo &quot;$USER ALL=(ALL) NOPASSWD: ALL&quot; &gt;&gt; /etc/sudoers</div><div class="line">-bash: /etc/sudoers: Permission denied</div></pre></td></tr></table></figure>
+<p>你会发现只有root用户可以操作。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ sudo echo &quot;$USER ALL=(ALL) NOPASSWD: ALL&quot; &gt;&gt; /etc/sudoers</div><div class="line">-bash: /etc/sudoers: Permission denied</div></pre></td></tr></table></figure>
+<p>咋回事呢？还是不行。。。</p>
+<p>当你以root权限执行<code>echo</code>命令追加一行到<code>/etc/sudoers</code> ，仍然使用的原user。</p>
+<p>通常有两种解决方法：</p>
+<ol>
+<li><code>echo &quot;$USER ALL=(ALL) NOPASSWD: ALL&quot; | sudo tee -a /etc/sudoers</code></li>
+<li><code>sudo bash -c &quot;echo &#39;$USER ALL=(ALL) NOPASSWD: ALL&#39; &gt;&gt; /etc/sudoers&quot;</code></li>
+</ol>
+<p>第一种，<code>tee -a</code>追加标准输入到文件，这时执行以root权限；</p>
+<p>第二种，我们以root用户执行bash，用 (<code>-c</code>) 以root执行整个命令。注意双引号/单引号，因为 <code>$USER</code>变量转义的问题。</p>
+<p>当你想更改密码时，可用 <code>passwd</code>，也可用 <code>/etc/shadow</code> 文件，这个文件必须用root权限：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ ls -l /etc/shadow</div><div class="line">-rw-r----- 1 root shadow 1122 Nov 27 18:52 /etc/shadow</div></pre></td></tr></table></figure>
+<p> <code>passwd</code> 如何才能被常规user执行往具有保护权限的文件写入？</p>
+<p>当你启动一个进程时，那这个进程属于你的用户，即使这个可执行文件的拥有者是其它user。</p>
+<p>你能改变文件的权限：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ ls -l /usr/bin/passwd</div><div class="line">-rwsr-xr-x 1 root root 54256 Mar 29  2016 /usr/bin/passwd</div></pre></td></tr></table></figure>
+<p>注意 <code>s</code> 字符，它是<code>sudo chmod u+s /usr/bin/passwd</code>实现的，意味着能以拥有者root的身份运行可执行文件。</p>
+<p>你使用 <code>find /bin -user root -perm -u+s</code>会发现一个<code>setuid</code> 可执行文件。同理，对用户组可以用 (<code>g+s</code>)。</p>
+<ul>
+<li>Process state</li>
+</ul>
+<p>接下来看下<em>htop</em>中进程状态列，其用字母 <em>S</em> 表示。</p>
+<p>下面是进程列的可能取值：</p>
+<table>
+<thead>
+<tr>
+<th>R</th>
+<th>运行状态（running）或者运行队列中的就绪状态（runnable）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S</td>
+<td>中断睡眠（等待事件完成）</td>
+</tr>
+<tr>
+<td>D</td>
+<td>非中断睡眠（常为IO）</td>
+</tr>
+<tr>
+<td>Z</td>
+<td>僵尸进程，无效进程但是未被父进程回收</td>
+</tr>
+<tr>
+<td>T</td>
+<td>被控制信号停止</td>
+</tr>
+<tr>
+<td>t</td>
+<td>跟踪时被调试者停止</td>
+</tr>
+<tr>
+<td>X</td>
+<td>死亡状态</td>
+</tr>
+</tbody>
+</table>
+<p> 注意，当你运行<code>ps</code>时，它将也会显示子状态，比如<em>Ss，R+，Ss+</em>，等等.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">$ ps x</div><div class="line">  PID TTY      STAT   TIME COMMAND</div><div class="line"> 1688 ?        Ss     0:00 /lib/systemd/systemd --user</div><div class="line"> 1689 ?        S      0:00 (sd-pam)</div><div class="line"> 1724 ?        S      0:01 sshd: vagrant@pts/0</div><div class="line"> 1725 pts/0    Ss     0:00 -bash</div><div class="line"> 2628 pts/0    R+     0:00 ps x</div></pre></td></tr></table></figure>
+<p><strong>R - 运行状态或者运行队列中的就绪状态</strong></p>
+<p>在这种状态下，进程正在运行或者在运行队列中等待运行。</p>
+<p>那运行的都是啥呢？</p>
+<p>当你编译所写的源代码，生成的机器码是CPU指令集，并保存为可执行文件。当你启动程序时，该程序被加载进内存，然后CPU执行这些指令集。</p>
+<p>从根本上来说，CPU是在执行指令，换句话说，处理数字。</p>
+<p><strong>S - 中断睡眠</strong></p>
+<p>这意味着该进程的指令不能在CPU上立即执行。相反地，该进程等待某个事件或者条件发生。当事件发生，系统内核设置进程状态为运行状态。</p>
+<p>本例是GNU的coreutils软件包中的<code>sleep</code>工具。它将睡眠指定秒数。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">$ sleep 1000 &amp;</div><div class="line">[1] 10089</div><div class="line">$ ps f</div><div class="line">  PID TTY      STAT   TIME COMMAND</div><div class="line"> 3514 pts/1    Ss     0:00 -bash</div><div class="line">10089 pts/1    S      0:00  \_ sleep 1000</div><div class="line">10094 pts/1    R+     0:00  \_ ps f</div></pre></td></tr></table></figure>
+<p>所以这是一个中断睡眠。那如何中断该进程？通过发送控制信号。</p>
+<p>你能在 <em>htop</em> 中点击 <em>F9</em> ，然后在左侧菜单中选择一个信号发送。</p>
+<p>发送的信号中最有名的是<code>kill</code>。因为<code>kill</code>是一个系统调用，其能发送信号给进程。程序<code>/bin/kill</code>能从用户空间做系统调用，默认的信号是使用<code>TERM</code>，该信号要求进程中止或者杀死。</p>
+<p>信号其实只是一个数字，但是数字太难记住，所以我们常说对应的名字。信号名字用大写表示，并用<code>SIG</code>前缀。</p>
+<p>常用的信号有<code>INT</code>， <code>KILL</code>， <code>STOP</code>， <code>CONT</code>， <code>HUP</code>。</p>
+<p>让我们发送<code>INT</code>（也称作，<code>SIGINT</code>或者<code>2</code>或者 <code>Terminal interrupt</code> ）中断睡眠。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ <span class="built_in">kill</span> -INT 10089</div><div class="line">[1]+  Interrupt               sleep 1000</div></pre></td></tr></table></figure>
+<p>当你在键盘上敲击<code>CTRL</code>+<code>C</code> 也会产生上面同样的效果。 <code>bash</code> 将发送前台进程 <code>SIGINT</code> 信号。</p>
+<p>顺便提一下，在 <code>bash</code>中，虽然大部分操作系统都有 <code>/bin/kill</code> ，但是 <code>kill</code> 是一个内建命令。这是为什么呢？如果你创建的进程达到限制条件，它允许进程被kill。</p>
+<p>实现相同功能的命令：</p>
+<ul>
+<li><code>kill -INT 10089</code></li>
+<li><code>kill -2 10089</code></li>
+<li><code>/bin/kill -2 10089</code></li>
+</ul>
+<p>另外一个有用的信号是 <code>SIGKILL</code> (也被称作 <code>9</code>)。你可以使用该信号kill掉不响应的进程，省的你发狂的按 <code>CTRL</code>+<code>C</code> 键盘。</p>
+<p>当编写程序时，你能设置信号handler函数，该函数将在进程收到信号时被调用。换句话说，你能捕获信号，然后做点什么事。例如，清理或者优雅的关闭进程。所以发送 <code>SIGINT</code> 信号（用户想中断一个进程）和<code>SIGTERM</code> （用户想中止一个进程）并不意味着进程被中止。</p>
+<p>当你运行Python脚本，你会发现一个意外：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ python -c <span class="string">'import sys; sys.stdin.read()'</span></div><div class="line">^C</div><div class="line">Traceback (most recent call last):</div><div class="line">  File <span class="string">"&lt;string&gt;"</span>, line 1, <span class="keyword">in</span> &lt;module&gt;</div><div class="line">KeyboardInterrupt</div></pre></td></tr></table></figure>
+<p>你可以告诉内核强制中止一个进程，使用发送 <code>KILL</code>信号：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ sleep 1000 &amp;</div><div class="line">[1] 2658</div><div class="line">$ <span class="built_in">kill</span> -9 2658</div><div class="line">[1]+  Killed                  sleep 1000</div></pre></td></tr></table></figure>
+<p><strong>D - 非中断睡眠</strong></p>
+<p>不像中止睡眠进程那么简单，你不能用信号唤醒该进程。这就是为什么许多人喊怕看到这个状态。你不能kill该进程，因为kill意味着通过发送<code>SIGKILL</code> 信号给该进程。</p>
+<p>如果进程必须等待不中断或者事件被期望快速发生，那这个状态被使用，比如读写磁盘。但是这仅仅发生一秒分之一。</p>
+<p>引用自StackOverflow</p>
+<blockquote>
+<p>不中断进程经常等到I/O出现页缺失（page fault）。进程/任务不能在这种状态下中断，因为它不能处理任何信号；如果中断了，另外一个页缺失将会发生，会返回到原始位置。</p>
+</blockquote>
+<p>换句话说，如果你在使用NFS（网络文件系统）时出现中断，那得好久才恢复。</p>
+<p>或者，以我的经验看，意味着进程正在交换许多小内存。</p>
+<p>让我们试着一个进程进入不中断睡眠。</p>
+<p><code>8.8.8.8</code> 是Google提供的公共DNS服务。他们没有一个开放的NFS，但是也不能阻止试验。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ sudo mount 8.8.8.8:/tmp /tmp &amp;</div><div class="line">[1] 12646</div><div class="line">$ sudo ps x | grep mount.nfs</div><div class="line">12648 pts/1    D      0:00 /sbin/mount.nfs 8.8.8.8:/tmp /tmp -o rw</div></pre></td></tr></table></figure>
+<p>如何找出刚才发生了什么？ <code>strace</code>!</p>
+<p> <code>strace</code>上面<code>ps</code>的输出命令：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ sudo strace /sbin/mount.nfs 8.8.8.8:/tmp /tmp -o rw</div><div class="line">...</div><div class="line">mount(<span class="string">"8.8.8.8:/tmp"</span>, <span class="string">"/tmp"</span>, <span class="string">"nfs"</span>, 0, ...</div></pre></td></tr></table></figure>
+<p>所以 <code>mount</code> 系统调用正在阻塞进程。</p>
+<p>如果想看看发生了什么，你能运行带<code>intr</code> 选项的 <code>mount</code> 命令来中断： <code>sudo mount 8.8.8.8:/tmp /tmp -o intr</code>。</p>
+<p><strong>Z - 僵尸进程，无效进程但是未被父进程回收</strong></p>
+<p>当一个进程以 <code>exit</code>退出时，它还有子进程，此时子进程变成了僵尸进程。</p>
+<ul>
+<li>如果僵尸进程存在一小会，那相当正常；</li>
+<li>僵尸进程存在很长时间可能导致程序bug；</li>
+<li>僵尸进程不消耗内存，仅仅是一个进程ID；</li>
+<li>僵尸进程不能被<code>kill</code> ；</li>
+<li>发生<code>SIGCHLD</code> 信号能让父进程回收僵尸进程；</li>
+<li><code>kill</code> 僵尸进程的父进程能摆脱父进程和其僵尸进程</li>
+</ul>
+<p>下面写个C程序的例子展示下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</div><div class="line">  <span class="built_in">printf</span>(<span class="string">"Running\n"</span>);</div><div class="line"></div><div class="line">  <span class="keyword">int</span> pid = fork();</div><div class="line"></div><div class="line">  <span class="keyword">if</span> (pid == <span class="number">0</span>) &#123;</div><div class="line">    <span class="built_in">printf</span>(<span class="string">"I am the child process\n"</span>);</div><div class="line">    <span class="built_in">printf</span>(<span class="string">"The child process is exiting now\n"</span>);</div><div class="line">    <span class="built_in">exit</span>(<span class="number">0</span>);</div><div class="line">  &#125; <span class="keyword">else</span> &#123;</div><div class="line">    <span class="built_in">printf</span>(<span class="string">"I am the parent process\n"</span>);</div><div class="line">    <span class="built_in">printf</span>(<span class="string">"The parent process is sleeping now\n"</span>);</div><div class="line">    sleep(<span class="number">20</span>);</div><div class="line">    <span class="built_in">printf</span>(<span class="string">"The parent process is finished\n"</span>);</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>安装GNU C编译器（GCC）：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt install -y gcc</div></pre></td></tr></table></figure>
+<p>编译代码并运行：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">gcc zombie.c -o zombie</div><div class="line">./zombie</div></pre></td></tr></table></figure>
+<p>查看进程树：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">$ ps f</div><div class="line">  PID TTY      STAT   TIME COMMAND</div><div class="line"> 3514 pts/1    Ss     0:00 -bash</div><div class="line"> 7911 pts/1    S+     0:00  \_ ./zombie</div><div class="line"> 7912 pts/1    Z+     0:00      \_ [zombie] &lt;defunct&gt;</div><div class="line"> 1317 pts/0    Ss     0:00 -bash</div><div class="line"> 7913 pts/0    R+     0:00  \_ ps f</div></pre></td></tr></table></figure>
+<p>我们得到了僵尸进程。当父进程退出，僵尸进程也退出。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ ps f</div><div class="line">  PID TTY      STAT   TIME COMMAND</div><div class="line"> 3514 pts/1    Ss+    0:00 -bash</div><div class="line"> 1317 pts/0    Ss     0:00 -bash</div><div class="line"> 7914 pts/0    R+     0:00  \_ ps f</div></pre></td></tr></table></figure>
+<p>如果用<code>while (true) ;</code> 代替 <code>sleep(20)</code> ，僵尸进程将正常退出。</p>
+<p>使用<code>exit</code>时，该进程所有的内存和资源被释放，其它的进程可以继续使用。</p>
+<p>为什么要保留僵尸进程存在呢？</p>
+<p>父进程使用 <code>wait</code>系统调用找出其子进程退出码（信号 handler）。如果一个进程睡眠，它需要等待唤醒。</p>
+<p>为什么不简单的强制进程唤醒和kill掉？当你厌倦小孩时，你不会把他扔垃圾桶。这里的原因相同。坏事情总会发生的。</p>
+<p><strong>T - 被控制信号停止</strong></p>
+<p>打开两个终端窗口，使用 <code>ps u</code>能查看到用户的进程：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ ps u</div><div class="line">USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND</div><div class="line">ubuntu    1317  0.0  0.9  21420  4992 pts/0    Ss+  Jun07   0:00 -bash</div><div class="line">ubuntu    3514  1.5  1.0  21420  5196 pts/1    Ss   07:28   0:00 -bash</div><div class="line">ubuntu    3528  0.0  0.6  36084  3316 pts/1    R+   07:28   0:00 ps u</div></pre></td></tr></table></figure>
+<p>忽略 <code>-bash</code> 和<code>ps u</code>进程。</p>
+<p>现在在其中一个终端窗口运行<code>cat /dev/urandom &gt; /dev/null</code> 。其进程状态为 <code>R+</code> ，意味着正在运行。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ ps u</div><div class="line">USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND</div><div class="line">ubuntu    3540  103  0.1   6168   688 pts/1    R+   07:29   0:04 cat /dev/urandom</div></pre></td></tr></table></figure>
+<p>按 <code>CTRL</code>+<code>Z</code> 停止该进程：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ <span class="comment"># CTRL+Z</span></div><div class="line">[1]+  Stopped                 cat /dev/urandom &gt; /dev/null</div><div class="line">$ ps aux</div><div class="line">USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND</div><div class="line">ubuntu    3540 86.8  0.1   6168   688 pts/1    T    07:29   0:15 cat /dev/urandom</div></pre></td></tr></table></figure>
+<p>该进程的状态现在为 <code>T</code>。</p>
+<p>在第一个终端运行 <code>fg</code> 可以重新恢复该进程。</p>
+<p>另外一种停止进程的方法是用 <code>kill</code> 发送 <code>STOP</code> 信号给进程。然后使用 <code>CONT</code> 信号可让进程恢复执行。</p>
+<p><strong>t - 跟踪时被调试者停止</strong></p>
+<p>首先，安装GNU调试器（gdb）：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt install -y gdb</div></pre></td></tr></table></figure>
+<p>监听网络端口1234的入网连接：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ nc <span class="_">-l</span> 1234 &amp;</div><div class="line">[1] 3905</div></pre></td></tr></table></figure>
+<p>状态显示睡眠状态，那意味着该进程在等待网络传入数据。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ ps u</div><div class="line">USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND</div><div class="line">ubuntu    3905  0.0  0.1   9184   896 pts/0    S    07:41   0:00 nc <span class="_">-l</span> 1234</div></pre></td></tr></table></figure>
+<p>运行调试器，并与进程ID为3905的进程关联：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo gdb -p 3905</div></pre></td></tr></table></figure>
+<p>你会发现这个进程的状态变为<code>t</code>，这意味着调试器正在跟踪该进程。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ ps u</div><div class="line">USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND</div><div class="line">ubuntu    3905  0.0  0.1   9184   896 pts/0    t    07:41   0:00 nc <span class="_">-l</span> 1234</div></pre></td></tr></table></figure>
+<ul>
+<li>Process time</li>
+</ul>
+<p>Linux是一个多任务的操作系统。这意味着，即使机器只有一个PCU，也能在同一个时间点运行多个进程。你可以通过SSH连接服务器查看 <em>htop</em> 输出，同时你的web服务也在通过网络传输博客内容给读者。</p>
+<p>那系统是如何做到在单个CPU上一个时间点只执行一个指令呢？答案是时间共享。</p>
+<p>一个进程运行“一点时间”，然后挂起；这时另外一个等待的进程运行“一点时间”。进程运行的这“一点时间”称为时间片（time slice）。</p>
+<p>时间片通常是几毫秒。所以只要服务器系统的负载不高，你是注意不到的。</p>
+<p>这也就可以解释为什么平均负载（load average）是运行进程的平均数了。如果你的服务器只有一个核，平均负载是1.0，那CPU的利用率达到100%。如果平均负载高于1.0，那意味着等待运行的进程数大于CPU能承载运行的进程数。所以会发现服务器宕机或者延迟。如果负载小雨1.0，那意味着CPU有时会处于空闲状态，不做任何工作。</p>
+<p>这也给你一个提示：为什么一个运行了10秒的进程的运行时间有时会高于或者低于准确的10秒。</p>
+<ul>
+<li>Process niceness and priority</li>
+</ul>
+<p>当运行的task数比可用的CPU核数要多时，你必须找个方法决定接下来哪个task运行哪个task保持等待。这其实是 task scheduler的职责。</p>
+<p>Linux内核的scheduler负责选择运行进程队列中哪个进程接下来运行，依赖于内核使用的scheduler算法。</p>
+<p>一般你不能影响scheduler，但是让它知道哪个进程更重要。</p>
+<p>Nice值(<code>NI</code>) 是表示用户空间进程优先级的数值，其代表静态优先级。Nice值的范围是-20~+19，拥有Nice值越大的进程的实际优先级越小（即Nice值为+19的进程优先级最小，为-20的进程优先级最大），默认的Nice值是0。Nice值增加1，降低进程10%的CPU时间。</p>
+<p>priority(优先级，<code>PRI</code>)是Linux内核级的优先级，其代表动态优先级。该优先级范围从0到139，0到99表示实时进程，100到139表示用户空间进程优先级。</p>
+<p>你可以改变Nice值让内核考虑该进程优先级，但是不能改变priority。</p>
+<p>Nice值和priority之间的关系如下：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">PR = 20 + NI</div></pre></td></tr></table></figure>
+<p>所以 <code>PR = 20 + (-20 to +19)</code> 的值是0到39，映射为100到139。</p>
+<p>在启动进程前设置该进程的Nice值：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">nice -n niceness program</div></pre></td></tr></table></figure>
+<p>当程序已经正在运行，可用 <code>renice</code>改变其Nice值：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">renice -n niceness -p PID</div></pre></td></tr></table></figure>
+<p>下面是CPU使用颜色代表的意义：</p>
+<blockquote>
+<p>蓝色：低优先级线程（nice &gt; 0）</p>
+<p>绿色：常规优先级线程</p>
+<p>红色：内核线程</p>
+</blockquote>
+<ul>
+<li>内存使用 - VIRT/RES/SHR/MEM</li>
+</ul>
+<p>进程给人的假象是只有一个进程使用内存，其实这是通过虚拟内存实现的。</p>
+<p>进程没有直接访问物理内存，而是拥有虚拟地址空间，Linux内核将虚拟内存地址转换成物理内存或者映射到磁盘。这就是为什么看起来进程能够使用的内存比电脑真实的内存要多。</p>
+<p>这里说明的是，想准确计算一个进程占用多少内存并不是那么直观。你也想计算共享内存或者磁盘映射内存吗？<code>htop</code> 显示的一些信息能帮助你估计内存使用量。</p>
+<p>内存使用颜色代表的意义：</p>
+<blockquote>
+<p>绿色：Used memory</p>
+<p>蓝色：Buffers</p>
+<p>橘黄色：Cache</p>
+</blockquote>
+<p><strong>VIRT/VSZ - 虚拟内存</strong></p>
+<blockquote>
+<p>task使用的虚拟内存总量。它包含代码、数据和共享内存（加上调出内存到磁盘的分页和已映射但未使用的分页）。</p>
+</blockquote>
+<p><code>VIRT</code> 是虚拟内存使用量。它包括所有的内存，含内存映射文件。</p>
+<p>如果应用请求1GB内存，但是内存只有1MB，那 <code>VIRT</code>显示1GB。如果 <code>mmap</code>映射的是一个1GB 文件， <code>VIRT</code>也显示1GB。</p>
+<p>大部分情况下， <code>VIRT</code>并不是一个太有用的数字。</p>
+<p><strong>RES/RSS - 常驻内存大小</strong></p>
+<blockquote>
+<p>task使用的非交换的物理内存。</p>
+</blockquote>
+<p><code>RES</code>是常驻内存使用量。</p>
+<p><code>RES</code>相比于 <code>VIRT</code>，能更好的表征进程的内存使用量：</p>
+<blockquote>
+<p>不包含交换出的内存；</p>
+<p>不包含共享内存</p>
+</blockquote>
+<p>如果一个进程使用1GB内存，并调用<code>fork()</code>函数，fork的结果是两个进程的 <code>RES</code> 都是1GB，但是实际上只使用了1GB内存。因为Linux采用的是copy-on-write机制。</p>
+<p><strong>SHR - 共享内存大</strong></p>
+<blockquote>
+<p>task使用的共享内存总量。</p>
+<p>简单的反应进程间共享的内存。</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</div><div class="line">  <span class="built_in">printf</span>(<span class="string">"Started\n"</span>);</div><div class="line">  sleep(<span class="number">10</span>);</div><div class="line"></div><div class="line">  <span class="keyword">size_t</span> memory = <span class="number">10</span> * <span class="number">1024</span> * <span class="number">1024</span>; <span class="comment">// 10 MB</span></div><div class="line">  <span class="keyword">char</span>* buffer = <span class="built_in">malloc</span>(memory);</div><div class="line">  <span class="built_in">printf</span>(<span class="string">"Allocated 10M\n"</span>);</div><div class="line">  sleep(<span class="number">10</span>);</div><div class="line"></div><div class="line">  <span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">0</span>; i &lt; memory/<span class="number">2</span>; i++)</div><div class="line">    buffer[i] = <span class="number">42</span>;</div><div class="line">  <span class="built_in">printf</span>(<span class="string">"Used 5M\n"</span>);</div><div class="line">  sleep(<span class="number">10</span>);</div><div class="line"></div><div class="line">  <span class="keyword">int</span> pid = fork();</div><div class="line">  <span class="built_in">printf</span>(<span class="string">"Forked\n"</span>);</div><div class="line">  sleep(<span class="number">10</span>);</div><div class="line"></div><div class="line">  <span class="keyword">if</span> (pid != <span class="number">0</span>) &#123;</div><div class="line">    <span class="keyword">for</span> (<span class="keyword">size_t</span> i = memory/<span class="number">2</span>; i &lt; memory/<span class="number">2</span> + memory/<span class="number">5</span>; i++)</div><div class="line">      buffer[i] = <span class="number">42</span>;</div><div class="line">    <span class="built_in">printf</span>(<span class="string">"Child used extra 2M\n"</span>);</div><div class="line">  &#125;</div><div class="line">  sleep(<span class="number">10</span>);</div><div class="line"></div><div class="line">  <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">fallocate <span class="_">-l</span> 10G</div><div class="line">gcc -std=c99 mem.c -o mem</div><div class="line">./mem</div></pre></td></tr></table></figure>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">Process  Message               VIRT  RES SHR</div><div class="line">main     Started               4200  680 604</div><div class="line">main     Allocated 10M        14444  680 604</div><div class="line">main     Used 5M              14444 6168 1116</div><div class="line">main     Forked               14444 6168 1116</div><div class="line">child    Forked               14444 5216 0</div><div class="line">main     Child used extra 2M        8252 1116</div><div class="line">child    Child used extra 2M        5216 0</div></pre></td></tr></table></figure>
+<p><strong>MEM% - 内存使用量占比</strong></p>
+<blockquote>
+<p>task当前使用的内存占比。</p>
+</blockquote>
+<p>该值为 <code>RES</code> 除以RAM总量。</p>
+<p>如果 <code>RES</code> 是400M，你有8GB的RAM，<code>MEM%</code> 是 <code>400/8192*100</code> = <code>4.88%</code>。</p>
+<p>“庖丁解牛”式问诊Linux启动全过程</p>
+<p>本文使用Digital Ocean droplet Ubuntu服务器启动过程为“蓝本”，详细解说Linux启动涉及的所有进程。</p>
+<p>Ubuntu系统引导启动的进程都有哪些？你都需要它们吗？</p>
+<p>下面是在全新Digital Ocean droplet 的Ubuntu（16.04.1 LTS x64）服务器上启动系统。</p>
+<p><img src="https://peteris.rocks/blog/htop/canyoukillit-before.png" alt="image"></p>
+<ul>
+<li>/sbin/init</li>
+</ul>
+<blockquote>
+<p>/sbin/init程序，也称init，调度除boot进程外所有的进程，配置用户环境。</p>
+<p>init启动后，将成为所有系统自动启动进程的父进程或者祖父进程。</p>
+</blockquote>
+<p>它是systemd吗？</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ dpkg -S /sbin/init</div><div class="line">systemd-sysv: /sbin/init</div></pre></td></tr></table></figure>
+<p>答案是，yes。</p>
+<p>如果kill掉<code>/sbin/init</code>会发生什么呢？什么也不会发生，哈哈。</p>
+<blockquote>
+<ul>
+<li><a href="https://wiki.ubuntu.com/SystemdForUpstartUsers" target="_blank" rel="external">https://wiki.ubuntu.com/SystemdForUpstartUsers</a></li>
+<li><a href="https://www.centos.org/docs/5/html/5.1/Installation_Guide/s2-boot-init-shutdown-init.html" target="_blank" rel="external">https://www.centos.org/docs/5/html/5.1/Installation_Guide/s2-boot-init-shutdown-init.html</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/lib/systemd/systemd-journald</li>
+</ul>
+<blockquote>
+<p>systemd-journald进程是一个系统服务，其收集、存储log数据。它基于接收的log信息创建和维护结构化、索引journal。</p>
+</blockquote>
+<p>换句话讲。</p>
+<blockquote>
+<p>journald主要的变化之一，是采用优化的log存储替代简单文本log文件。使得系统管理员访问相应的log信息更有效。journald引入数据库式log的集中存储能力。</p>
+</blockquote>
+<p>你可以使用 <code>journalctl</code> 命令查询log文件。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">journalctl _COMM=sshd logs by sshd</div><div class="line">journalctl _COMM=sshd -o json-pretty logs by sshd in JSON</div><div class="line">journalctl --since &quot;2015-01-10&quot; --until &quot;2015-01-11 03:00&quot;</div><div class="line">journalctl --since 09:00 --until &quot;1 hour ago&quot;</div><div class="line">journalctl --since yesterday</div><div class="line">journalctl -b logs since boot</div><div class="line">journalctl -f to follow logs</div><div class="line">journalctl --disk-usage</div><div class="line">journalctl --vacuum-size=1G</div></pre></td></tr></table></figure>
+<p>相当酷有木有！</p>
+<p>看起来不能移除或者disable该服务，但是你可以关闭logging。</p>
+<blockquote>
+<ul>
+<li><a href="https://www.freedesktop.org/software/systemd/man/systemd-journald.service.html" target="_blank" rel="external">https://www.freedesktop.org/software/systemd/man/systemd-journald.service.html</a></li>
+<li><a href="https://www.digitalocean.com/community/tutorials/how-to-use-journalctl-to-view-and-manipulate-systemd-logs" target="_blank" rel="external">https://www.digitalocean.com/community/tutorials/how-to-use-journalctl-to-view-and-manipulate-systemd-logs</a></li>
+<li><a href="https://www.loggly.com/blog/why-journald/" target="_blank" rel="external">https://www.loggly.com/blog/why-journald/</a></li>
+<li><a href="https://ask.fedoraproject.org/en/question/63985/how-to-correctly-disable-journald/" target="_blank" rel="external">https://ask.fedoraproject.org/en/question/63985/how-to-correctly-disable-journald/</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/sbin/lvmetad -f</li>
+</ul>
+<blockquote>
+<p>lvmetad守护进程缓存LVM元数据（metadata），所以LVM命令不用扫描磁盘就能读取元数据。</p>
+<p>元数据缓存的优势，在于扫描磁盘是非常耗时的，并且可能中断系统和磁盘的正常工作。</p>
+</blockquote>
+<p>那什么才是LVM（Logical Volume Management，逻辑卷管理）呢？</p>
+<blockquote>
+<p>你可以认为逻辑卷管理LVM是动态分区（dynamic partitions），意味着你能在正在运行的系统上用命令行创建/重设大小/删除（create/resize/delete）LVM分区（用LVM的话讲是逻辑卷）：无须重启操作系统来让内核感知新建或者重设大小的分区。</p>
+</blockquote>
+<p>听起来像，如果你正在使用LVM服务，那得保留该服务。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ lvscan</div><div class="line">$ sudo apt remove lvm2 -y --purge</div></pre></td></tr></table></figure>
+<blockquote>
+<ul>
+<li><a href="http://manpages.ubuntu.com/manpages/xenial/man8/lvmetad.8.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man8/lvmetad.8.html</a></li>
+<li><a href="http://askubuntu.com/questions/3596/what-is-lvm-and-what-is-it-used-for" target="_blank" rel="external">http://askubuntu.com/questions/3596/what-is-lvm-and-what-is-it-used-for</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/lib/systemd/udevd</li>
+</ul>
+<blockquote>
+<p>systemd-udevd监听Linux内核uevent事件（uevent是内核空间和用户空间之间通信的机制，主要用于热插拔事件（hotplug））。对于每个事件，systemd-udevd都会根据udev规则执行匹配的指定设备。</p>
+<p>udev是Linux内核的设备管理器。其作为devfsd和hotplug的升级，udev主要管理/dev目录下的设备节点。</p>
+</blockquote>
+<p>所以该服务会管理 <code>/dev</code>。</p>
+<p>作者不太确定是否一定要运行在虚拟机上。</p>
+<blockquote>
+<ul>
+<li><a href="https://www.freedesktop.org/software/systemd/man/systemd-udevd.service.html" target="_blank" rel="external">https://www.freedesktop.org/software/systemd/man/systemd-udevd.service.html</a></li>
+<li><a href="https://wiki.archlinux.org/index.php/udev" target="_blank" rel="external">https://wiki.archlinux.org/index.php/udev</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/lib/systemd/timesyncd</li>
+</ul>
+<blockquote>
+<p>systemd-timesyncd是使用远程网络时间协议来同步本地系统时钟的系统服务。</p>
+</blockquote>
+<p>所以该服务是来替代<code>ntpd</code>的。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">$ timedatectl status</div><div class="line">      Local time: Fri 2016-08-26 11:38:21 UTC</div><div class="line">  Universal time: Fri 2016-08-26 11:38:21 UTC</div><div class="line">        RTC time: Fri 2016-08-26 11:38:20</div><div class="line">       Time zone: Etc/UTC (UTC, +0000)</div><div class="line"> Network time on: yes</div><div class="line">NTP synchronized: yes</div><div class="line"> RTC <span class="keyword">in</span> <span class="built_in">local</span> TZ: no</div></pre></td></tr></table></figure>
+<p>查看一下服务器上打开的端口：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ sudo netstat -nlput</div><div class="line">Active Internet connections (only servers)</div><div class="line">Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name</div><div class="line">tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      2178/sshd</div><div class="line">tcp6       0      0 :::22                   :::*                    LISTEN      2178/sshd</div></pre></td></tr></table></figure>
+<p>以前在Ubuntu 14.04上打开的端口如下：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">$ sudo apt-get install ntp -y</div><div class="line">$ sudo netstat -nlput</div><div class="line">Active Internet connections (only servers)</div><div class="line">Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name</div><div class="line">tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      1380/sshd</div><div class="line">tcp6       0      0 :::22                   :::*                    LISTEN      1380/sshd</div><div class="line">udp        0      0 10.19.0.6:123           0.0.0.0:*                           2377/ntpd</div><div class="line">udp        0      0 139.59.256.256:123      0.0.0.0:*                           2377/ntpd</div><div class="line">udp        0      0 127.0.0.1:123           0.0.0.0:*                           2377/ntpd</div><div class="line">udp        0      0 0.0.0.0:123             0.0.0.0:*                           2377/ntpd</div><div class="line">udp6       0      0 fe80::601:6aff:fxxx:123 :::*                                2377/ntpd</div><div class="line">udp6       0      0 ::1:123                 :::*                                2377/ntpd</div><div class="line">udp6       0      0 :::123                  :::*                                2377/ntpd</div></pre></td></tr></table></figure>
+<blockquote>
+<p><a href="https://www.freedesktop.org/software/systemd/man/systemd-timesyncd.service.html" target="_blank" rel="external">https://www.freedesktop.org/software/systemd/man/systemd-timesyncd.service.html</a></p>
+<p><a href="https://wiki.archlinux.org/index.php/systemd-timesyncd" target="_blank" rel="external">https://wiki.archlinux.org/index.php/systemd-timesyncd</a></p>
+</blockquote>
+<ul>
+<li>/usr/sbin/atd -f</li>
+</ul>
+<blockquote>
+<p>atd将作业加入队列稍后执行。atd通过<code>at</code>将业务加入队列。</p>
+<p><code>at</code>和批量从标准输入输出或者指定文件读命令并稍后执行。</p>
+</blockquote>
+<p><code>cron</code>命令调度作业周期性重复运行，<code>at</code>只在指定时间运行一次。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">$ <span class="built_in">echo</span> <span class="string">"touch /tmp/yolo.txt"</span> | at now + 1 minute</div><div class="line">job 1 at Fri Aug 26 10:44:00 2016</div><div class="line">$ atq</div><div class="line">1       Fri Aug 26 10:44:00 2016 a root</div><div class="line">$ sleep 60 &amp;&amp; ls /tmp/yolo.txt</div><div class="line">/tmp/yolo.txt</div></pre></td></tr></table></figure>
+<p>不需要使用的话可以卸载：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt remove at -y --purge</div></pre></td></tr></table></figure>
+<blockquote>
+<ul>
+<li><a href="http://manpages.ubuntu.com/manpages/xenial/man8/atd.8.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man8/atd.8.html</a></li>
+<li><a href="http://manpages.ubuntu.com/manpages/xenial/man1/at.1.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man1/at.1.html</a></li>
+<li><a href="http://askubuntu.com/questions/162439/why-does-ubuntu-server-run-both-cron-and-atd" target="_blank" rel="external">http://askubuntu.com/questions/162439/why-does-ubuntu-server-run-both-cron-and-atd</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/usr/lib/snapd/snapd</li>
+</ul>
+<blockquote>
+<p>Snappy Ubuntu Core是带有事务性更新的Ubuntu版本，其和当前的Ubuntu具有相同的library的最小服务器镜像，但是以更简单的机制来提供应用。</p>
+</blockquote>
+<p>很显然，它是一个简化版的deb包，分发的所有依赖都在单个snap中。</p>
+<p>作者从来不用snappy在服务器上发布或者分发应用，所以可以卸载：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt remove snapd -y --purge</div></pre></td></tr></table></figure>
+<blockquote>
+<ul>
+<li><a href="https://developer.ubuntu.com/en/snappy/" target="_blank" rel="external">https://developer.ubuntu.com/en/snappy/</a></li>
+<li><a href="https://insights.ubuntu.com/2016/06/14/universal-snap-packages-launch-on-multiple-linux-distros/" target="_blank" rel="external">https://insights.ubuntu.com/2016/06/14/universal-snap-packages-launch-on-multiple-linux-distros/</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/usr/bin/dbus-daemon</li>
+</ul>
+<blockquote>
+<p>在计算机中，D-Bus或者DBus是进程间通信（ inter-process communication，IPC）和远程过程调用（remote procedure call，RPC）机制，它允许在同一台机器上并发运行的多个计算机程序（进程）通信。</p>
+</blockquote>
+<p>作者觉得当你需要桌面环境时要启动该服务，当你只是在服务器上运行web应用则可以卸载：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt remove dbus -y --purge</div></pre></td></tr></table></figure>
+<p>然而，当你想看下时间是否通过NTP同步，发现了问题：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ timedatectl status</div><div class="line">Failed to create bus connection: No such file or directory</div></pre></td></tr></table></figure>
+<blockquote>
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/D-Bus" target="_blank" rel="external">https://en.wikipedia.org/wiki/D-Bus</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/lib/systemd/systemd-logind</li>
+</ul>
+<blockquote>
+<p>systemd-logind是管理用户登录的系统服务。</p>
+<ul>
+<li><a href="https://www.freedesktop.org/software/systemd/man/systemd-logind.service.html" target="_blank" rel="external">https://www.freedesktop.org/software/systemd/man/systemd-logind.service.html</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/usr/sbin/cron -f</li>
+</ul>
+<blockquote>
+<p><code>cron</code>守护进程执行调度计划命令。</p>
+<p><code>-f</code> 保持运行在前台，不以守护进程运行。</p>
+</blockquote>
+<p>你可以使用<code>cron</code>周期性调度任务运行。</p>
+<p> <code>crontab -e</code> 编辑cron的配置文件，在Ubuntu上可以用 <code>/etc/cron.hourly</code>，<code>/etc/cron.daily</code>等配置。</p>
+<p>你可以使用下面的方法查看cron的log文件：</p>
+<ul>
+<li><code>grep cron /var/log/syslog</code> </li>
+<li><code>journalctl _COMM=cron</code></li>
+<li><code>journalctl _COMM=cron --since=&quot;date&quot; --until=&quot;date&quot;</code></li>
+</ul>
+<p>如果你不想使用cron时，可以停止并disable该服务：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">sudo systemctl stop cron</div><div class="line">sudo systemctl <span class="built_in">disable</span> cron</div></pre></td></tr></table></figure>
+<p>当使用 <code>apt remove cron</code> 删除cron服务时，会发现其会安装postfix：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ sudo apt remove cron</div><div class="line">The following packages will be REMOVED:</div><div class="line">  cron</div><div class="line">The following NEW packages will be installed:</div><div class="line">  anacron bcron bcron-run fgetty libbg1 libbg1-doc postfix runit ssl-cert ucspi-unix</div></pre></td></tr></table></figure>
+<p>看起来cron服务需要邮件客户端（MTA）发送邮件：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">$ apt show cron</div><div class="line">Package: cron</div><div class="line">Version: 3.0pl1-128ubuntu2</div><div class="line">...</div><div class="line">Suggests: anacron (&gt;= 2.0-1), logrotate, checksecurity, exim4 | postfix | mail-transport-agent</div><div class="line"></div><div class="line">$ apt depends cron</div><div class="line">cron</div><div class="line">  ...</div><div class="line">  Suggests: anacron (&gt;= 2.0-1)</div><div class="line">  Suggests: logrotate</div><div class="line">  Suggests: checksecurity</div><div class="line"> |Suggests: exim4</div><div class="line"> |Suggests: postfix</div><div class="line">  Suggests: &lt;mail-transport-agent&gt;</div><div class="line">    ...</div><div class="line">    exim4-daemon-heavy</div><div class="line">    postfix</div></pre></td></tr></table></figure>
+<blockquote>
+<ul>
+<li><a href="https://help.ubuntu.com/community/CronHowto" target="_blank" rel="external">https://help.ubuntu.com/community/CronHowto</a></li>
+<li><a href="https://www.digitalocean.com/community/tutorials/how-to-use-cron-to-automate-tasks-on-a-vps" target="_blank" rel="external">https://www.digitalocean.com/community/tutorials/how-to-use-cron-to-automate-tasks-on-a-vps</a></li>
+<li><a href="http://unix.stackexchange.com/questions/212355/where-is-my-logfile-of-crontab" target="_blank" rel="external">http://unix.stackexchange.com/questions/212355/where-is-my-logfile-of-crontab</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/usr/sbin/rsyslogd -n</li>
+</ul>
+<blockquote>
+<p>Rsyslogd是提供消息日志的系统组件。</p>
+</blockquote>
+<p>换句话说，rsyslogd将日志写入 <code>/var/log/</code> 目录下，比如 <code>/var/log/auth.log</code> 是SSH登陆的权限日志。</p>
+<p>rsyslogd的配置文件是<code>/etc/rsyslog.d</code>。</p>
+<p>你也可以配置rsyslogd发送log文件到远程服务器，实现日志log中心化。</p>
+<p>你也可以在后台脚本中使用 <code>logger</code> 命令将消息日志写入 <code>/var/log/syslog</code> 。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#!/bin/bash</span></div><div class="line"></div><div class="line">logger Starting doing something</div><div class="line"><span class="comment"># NFS, get IPs, etc.</span></div><div class="line">logger Done doing something</div></pre></td></tr></table></figure>
+<p>但是，前面已经有 <code>systemd-journald</code> 服务在运行了，那还需 <code>rsyslogd</code> 吗？</p>
+<blockquote>
+<p>Rsyslog 和 Journal服务是存在于系统中的两个log日志应用，它们功能不同。大部分情况下，需要同时结合两者的功能。比如，创建结构化的消息并存储到文件数据库。通信接口需要Rsyslog提供输入和输出模块，通信socket由Journal提供。</p>
+</blockquote>
+<p>所以呢？看样子还是暂时保留吧。</p>
+<blockquote>
+<ul>
+<li><a href="http://manpages.ubuntu.com/manpages/xenial/man8/rsyslogd.8.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man8/rsyslogd.8.html</a></li>
+<li><a href="http://manpages.ubuntu.com/manpages/xenial/man1/logger.1.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man1/logger.1.html</a></li>
+<li><a href="https://wiki.archlinux.org/index.php/rsyslog" target="_blank" rel="external">https://wiki.archlinux.org/index.php/rsyslog</a></li>
+<li><a href="https://www.digitalocean.com/community/tutorials/how-to-centralize-logs-with-rsyslog-logstash-and-elasticsearch-on-ubuntu-14-04" target="_blank" rel="external">https://www.digitalocean.com/community/tutorials/how-to-centralize-logs-with-rsyslog-logstash-and-elasticsearch-on-ubuntu-14-04</a></li>
+<li><a href="https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/System_Administrators_Guide/s1-interaction_of_rsyslog_and_journal.html" target="_blank" rel="external">https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/System_Administrators_Guide/s1-interaction_of_rsyslog_and_journal.html</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/usr/sbin/acpid</li>
+</ul>
+<blockquote>
+<p>acpid，是高级配置与电源接口（Advanced Configuration and Power Interface，ACPI）事件守护进程。</p>
+<p>acpid设计用来通知ACPI事件的用户空间程序，其在系统启动时已启动，并默认以后台进程运行。</p>
+<p>计算机中的高级配置与电源接口，提供处理电源相关事件的开源标准。操作系统可以处理计算机硬件的发现和配置，可以进行电源管理。比如，将未使用的组件置为睡眠，进行状态监控。</p>
+</blockquote>
+<p>但是本例中使用的虚拟机，不需要挂起/继续。</p>
+<p>这里删除该服务，看下会发生什么。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt remove acpid -y --purge</div></pre></td></tr></table></figure>
+<p>作者可以成功执行 <code>reboot</code>重启 droplet，但是执行 <code>halt</code> 后必须通过web接口关闭虚拟机。</p>
+<blockquote>
+<ul>
+<li><a href="http://manpages.ubuntu.com/manpages/xenial/man8/acpid.8.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man8/acpid.8.html</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Advanced_Configuration_and_Power_Interface" target="_blank" rel="external">https://en.wikipedia.org/wiki/Advanced_Configuration_and_Power_Interface</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/usr/bin/lxcfs /var/lib/lxcfs/</li>
+</ul>
+<blockquote>
+<p>Lxcfs主要是以lxc容器为用户提供fuse文件系统。在Ubuntu 15.04上，默认提供两个功能：一是，一些/proc文件的视图；二是，过滤访问主机的cgroup文件系统。</p>
+<p>总之，在Ubuntu 15.04上你能用通用的方式（ lxc-create）创建容器。创建的容器使用uptime、top等能得出“正确”结果。</p>
+</blockquote>
+<p>不用LXC容器时可以移除该服务：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt remove lxcfs -y --purge</div></pre></td></tr></table></figure>
+<blockquote>
+<ul>
+<li><a href="https://insights.ubuntu.com/2015/03/02/introducing-lxcfs/" target="_blank" rel="external">https://insights.ubuntu.com/2015/03/02/introducing-lxcfs/</a></li>
+<li><a href="https://www.stgraber.org/2016/03/31/lxcfs-2-0-has-been-released/" target="_blank" rel="external">https://www.stgraber.org/2016/03/31/lxcfs-2-0-has-been-released/</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/usr/lib/accountservice/accounts-daemon</li>
+</ul>
+<blockquote>
+<p>账户管理AccountsService包提供一系列D-Bus接口查询和管理用户账户信息。其是基于usermod(8)，useradd(8) 和userdel(8) 命令实现的。</p>
+</blockquote>
+<p>作者想知道移除该服务会出现什么问题。当移除DBus时， <code>timedatectl</code>失效。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt remove accountsservice -y --purge</div></pre></td></tr></table></figure>
+<blockquote>
+<ul>
+<li><a href="http://www.linuxfromscratch.org/blfs/view/systemd/gnome/accountsservice.html" target="_blank" rel="external">http://www.linuxfromscratch.org/blfs/view/systemd/gnome/accountsservice.html</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/sbin/mdadm</li>
+</ul>
+<blockquote>
+<p>Linux组件mdadm是管理RAID设备的管理和监控软件。</p>
+<p>其名字是源于md（multiple device，多设备）节点管理（administers），它替代之前的mdctl。原始的名字是 “Mirror Disk”，随着功能的增加名字随之改变。</p>
+<p>RAID是将多块硬盘看作是一块硬盘的方法。RAID的目的有两个：1)扩展磁盘驱动容量：RAID 0。如果你有2个500GB的HDD，则总的容量即为1TB；2)防止驱动失败时数据丢失。比如RAID 1，RAID 5， RAID 6和RAID 10。</p>
+</blockquote>
+<p>可以用如下命令移除：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt remove mdadm -y --purge</div></pre></td></tr></table></figure>
+<blockquote>
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/Mdadm" target="_blank" rel="external">https://en.wikipedia.org/wiki/Mdadm</a></li>
+<li><a href="https://help.ubuntu.com/community/Installation/SoftwareRAID" target="_blank" rel="external">https://help.ubuntu.com/community/Installation/SoftwareRAID</a></li>
+<li><a href="http://manpages.ubuntu.com/manpages/xenial/man8/mdadm.8.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man8/mdadm.8.html</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/usr/lib/policykit-1/polkitd –no-debug</li>
+</ul>
+<blockquote>
+<p>polkitd：PolicyKit守护进程。</p>
+<p>polkit：授权管理。</p>
+</blockquote>
+<p>有点类似是细粒度的sudo权限控制。你能允许非权限用户做某些root用户的操作。比如，桌面计算机中的Linux重启计算机。</p>
+<p>这里是运行的服务器，可以移除该服务：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt remove policykit-1 -y --purge</div></pre></td></tr></table></figure>
+<blockquote>
+<ul>
+<li><a href="http://manpages.ubuntu.com/manpages/xenial/man8/polkitd.8.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man8/polkitd.8.html</a></li>
+<li><a href="http://manpages.ubuntu.com/manpages/xenial/man8/polkit.8.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man8/polkit.8.html</a></li>
+<li><a href="http://www.admin-magazine.com/Articles/Assigning-Privileges-with-sudo-and-PolicyKit" target="_blank" rel="external">http://www.admin-magazine.com/Articles/Assigning-Privileges-with-sudo-and-PolicyKit</a></li>
+<li><a href="https://wiki.archlinux.org/index.php/Polkit#Configuration" target="_blank" rel="external">https://wiki.archlinux.org/index.php/Polkit#Configuration</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/usr/sbin/sshd -D</li>
+</ul>
+<blockquote>
+<p>sshd（OpenSSH Daemon），ssh的守护进程。</p>
+<p>指定-D选项时，sshd不断开，也不成为守护进程。这样会更容易监控sshd。</p>
+<ul>
+<li><a href="http://manpages.ubuntu.com/manpages/xenial/man8/sshd.8.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man8/sshd.8.html</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>/sbin/iscsid</li>
+</ul>
+<p>iscsid是系统守护进程，处理iSCSI配置和管理连接。从帮助页看到：</p>
+<blockquote>
+<p>iscsid实现iSCSI协议的控制路径，和一些设备管理。比如，守护进程能配置成在服务器启动时自动重启，该功能基于持久化iSCSI数据库。</p>
+</blockquote>
+<p>可以移除该服务：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt remove open-iscsi -y --purge</div></pre></td></tr></table></figure>
+<ul>
+<li>/sbin/agetty –noclear tty1 linux</li>
+</ul>
+<blockquote>
+<p>agetty是alternative Linux getty的缩写。</p>
+<p>getty，是”get tty”的简写，通常从 <code>/etc/inittab</code> 启动，允许用户从终端 (TTYs)登录。它会提示输入用户名，运行’login’ 程序授权用户登录。</p>
+<p>早期getty存在传统Unix系统，其管理一系列连接到主机上的终端（电传打字机，Teletype machine）连接。其中tty是Teletype的缩写，后来代指各种文字终端。</p>
+</blockquote>
+<p>如果在物理服务器上，你可以使用getty登录。在Digital Ocean，你可以点击droplet详情上的<em>Console</em>，通过浏览器和终端交互（可能是VNC连接）。</p>
+<p>在过去，系统启动后你会看到一大泼tty启动（一般配置在/etc/inittab）；不过现在都用systemd代替。</p>
+<p>下面移除 <code>agetty</code>启动的配置文件：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">sudo rm /etc/systemd/system/getty.target.wants/getty@tty1.service</div><div class="line">sudo rm /lib/systemd/system/getty@.service</div></pre></td></tr></table></figure>
+<p>然后重启服务器，仍然可以通过SSH连接服务器，但是不能通过Digital Ocean的web控制台登录服务器啦。</p>
+<p><img src="http://img0.ph.126.net/QQy2chIVliRMwjpAkvKNZQ==/6632514723004686312.png" alt="image"></p>
+<blockquote>
+<ul>
+<li><a href="http://manpages.ubuntu.com/manpages/xenial/man8/getty.8.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man8/getty.8.html</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Getty_(Unix" target="_blank" rel="external">https://en.wikipedia.org/wiki/Getty_(Unix)</a>)</li>
+<li><a href="http://0pointer.de/blog/projects/serial-console.html" target="_blank" rel="external">http://0pointer.de/blog/projects/serial-console.html</a></li>
+<li><a href="http://unix.stackexchange.com/questions/56531/how-to-get-fewer-ttys-with-systemd" target="_blank" rel="external">http://unix.stackexchange.com/questions/56531/how-to-get-fewer-ttys-with-systemd</a></li>
+</ul>
+</blockquote>
+<ul>
+<li>sshd: root@pts/0 &amp; -bash &amp; htop</li>
+</ul>
+<p><code>sshd: root@pts/0</code> 意味着root用户在#<code>0</code>伪终端 (<code>pts</code>)创建啦SSH会话。</p>
+<p><code>bash</code> 是指使用的shell。</p>
+<p>但是为啥<code>bash</code> 开头有个破折号呢？Reddit上有解释：</p>
+<blockquote>
+<p><code>bash</code> 开头的破折号是因为<code>bash</code> 以login shell模式启动时（取得<code>bash</code> 时需要完整的登录流程）。启动login shell模式有两种方式：使用“-”参数启动；使用”—login”选项启动。它们都会加载配置文件。</p>
+</blockquote>
+<p><code>htop</code> 是交互式进程查看工具。</p>
+<p>接着移除下面的服务：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">sudo apt remove lvm2 -y --purge</div><div class="line">sudo apt remove at -y --purge</div><div class="line">sudo apt remove snapd -y --purge</div><div class="line">sudo apt remove lxcfs -y --purge</div><div class="line">sudo apt remove mdadm -y --purge</div><div class="line">sudo apt remove open-iscsi -y --purge</div><div class="line">sudo apt remove accountsservice -y --purge</div><div class="line">sudo apt remove policykit-1 -y --purge</div></pre></td></tr></table></figure>
+<p>用<code>htop</code>查看会出现如下图：</p>
+<p><img src="http://img0.ph.126.net/ts_inlBS6JC-agpy9WFyPw==/3081869520024393963.png" alt="image"></p>
+<p>再次挑战“极限”情况：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">sudo apt remove dbus -y --purge</div><div class="line">sudo apt remove rsyslog -y --purge</div><div class="line">sudo apt remove acpid -y --purge</div><div class="line">sudo systemctl stop cron &amp;&amp; sudo systemctl <span class="built_in">disable</span> cron</div><div class="line">sudo rm /etc/systemd/system/getty.target.wants/getty@tty1.service</div><div class="line">sudo rm /lib/systemd/system/getty@.service</div></pre></td></tr></table></figure>
+<p>再用<code>htop</code>查看：</p>
+<p><img src="http://img2.ph.126.net/6Y5YnkSZ7ci07ByX1GhT_g==/6632304716283782948.png" alt="image"></p>
+<p>未完待续。。。</p>
+<p>Enjoy!</p>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/12/28/deep-learning-with-python-chapter-1-1.1/" rel="next" title="《Deep Learning with Python》第一章 1.1 人工智能、机器学习和深度学习">
+                <i class="fa fa-chevron-left"></i> 《Deep Learning with Python》第一章 1.1 人工智能、机器学习和深度学习
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/12/28/face-emotion-recognition/" rel="prev" title="面部表情（表情包）识别">
+                面部表情（表情包）识别 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="http://img0.ph.126.net/3vPAbMoh_6fH3-g_I0zo-w==/6631748363397501906.jpg"
+               alt="侠天" />
+          <p class="site-author-name" itemprop="name">侠天</p>
+          <p class="site-description motion-element" itemprop="description">侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">27</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/1333564335" target="_blank" title="微博">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  微博
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://www.infoq.com/cn/author/%E4%BE%A0%E5%A4%A9" target="_blank" title="InfoQ">
+                  
+                    <i class="fa fa-fw fa-infoq"></i>
+                  
+                  InfoQ
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#Htop-on-CentOS"><span class="nav-number">1.</span> <span class="nav-text">Htop on CentOS</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">侠天</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+  </script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+    });
+  </script>
+  <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+  
+
+  
+
+</body>
+</html>
