@@ -238,6 +238,234 @@
             
               
                 
+                <a class="post-title-link" href="/2016/10/24/visual-tools-for-machine-learning-part-3/" itemprop="url">
+                  机器学习可视化系统完结篇：模型评估和参数调优
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-10-24T01:30:30+08:00" content="2016-10-24">
+              2016-10-24
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>机器学习可视化系统完结篇：模型评估和参数调优</p>
+<p><em>写在之前：前两篇讲述了特征分析：《<a href="http://mp.weixin.qq.com/s?__biz=MzI0MDIxMDM0MQ==&amp;mid=2247483684&amp;idx=1&amp;sn=428cf35632b2408e1dc7d36dff497c53&amp;scene=0#wechat_redirect" target="_blank" rel="external">可视化图表让机器学习“biu”的一样简单：特征分析</a>》和模型选择：《<a href="http://mp.weixin.qq.com/s?__biz=MzI0MDIxMDM0MQ==&amp;mid=2247483750&amp;idx=1&amp;sn=34d9979d6e2608535d9921db54d57a8d&amp;chksm=e91f19acde6890baa7e6950b7133bcf290549c8b2ef150e5422a3c2f0df233e51cbde2b5baf3&amp;scene=0#wechat_redirect" target="_blank" rel="external">机器学习模型选择如此简单</a>》。</em></p>
+<p>本篇文章详细阐述机器学习模型评估和参数调优。将主要围绕两个问题来阐述：</p>
+<ol>
+<li>“知其所以然”：当你选择的一个机器学习模型运行时，你要知道它是如何工作的；</li>
+<li>“青出于蓝”：更进一步，你得知道如何让此机器学习模型工作的更优。</li>
+</ol>
+<h4 id="模型评估的方法"><a href="#模型评估的方法" class="headerlink" title="模型评估的方法"></a>模型评估的方法</h4><p>一般情况来说，F1评分或者R平方(R-Squared value)等数值评分可以告诉我们训练的机器学习模型的好坏。也有其它许多度量方式来评估拟合模型。</p>
+<p>你应该猜出来，我将提出使用可视化的方法结合数值评分来更直观的评判机器学习模型。接下来的几个部分将分享一些有用的工具。</p>
+<p>首先想声明的，单单一个评分或者一条线，是无法完全评估一个机器学习模型。偏离真实场景来评估机器学习模型（’good’ or ‘bad’）都是“耍流氓”。某个机器学习模型若可“驾驭”小样本数据集生成最多预测模型（即，命中更多预测数据集）。如果一个拟合模型比其它拟合过的模型形式或者你昨天的预测模型能够得到更好的结果，那即是好（’good’）。</p>
+<p>下面是一些标准指标： <em>confusion_matrix</em>，<em>mean_squared_error</em>， <em>r2_score</em>，这些可以用来评判分类器或者回归的好坏。表格中给出的是<strong><em>Scikit-Learn</em></strong>中的函数以及描述：</p>
+<p>评估分类模型：</p>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>描述</th>
+<th>Scikit-learn函数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Precision</td>
+<td>精准度</td>
+<td>from sklearn.metrics import precision_score</td>
+</tr>
+<tr>
+<td>Recall</td>
+<td>召回率</td>
+<td>from sklearn.metrics import recall_score</td>
+</tr>
+<tr>
+<td>F1</td>
+<td>F1值</td>
+<td>from sklearn.metrics import f1_score</td>
+</tr>
+<tr>
+<td>Confusion Matrix</td>
+<td>混淆矩阵</td>
+<td>from sklearn.metrics import confusion_matrix</td>
+</tr>
+<tr>
+<td>ROC</td>
+<td>ROC曲线</td>
+<td>from sklearn.metrics import roc</td>
+</tr>
+<tr>
+<td>AUC</td>
+<td>ROC曲线下的面积</td>
+<td>from sklearn.metrics import auc</td>
+</tr>
+</tbody>
+</table>
+<p>评估回归模型：</p>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>描述</th>
+<th>Scikit-learn函数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mean Square Error (MSE, RMSE)</td>
+<td>平均方差</td>
+<td>from sklearn.metrics import mean_squared_error</td>
+</tr>
+<tr>
+<td>Absolute Error (MAE, RAE)</td>
+<td>绝对误差</td>
+<td>from sklearn.metrics import mean_absolute_error, median_absolute_error</td>
+</tr>
+<tr>
+<td>R-Squared</td>
+<td>R平方值</td>
+<td>from sklearn.metrics import r2_score</td>
+</tr>
+</tbody>
+</table>
+<p>下面开始使用<strong><em>Scikit-Learn</em></strong>的可视化工具来更直观的展现模型的好坏。</p>
+<h6 id="评估分类模型"><a href="#评估分类模型" class="headerlink" title="评估分类模型"></a>评估分类模型</h6><p>我们评估分类器是判断预测值时否很好的与实际标记值相匹配。正确的鉴别出正样本（True Positives）或者负样本（True Negatives）都是True。同理，错误的判断正样本（False Positive，即一类错误）或者负样本（False Negative，即二类错误）。</p>
+<p>注意：True和False是对于评价预测结果而言，也就是评价预测结果是正确的(True)还是错误的(False)。而Positive和Negative则是样本分类的标记。</p>
+<p>通常，我们希望通过一些参数来告知模型评估如何。为此，我们使用混淆矩阵。</p>
+<h5 id="混淆矩阵"><a href="#混淆矩阵" class="headerlink" title="混淆矩阵"></a>混淆矩阵</h5><p><img src="https://silvrback.s3.amazonaws.com/uploads/4ab81a17-4a77-4e9e-b092-de5fac2afa07/confusionmatrix_large.png" alt="Confusion Matrix"></p>
+<p>幸运的是，<strong><em>Scikit-Learn</em></strong>提供内建函数（<em>sklearn.metrics.confusion_matrix</em>）来计算混淆矩阵。输入数据集实际值和模型预测值作为参数，输出即为混淆矩阵，结果类似这样：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">[[<span class="number">1238</span>   <span class="number">19</span>]   <span class="comment"># True Positives = 1238, False Negatives = 19</span></div><div class="line"> [   <span class="number">2</span>  <span class="number">370</span>]]  <span class="comment"># False Positives = 2, True Negatives = 370</span></div></pre></td></tr></table></figure>
+<h5 id="分类报告"><a href="#分类报告" class="headerlink" title="分类报告"></a>分类报告</h5><p>分类报告除了包括混淆矩阵，也增加了其它优势，比如，混淆矩阵会标示样例是否被正确鉴别，同时也提供precision，recall和 F1 值三种评估指标。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> classification_report</div><div class="line"></div><div class="line">print(classification_report(y_true, y_pred, target_names=target_names))</div></pre></td></tr></table></figure>
+<p> 更进一步，可以对<strong><em>Scikit-Learn</em></strong>的内建函数做些加强，比如，使用带颜色区分的热力图，它将帮助我们的眼睛更容易的辨别预测成功（橘黄色）和失败（灰色）。代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">from</span> matplotlib <span class="keyword">import</span> colors</div><div class="line"><span class="keyword">from</span> matplotlib.colors <span class="keyword">import</span> ListedColormap</div><div class="line"></div><div class="line">ddl_heat = [<span class="string">'#DBDBDB'</span>,<span class="string">'#DCD5CC'</span>,<span class="string">'#DCCEBE'</span>,<span class="string">'#DDC8AF'</span>,<span class="string">'#DEC2A0'</span>,<span class="string">'#DEBB91'</span>,\</div><div class="line">            <span class="string">'#DFB583'</span>,<span class="string">'#DFAE74'</span>,<span class="string">'#E0A865'</span>,<span class="string">'#E1A256'</span>,<span class="string">'#E19B48'</span>,<span class="string">'#E29539'</span>]</div><div class="line">ddlheatmap = colors.ListedColormap(ddl_heat)</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">plot_classification_report</span><span class="params">(cr, title=None, cmap=ddlheatmap)</span>:</span></div><div class="line">    title = title <span class="keyword">or</span> <span class="string">'Classification report'</span></div><div class="line">    lines = cr.split(<span class="string">'\n'</span>)</div><div class="line">    classes = []</div><div class="line">    matrix = []</div><div class="line"></div><div class="line">    <span class="keyword">for</span> line <span class="keyword">in</span> lines[<span class="number">2</span>:(len(lines)<span class="number">-3</span>)]:</div><div class="line">        s = line.split()</div><div class="line">        classes.append(s[<span class="number">0</span>])</div><div class="line">        value = [float(x) <span class="keyword">for</span> x <span class="keyword">in</span> s[<span class="number">1</span>: len(s) - <span class="number">1</span>]]</div><div class="line">        matrix.append(value)</div><div class="line"></div><div class="line">    fig, ax = plt.subplots(<span class="number">1</span>)</div><div class="line"></div><div class="line">    <span class="keyword">for</span> column <span class="keyword">in</span> range(len(matrix)+<span class="number">1</span>):</div><div class="line">        <span class="keyword">for</span> row <span class="keyword">in</span> range(len(classes)):</div><div class="line">            txt = matrix[row][column]</div><div class="line">            ax.text(column,row,matrix[row][column],va=<span class="string">'center'</span>,ha=<span class="string">'center'</span>)</div><div class="line"></div><div class="line">    fig = plt.imshow(matrix, interpolation=<span class="string">'nearest'</span>, cmap=cmap)</div><div class="line">    plt.title(title)</div><div class="line">    plt.colorbar()</div><div class="line">    x_tick_marks = np.arange(len(classes)+<span class="number">1</span>)</div><div class="line">    y_tick_marks = np.arange(len(classes))</div><div class="line">    plt.xticks(x_tick_marks, [<span class="string">'precision'</span>, <span class="string">'recall'</span>, <span class="string">'f1-score'</span>], rotation=<span class="number">45</span>)</div><div class="line">    plt.yticks(y_tick_marks, classes)</div><div class="line">    plt.ylabel(<span class="string">'Classes'</span>)</div><div class="line">    plt.xlabel(<span class="string">'Measures'</span>)</div><div class="line">    plt.show()</div><div class="line"></div><div class="line">cr = classification_report(y_true, y_pred)</div><div class="line">plot_classification_report(cr)</div></pre></td></tr></table></figure>
+<p><img src="https://silvrback.s3.amazonaws.com/uploads/8a76cb0d-6ead-494f-b000-d3bd3ec58aad/classificationreport_large.png" alt="Classification Report"></p>
+<p>看起来挺容易，对不？发现分类热力图的另外一个好处，它可以让我们看出一类错误 VS 二类错误。但有一个缺陷，它并不能垮模型进行比较，而这对评估拟合模型是相当重要的。因为这个原因，接下来将使用第二篇文章中的<em>classify</em>和<em>regress</em>代码。</p>
+<p>下面的<em>get_preds</em>函数将输出一个实际标记值和预测值的二元组，这个二元组将会使得后续的跨模型的可视化比较变得容易：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_preds</span><span class="params">(attributes, targets, model)</span>:</span></div><div class="line">    <span class="string">'''</span></div><div class="line">    Executes classification or regression using the specified model</div><div class="line">    and returns expected and predicted values.</div><div class="line">    Useful for comparison plotting!</div><div class="line">    '''</div><div class="line">    splits = cv.train_test_split(attributes, targets, test_size=<span class="number">0.2</span>)</div><div class="line">    X_train, X_test, y_train, y_test = splits</div><div class="line"></div><div class="line">    model.fit(X_train, y_train)</div><div class="line">    y_true = y_test</div><div class="line">    y_pred = model.predict(X_test)</div><div class="line">    <span class="keyword">return</span> (y_true,y_pred)</div></pre></td></tr></table></figure>
+<h5 id="ROC曲线"><a href="#ROC曲线" class="headerlink" title="ROC曲线"></a>ROC曲线</h5><p>另一种评估分类模型的方法是ROC（Receiver Operating Characteristic）曲线。我们能从<strong><em>Scikit-Learn</em></strong> 指标模块中import <em>roc_curve</em>，计算 true positive率和false positive 率的数值。我们也可以画出ROC曲线来权衡模型的敏感性和特异性。</p>
+<p>下面的代码将画出ROC，Y轴代表true positive率，X轴代表false positive 率。同时，我们也可以增加同时比较两种不同的拟合模型，这里看到的是 <em>KNeighborsClassifier</em> 分类器远胜 <em>LinearSVC</em> 分类器：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">roc_compare_two</span><span class="params">(y, yhats, models)</span>:</span></div><div class="line">    f, (ax1, ax2) = plt.subplots(<span class="number">1</span>, <span class="number">2</span>, sharey=<span class="keyword">True</span>)</div><div class="line">    <span class="keyword">for</span> yhat, m, ax <span class="keyword">in</span> ((yhats[<span class="number">0</span>], models[<span class="number">0</span>], ax1), (yhats[<span class="number">1</span>], models[<span class="number">1</span>], ax2)):</div><div class="line">        false_positive_rate, true_positive_rate, thresholds = roc_curve(y,yhat)</div><div class="line">        roc_auc = auc(false_positive_rate, true_positive_rate)</div><div class="line">        ax.set_title(<span class="string">'ROC for %s'</span> % m)</div><div class="line">        ax.plot(false_positive_rate, true_positive_rate, \</div><div class="line">                c=<span class="string">'#2B94E9'</span>, label=<span class="string">'AUC = %0.2f'</span>% roc_auc)</div><div class="line">        ax.legend(loc=<span class="string">'lower right'</span>)</div><div class="line">        ax.plot([<span class="number">0</span>,<span class="number">1</span>],[<span class="number">0</span>,<span class="number">1</span>],<span class="string">'m--'</span>,c=<span class="string">'#666666'</span>)</div><div class="line">    plt.xlim([<span class="number">0</span>,<span class="number">1</span>])</div><div class="line">    plt.ylim([<span class="number">0</span>,<span class="number">1.1</span>])</div><div class="line">    plt.show()</div><div class="line"></div><div class="line">y_true_svc, y_pred_svc = get_preds(stdfeatures, labels, LinearSVC())</div><div class="line">y_true_knn, y_pred_knn = get_preds(stdfeatures, labels, KNeighborsClassifier())</div><div class="line"></div><div class="line">actuals = np.array([y_true_svc,y_true_knn])</div><div class="line">predictions = np.array([y_pred_svc,y_pred_knn])</div><div class="line">models = [<span class="string">'LinearSVC'</span>,<span class="string">'KNeighborsClassifier'</span>]</div><div class="line"></div><div class="line">roc_compare_two(actuals, predictions, models)</div></pre></td></tr></table></figure>
+<p><img src="https://silvrback.s3.amazonaws.com/uploads/27a127d5-5486-4175-9194-6f0f520bbe03/roc_auc_compare_large.png" alt="ROC_AUC Curve"></p>
+<p>在ROC空间，ROC曲线越凸向左上方向效果越好；越靠近对角线，分类器越趋向于随机分类器。</p>
+<p>同时，我们也会计算曲线下的面积（AUC），可以结合上图。如果AUC的值达到0.80，那说明分类器分类非常准确；如果AUC值在0.60～0.80之间，那分类器还算好，但是我们调调参数可能会得到更好的性能；如果AUC值小于0.60，那就惨不忍睹了，你得好好分析下咯。</p>
+<h5 id="评估回归模型"><a href="#评估回归模型" class="headerlink" title="评估回归模型"></a>评估回归模型</h5><p>对于混凝土数据集试验一些不同的机器学习模型，然后评判哪种更好。在第二篇文章中，我们使用的平均方差和 R 平方值，比如：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">Mean squared error = <span class="number">116.268</span></div><div class="line">R2 score = <span class="number">0.606</span></div></pre></td></tr></table></figure>
+<p>这些数值是有用的，特别是对不同的拟合模型比较平均方差和 R 平方值。但是，这是不够的，它不能告诉我们为什么一个模型远胜于另外一个；也不能告诉我们如何对模型调参数提高评分。接下来，我们将看到两种可视化的评估技术来帮助诊断模型有效性：预测错误曲线 和 残差曲线。</p>
+<h5 id="预测错误曲线"><a href="#预测错误曲线" class="headerlink" title="预测错误曲线"></a>预测错误曲线</h5><p>为了知道我们的模型预测值与期望值到底有多接近，我们将拿混凝土数据集（混凝土强度）做例子，画出其期望值和模型预测值曲线。下面是不同回归模型的错误曲线：<em>Ridge</em>， <em>SVR</em> 和<em>RANSACRegressor</em>。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">error_compare_three</span><span class="params">(mods,X,y)</span>:</span></div><div class="line">    f, (ax1, ax2, ax3) = plt.subplots(<span class="number">3</span>, sharex=<span class="keyword">True</span>, sharey=<span class="keyword">True</span>)</div><div class="line">    <span class="keyword">for</span> mod, ax <span class="keyword">in</span> ((mods[<span class="number">0</span>], ax1),(mods[<span class="number">1</span>], ax2),(mods[<span class="number">2</span>], ax3)):</div><div class="line">        predicted = cv.cross_val_predict(mod[<span class="number">0</span>], X, y, cv=<span class="number">12</span>)</div><div class="line">        ax.scatter(y, predicted, c=<span class="string">'#F2BE2C'</span>)</div><div class="line">        ax.set_title(<span class="string">'Prediction Error for %s'</span> % mod[<span class="number">1</span>])</div><div class="line">        ax.plot([y.min(), y.max()], [y.min(), y.max()], <span class="string">'k--'</span>, lw=<span class="number">4</span>, c=<span class="string">'#2B94E9'</span>)</div><div class="line">        ax.set_ylabel(<span class="string">'Predicted'</span>)</div><div class="line">    plt.xlabel(<span class="string">'Measured'</span>)</div><div class="line">    plt.show()</div><div class="line"></div><div class="line">models = np.array([(Ridge(),<span class="string">'Ridge'</span>), (SVR(),<span class="string">'SVR'</span>), (RANSACRegressor(),<span class="string">'RANSAC'</span>)])</div><div class="line">error_compare_three(models, features, labels)</div></pre></td></tr></table></figure>
+<p><img src="https://silvrback.s3.amazonaws.com/uploads/65b6159a-1745-41ac-a71e-d77624566774/model_error_large.png" alt="Visualizing error in regression models"></p>
+<p>从这里可以很清晰的看出预测值和期望值的关系。同时也发现线性回归模型效果好。</p>
+<h5 id="残差曲线"><a href="#残差曲线" class="headerlink" title="残差曲线"></a>残差曲线</h5><p> 残差是数据集每个实例的实际标记值和预测值之间的差值。通过画出一系列实例的残差，可以帮助我们检测它们是否随机错误。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">resids_compare_three</span><span class="params">(mods,X,y)</span>:</span></div><div class="line">    f, (ax1, ax2, ax3) = plt.subplots(<span class="number">3</span>, sharex=<span class="keyword">True</span>, sharey=<span class="keyword">True</span>)</div><div class="line">    plt.title(<span class="string">'Plotting residuals using training (blue) and test (green) data'</span>)</div><div class="line">    <span class="keyword">for</span> m, ax <span class="keyword">in</span> ((mods[<span class="number">0</span>], ax1),(mods[<span class="number">1</span>], ax2),(mods[<span class="number">2</span>], ax3)):</div><div class="line">        <span class="keyword">for</span> feature <span class="keyword">in</span> list(X):</div><div class="line">            splits = cv.train_test_split(X[[feature]], y, test_size=<span class="number">0.2</span>)</div><div class="line">            X_tn, X_tt, y_tn, y_tt = splits</div><div class="line">            m[<span class="number">0</span>].fit(X_tn, y_tn)</div><div class="line">            ax.scatter(m[<span class="number">0</span>].predict(X_tn),m[<span class="number">0</span>].predict(X_tn)-y_tn,c=<span class="string">'#2B94E9'</span>,s=<span class="number">40</span>,alpha=<span class="number">0.5</span>)</div><div class="line">            ax.scatter(m[<span class="number">0</span>].predict(X_tt), m[<span class="number">0</span>].predict(X_tt)-y_tt,c=<span class="string">'#94BA65'</span>,s=<span class="number">40</span>)</div><div class="line">        ax.hlines(y=<span class="number">0</span>, xmin=<span class="number">0</span>, xmax=<span class="number">100</span>)</div><div class="line">        ax.set_title(m[<span class="number">1</span>])</div><div class="line">        ax.set_ylabel(<span class="string">'Residuals'</span>)</div><div class="line">    plt.xlim([<span class="number">20</span>,<span class="number">70</span>])        <span class="comment"># Adjust according to your dataset</span></div><div class="line">    plt.ylim([<span class="number">-50</span>,<span class="number">50</span>])  </div><div class="line">    plt.show()</div><div class="line"></div><div class="line">models = np.array([(Ridge(),<span class="string">'Ridge'</span>), (LinearRegression(),<span class="string">'Linear Regression'</span>), (SVR(),<span class="string">'SVR'</span>)])</div><div class="line">resids_compare_three(models, features, labels)</div></pre></td></tr></table></figure>
+<p><img src="https://silvrback.s3.amazonaws.com/uploads/f4280e91-f5b1-43f8-a2a8-5a0e5b7174b2/residuals_large.png" alt="Plotting residuals in regression models"></p>
+<h5 id="Bias-VS-Variance"><a href="#Bias-VS-Variance" class="headerlink" title="Bias VS Variance"></a>Bias VS Variance</h5><p>每种评估器都有是有利有弊。</p>
+<p>首先 Error = Bias + Variance。Error反映的是整个模型的准确度，Bias反映的是模型在样本上的输出与真实值之间的误差，即模型本身的精准度，Variance反映的是模型每一次输出结果与模型输出期望之间的误差，即模型的稳定性。</p>
+<h5 id="机器学习可视化调参"><a href="#机器学习可视化调参" class="headerlink" title="机器学习可视化调参"></a>机器学习可视化调参</h5><p>在文章开篇，我们提出了两个问题：我们如何知道一个机器学习模型可以工作？我们如何让这个模型工作（运行）的更好？</p>
+<p>接下来，我们将回答第二个问题。如果你有注意，我们用的模型都是使用<strong><em>Scikit-Learn</em></strong> 默认的参数。对于我们的大部分拟合模型来讲，评分已经相当好了。但有时并没有那么幸运，这时我们就得自己调参数。</p>
+<h6 id="可视化训练和验证模型"><a href="#可视化训练和验证模型" class="headerlink" title="# 可视化训练和验证模型"></a># 可视化训练和验证模型</h6><p> 如何选择最好的模型参数呢？一种方法是，用单一参数的不同值去验证一个模型的评估分数。让我们拿<em>SVC</em> 分类器来试验，通过调不同的gama值来画出训练值和测试纸的曲线。</p>
+<p>我们的关注点是训练值和测试值都高的点。如果两者都低，那是欠拟合（underfit）；如果训练值高但是测试值低，那说明是过拟合（overfit）。</p>
+<p>下面的代码画出来的曲线是拿信用卡数据集来做例子，这里用的 6折交叉验证。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">plot_val_curve</span><span class="params">(features, labels, model)</span>:</span></div><div class="line">    p_range = np.logspace(<span class="number">-5</span>, <span class="number">5</span>, <span class="number">5</span>)</div><div class="line"></div><div class="line">    train_scores, test_scores = validation_curve(</div><div class="line">        model, features, labels, param_name=<span class="string">'gamma'</span>, param_range=p_range,</div><div class="line">        cv=<span class="number">6</span>, scoring=<span class="string">'accuracy'</span>, n_jobs=<span class="number">1</span></div><div class="line">    )</div><div class="line"></div><div class="line">    train_scores_mean = np.mean(train_scores, axis=<span class="number">1</span>)</div><div class="line">    train_scores_std = np.std(train_scores, axis=<span class="number">1</span>)</div><div class="line">    test_scores_mean = np.mean(test_scores, axis=<span class="number">1</span>)</div><div class="line">    test_scores_std = np.std(test_scores, axis=<span class="number">1</span>)</div><div class="line"></div><div class="line">    plt.title(<span class="string">'Validation Curve'</span>)</div><div class="line">    plt.xlabel(<span class="string">'$\gamma$'</span>)</div><div class="line">    plt.ylabel(<span class="string">'Score'</span>)</div><div class="line">    plt.semilogx(p_range, train_scores_mean, label=<span class="string">'Training score'</span>, color=<span class="string">'#E29539'</span>)</div><div class="line">    plt.semilogx(p_range, test_scores_mean, label=<span class="string">'Cross-validation score'</span>, color=<span class="string">'#94BA65'</span>)</div><div class="line">    plt.legend(loc=<span class="string">'best'</span>)</div><div class="line">    plt.show()</div><div class="line"></div><div class="line">X = scale(credit[[<span class="string">'limit'</span>,<span class="string">'sex'</span>,<span class="string">'edu'</span>,<span class="string">'married'</span>,<span class="string">'age'</span>,<span class="string">'apr_delay'</span>]])</div><div class="line">y = credit[<span class="string">'default'</span>]</div><div class="line">plot_val_curve(X, y, SVC())</div></pre></td></tr></table></figure>
+<p><img src="https://silvrback.s3.amazonaws.com/uploads/5b3cc5b4-a6f3-4146-b951-94a2b3547bfc/validation_curve_large.png" alt="Validation curve"></p>
+<h5 id="Grid-Search"><a href="#Grid-Search" class="headerlink" title="Grid Search"></a>Grid Search</h5><p>对于超参数调优，大部分人使用的grid search。Grid search是一种暴力调参方法，即遍历所有可能的参数值。</p>
+<p>对于信用卡数据集使用 <em>SVC</em>模型，我们通过试验不同内核系数gama来提高预测准确性：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">from</span> sklearn.grid_search <span class="keyword">import</span> GridSearchCV</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">blind_gridsearch</span><span class="params">(model, X, y)</span>:</span></div><div class="line">    C_range = np.logspace(<span class="number">-2</span>, <span class="number">10</span>, <span class="number">5</span>)</div><div class="line">    gamma_range = np.logspace(<span class="number">-5</span>, <span class="number">5</span>, <span class="number">5</span>)</div><div class="line">    param_grid = dict(gamma=gamma_range, C=C_range)</div><div class="line">    grid = GridSearchCV(SVC(), param_grid=param_grid)</div><div class="line">    grid.fit(X, y)</div><div class="line"></div><div class="line">    print(</div><div class="line">        <span class="string">'The best parameters are &#123;&#125; with a score of &#123;:0.2f&#125;.'</span>.format(</div><div class="line">            grid.best_params_, grid.best_score_</div><div class="line">        )</div><div class="line">    )</div><div class="line">features = credit[[<span class="string">'limit'</span>,<span class="string">'sex'</span>,<span class="string">'edu'</span>,<span class="string">'married'</span>,<span class="string">'age'</span>,<span class="string">'apr_delay'</span>]]</div><div class="line">labels   = credit[<span class="string">'default'</span>]</div><div class="line">blind_gridsearch(SVC(), features, labels)</div></pre></td></tr></table></figure>
+<p>但是，grid search需要我们理解哪些参数是合适的，参数的意义，参数是如何影响模型的以及参数的合理的搜索范围来初始化搜索。</p>
+<p>这里，我们使用 <em>visual_gridsearch</em> 代替 <em>blind_gridsearch</em> 函数：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">visual_gridsearch</span><span class="params">(model, X, y)</span>:</span></div><div class="line">    C_range = np.logspace(<span class="number">-2</span>, <span class="number">10</span>, <span class="number">5</span>)</div><div class="line">    gamma_range = np.logspace(<span class="number">-5</span>, <span class="number">5</span>, <span class="number">5</span>)</div><div class="line">    param_grid = dict(gamma=gamma_range, C=C_range)</div><div class="line">    grid = GridSearchCV(SVC(), param_grid=param_grid)</div><div class="line">    grid.fit(X, y)</div><div class="line"></div><div class="line">    scores = [x[<span class="number">1</span>] <span class="keyword">for</span> x <span class="keyword">in</span> grid.grid_scores_]</div><div class="line">    scores = np.array(scores).reshape(len(C_range), len(gamma_range))</div><div class="line"></div><div class="line">    plt.figure(figsize=(<span class="number">8</span>, <span class="number">6</span>))</div><div class="line">    plt.subplots_adjust(left=<span class="number">.2</span>, right=<span class="number">0.95</span>, bottom=<span class="number">0.15</span>, top=<span class="number">0.95</span>)</div><div class="line">    plt.imshow(scores, interpolation=<span class="string">'nearest'</span>, cmap=ddlheatmap)</div><div class="line">    plt.xlabel(<span class="string">'gamma'</span>)</div><div class="line">    plt.ylabel(<span class="string">'C'</span>)</div><div class="line">    plt.colorbar()</div><div class="line">    plt.xticks(np.arange(len(gamma_range)), gamma_range, rotation=<span class="number">45</span>)</div><div class="line">    plt.yticks(np.arange(len(C_range)), C_range)</div><div class="line">    plt.title(</div><div class="line">        <span class="string">"The best parameters are &#123;&#125; with a score of &#123;:0.2f&#125;."</span>.format(</div><div class="line">        grid.best_params_, grid.best_score_)</div><div class="line">    )</div><div class="line">    plt.show()</div><div class="line"></div><div class="line">visual_gridsearch(SVC(), features, labels)</div></pre></td></tr></table></figure>
+<p><img src="https://silvrback.s3.amazonaws.com/uploads/e440eb11-0bbd-44be-a9fb-4264581d654b/validation_heatmap_large.png" alt="Validation accuracy as a function of gamma and C"></p>
+<p> <em>visual_gridsearch</em> 的方法可以帮助我们理解不同的模型参数下的精确值。但是超参数调优的路程很长，好些人为此研究了几十年。</p>
+<h5 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h5><p>这是可视化机器学习部分的最后一篇，可视化在机器学习的过程占用重要的角色。许多工具都提供这个功能，比如， <em>Scikit-Learn</em> ，<em>Matplotlib</em> ， <em>Pandas</em> ，<em>Bokeh</em> 和 <em>Seaborn</em>。</p>
+<p><em>希望我写的对部分人有用，如果是这样，请让我知道，谢谢。</em></p>
+<p>Enjoy!</p>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2016/09/20/streaming-process-data-access/" itemprop="url">
                   流式处理架构的“瓶颈”：数据访问（上）
                 </a>
@@ -1385,296 +1613,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/08/12/graph-of-thrones-neo4j-social-network-analysis/" itemprop="url">
-                  基于社区发现算法和图分析Neo4j解读《权力的游戏》
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-08-12T00:36:55+08:00" content="2016-08-12">
-              2016-08-12
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p><em>导读</em>：几个月前，数学家 Andrew Beveridge和Jie Shan在数学杂志上发表<a href="https://www.macalester.edu/~abeverid/thrones.html" target="_blank" rel="external">《权力的网络》</a>，主要分析畅销小说《冰与火之歌》第三部《冰雨的风暴》中人物关系，其已经拍成电视剧《权力的游戏》系列。他们在论文中介绍了如何通过文本分析和实体提取构建人物关系的网络。紧接着，使用社交网络分析算法对人物关系网络分析找出最重要的角色；应用社区发现算法来找到人物聚类。</p>
-<p>其中的分析和可视化是用Gephi做的，Gephi是非常流行的图分析工具。但作者觉得使用Neo4j来实现更有趣。</p>
-<h5 id="导入原始数据到Neo4j"><a href="#导入原始数据到Neo4j" class="headerlink" title="导入原始数据到Neo4j"></a>导入原始数据到Neo4j</h5><p>原始数据可从<a href="https://www.macalester.edu/~abeverid/data/stormofswords.csv" target="_blank" rel="external">网络上下载</a>，格式如下：</p>
-<pre><code>Source,Target,Weight
-Aemon,Grenn,5
-Aemon,Samwell,31
-Aerys,Jaime,18
-...
-</code></pre><p>上面是人物关系的之邻接表以及关系权重。作者使用简单的数据模型：<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">(:Character &#123;name&#125;)-[:INTERACTS]-&gt;(:Character &#123;name&#125;)</div></pre></td></tr></table></figure></p>
-<p>带有标签<em>Character</em>的节点代表小说中的角色，用单向关系类型<em>INTERACTS</em>代表小说中的角色有过接触。节点属性会存储角色的名字<em>name</em>，两角色间接触的次数作为关系的属性：权重（<em>weight</em>）。</p>
-<p>首先创建节点c，并做唯一限制性约束，<em>c.name</em>唯一，保证schema的完整性：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">CREATE CONSTRAINT ON (c:Character) ASSERT c.name IS UNIQUE;</div></pre></td></tr></table></figure></p>
-<p>一旦约束创建即相应的创建索引，这将有助于通过角色的名字查询的性能。作者使用Neo4j的Cypher（Cypher是一种声明式图查询语言，能表达高效查询和更新图数据库）<em>LOAD CSV</em>语句导入数据：<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">LOAD CSV WITH HEADERS FROM "https://www.macalester.edu/~abeverid/data/stormofswords.csv" AS row</div><div class="line">MERGE (src:Character &#123;name: row.Source&#125;)</div><div class="line">MERGE (tgt:Character &#123;name: row.Target&#125;)</div><div class="line">MERGE (src)-[r:INTERACTS]-&gt;(tgt)</div><div class="line">SET r.weight = toInt(row.Weight)</div></pre></td></tr></table></figure></p>
-<p>这样得到一个简单的数据模型：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">CALL apoc.meta.graph()</div></pre></td></tr></table></figure></p>
-<p><img src="http://img0.ph.126.net/iKaRxZgqA_gA2_mWqX8HIg==/6631569143001537963.png" alt="此处输入图片的描述"></p>
-<p>图1 ：《权力的游戏》模型的图。Character角色节点由INTERACTS关系联结</p>
-<p>我们能可视化整个图形，但是这并不能给我们很多信息，比如哪些是最重要的人物，以及他们相互接触的信息：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">MATCH p=(:Character)-[:INTERACTS]-(:Character)</div><div class="line">RETURN p</div></pre></td></tr></table></figure></p>
-<p><img src="http://img1.ph.126.net/Enc8q7NSeSO6Z4z2iTvuDw==/6631651606373623600.jpg" alt="此处输入图片的描述"></p>
-<p>图2</p>
-<h4 id="人物网络分析"><a href="#人物网络分析" class="headerlink" title="人物网络分析"></a>人物网络分析</h4><p>作者使用Neo4j的图查询语言Cypher来做《权力的游戏》图分析，应用到了网络分析的一些工具，具体见<a href="https://www.cs.cornell.edu/home/kleinber/networks-book/" target="_blank" rel="external">《网络，人群和市场：关于高度连接的世界》</a>。</p>
-<h5 id="人物数量"><a href="#人物数量" class="headerlink" title="人物数量"></a>人物数量</h5><p>万事以简单开始。先看看上图上由有多少人物：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">MATCH (c:Character) RETURN count(c)</div></pre></td></tr></table></figure></p>
-<table>
-<thead>
-<tr>
-<th>count(c)</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>107</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<h5 id="概要统计"><a href="#概要统计" class="headerlink" title="概要统计"></a>概要统计</h5><p>统计每个角色接触的其它角色的数目：<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">MATCH (c:Character)-[:INTERACTS]-&gt;()</div><div class="line">WITH c, count(*) AS num</div><div class="line">RETURN min(num) AS min, max(num) AS max, avg(num) AS avg_characters, stdev(num) AS stdev</div></pre></td></tr></table></figure></p>
-<table>
-<thead>
-<tr>
-<th>min</th>
-<th>max</th>
-<th>avg_characters</th>
-<th>stdev</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>24</td>
-<td>4.957746478873241</td>
-<td>6.227672391875085</td>
-</tr>
-</tbody>
-</table>
-<h5 id="图（网络）的直径"><a href="#图（网络）的直径" class="headerlink" title="图（网络）的直径"></a>图（网络）的直径</h5><p>网络的直径或者测底线或者最长最短路径：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">// Find maximum diameter of network</div><div class="line">// maximum shortest path between two nodes</div><div class="line">MATCH (a:Character), (b:Character) WHERE id(a) &gt; id(b)</div><div class="line">MATCH p=shortestPath((a)-[:INTERACTS*]-(b))</div><div class="line">RETURN length(p) AS len, extract(x IN nodes(p) | x.name) AS path</div><div class="line">ORDER BY len DESC LIMIT <span class="number">4</span></div></pre></td></tr></table></figure></p>
-<table>
-<thead>
-<tr>
-<th>len</th>
-<th>path   </th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>6</td>
-<td>[Illyrio, Belwas, Daenerys, Robert, Tywin, Oberyn, Amory] </td>
-</tr>
-<tr>
-<td>6</td>
-<td>[Illyrio, Belwas, Daenerys, Robert, Sansa, Bran, Jojen]</td>
-</tr>
-<tr>
-<td>6</td>
-<td>[Illyrio, Belwas, Daenerys, Robert, Stannis, Davos, Shireen]</td>
-</tr>
-<tr>
-<td>6</td>
-<td>[Illyrio, Belwas, Daenerys, Robert, Sansa, Bran, Luwin]</td>
-</tr>
-</tbody>
-</table>
-<p>我们能看到网络中有许多长度为6的路径。</p>
-<h5 id="最短路径"><a href="#最短路径" class="headerlink" title="最短路径"></a>最短路径</h5><p>作者使用Cypher 的shortestPath函数找到图中任意两个角色之间的最短路径。让我们找出凯特琳·史塔克（Catelyn Stark ）和卓戈·卡奥（Kahl Drogo）之间的最短路径：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">// Shortest path <span class="keyword">from</span> Catelyn Stark to Khal Drogo</div><div class="line">MATCH (catelyn:Character &#123;name: <span class="string">"Catelyn"</span>&#125;), (drogo:Character &#123;name: <span class="string">"Drogo"</span>&#125;)</div><div class="line">MATCH p=shortestPath((catelyn)-[INTERACTS*]-(drogo))</div><div class="line">RETURN p</div></pre></td></tr></table></figure></p>
-<p><img src="http://img1.ph.126.net/hM5i7QenCvEwrv6FxkjpRA==/6631649407350368299.jpg" alt="此处输入图片的描述"></p>
-<p>图3</p>
-<h5 id="所有最短路径"><a href="#所有最短路径" class="headerlink" title="所有最短路径"></a>所有最短路径</h5><p>联结凯特琳·史塔克（Catelyn Stark ）和卓戈·卡奥（Kahl Drogo）之间的最短路径可能还有其它路径，我们可以使用Cypher的<em>allShortestPaths</em>函数来查找：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">// All shortest paths <span class="keyword">from</span> Catelyn Stark to Khal Drogo</div><div class="line">MATCH (catelyn:Character &#123;name: <span class="string">"Catelyn"</span>&#125;), (drogo:Character &#123;name: <span class="string">"Drogo"</span>&#125;)</div><div class="line">MATCH p=allShortestPaths((catelyn)-[INTERACTS*]-(drogo))</div><div class="line">RETURN p</div></pre></td></tr></table></figure>
-<p><img src="http://img1.ph.126.net/P_R0YArgypcQJ9qK34-FlA==/6631481182071320497.jpg" alt="此处输入图片的描述"></p>
-<p>图4</p>
-<h5 id="关键节点"><a href="#关键节点" class="headerlink" title="关键节点"></a>关键节点</h5><p>在网络中，如果一个节点位于其它两个节点所有的最短路径上，即称为关键节点。下面我们找出网络中所有的关键节点：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">// Find all pivotal nodes <span class="keyword">in</span> network</div><div class="line">MATCH (a:Character), (b:Character)</div><div class="line">MATCH p=allShortestPaths((a)-[:INTERACTS*]-(b)) WITH collect(p) AS paths, a, b</div><div class="line">MATCH (c:Character) WHERE all(x IN paths WHERE c IN nodes(x)) AND NOT c IN [a,b]</div><div class="line">RETURN a.name, b.name, c.name AS PivotalNode SKIP <span class="number">490</span> LIMIT <span class="number">10</span></div></pre></td></tr></table></figure>
-<pre><code>|a.name |b.name |PivotalNode|
-</code></pre><p>—|—|—|<br>                          |Aegon  |Thoros |Daenerys   |<br>                          |Aegon  |Thoros |Robert     |<br>                          |Drogo  |Ramsay |Robb       |<br>                          |Styr   |Daario |Daenerys   |<br>                          |Styr   |Daario |Jon        |<br>                          |Styr   |Daario |Robert     |<br>                          |Qhorin |Podrick|Jon        |<br>                          |Qhorin |Podrick|Sansa      |<br>                          |Orell  |Theon  |Jon        |<br>                          |Illyrio|Bronn  |Belwas     |</p>
-<p>从结果表格中我们可以看出有趣的结果：罗柏·史塔克（Robb）是卓戈·卡奥（Drogo）和拉姆塞·波顿（Ramsay）的关键节点。这意味着，所有联结卓戈·卡奥（Drogo）和拉姆塞·波顿（Ramsay）的最短路径都要经过罗柏·史塔克（Robb）。我们可以通过可视化卓戈·卡奥（Drogo）和拉姆塞·波顿（Ramsay）之间的所有最短路径来验证：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">MATCH (a:Character &#123;name: <span class="string">"Drogo"</span>&#125;), (b:Character &#123;name: <span class="string">"Ramsay"</span>&#125;)</div><div class="line">MATCH p=allShortestPaths((a)-[:INTERACTS*]-(b))</div><div class="line">RETURN p</div></pre></td></tr></table></figure></p>
-<p><img src="http://img0.ph.126.net/CV_gvGLBdVUxJttOCdRgdQ==/6631809936048025407.jpg" alt="此处输入图片的描述"></p>
-<p>图5</p>
-<h4 id="节点中心度"><a href="#节点中心度" class="headerlink" title="节点中心度"></a>节点中心度</h4><p><a href="https://en.wikipedia.org/wiki/Centrality" target="_blank" rel="external">节点中心度</a>给出网络中节点的重要性的相对度量。有许多不同的方式来度量中心度，每种方式都代表不同类型的“重要性”。</p>
-<h5 id="度中心性-Degree-Centrality"><a href="#度中心性-Degree-Centrality" class="headerlink" title="度中心性(Degree Centrality)"></a>度中心性(Degree Centrality)</h5><p>度中心性是最简单度量，即为某个节点在网络中的联结数。在《权力的游戏》的图中，某个角色的度中心性是指该角色接触的其他角色数。作者使用Cypher计算度中心性：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">MATCH (c:Character)-[:INTERACTS]-()</div><div class="line">RETURN c.name AS character, count(*) AS degree ORDER BY degree DESC</div></pre></td></tr></table></figure></p>
-<pre><code>|character|degree|
-</code></pre><p>—|—|<br>                              |Tyrion   |36    |<br>                              |Jon      |26    |<br>                              |Sansa    |26    |<br>                              |Robb     |25    |<br>                              |Jaime    |24    |<br>                              |Tywin    |22    |<br>                              |Cersei   |20    |<br>                              |Arya     |19    |<br>                              |Joffrey  |18    |<br>                              |Robert   |18    |<br>从上面可以发现，在《权力的游戏》网络中提利昂·兰尼斯特（Tyrion）和最多的角色有接触。鉴于他的心计，我们觉得这是有道理的。</p>
-<h5 id="加权度中心性（Weighted-Degree-Centrality）"><a href="#加权度中心性（Weighted-Degree-Centrality）" class="headerlink" title="加权度中心性（Weighted Degree Centrality）"></a>加权度中心性（Weighted Degree Centrality）</h5><p>作者存储一对角色接触的次数作为<em>INTERACTS</em>关系的<em>weight</em>属性。对该角色的<em>INTERACTS</em>关系的所有<em>weight</em>相加得到加权度中心性。作者使用Cypher计算所有角色的这个度量：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">MATCH (c:Character)-[r:INTERACTS]-()</div><div class="line">RETURN c.name AS character, sum(r.weight) AS weightedDegree ORDER BY weightedDegree DESC</div></pre></td></tr></table></figure></p>
-<pre><code>|character|weightedDegree|
-</code></pre><p>—|—|<br>                        |Tyrion   |551           |<br>                        |Jon      |442           |<br>                        |Sansa    |383           |<br>                        |Jaime    |372           |<br>                        |Bran     |344           |<br>                        |Robb     |342           |<br>                        |Samwell  |282           |<br>                        |Arya     |269           |<br>                        |Joffrey  |255           |<br>                        |Daenerys |232           |</p>
-<h5 id="介数中心性（Betweenness-Centrality）"><a href="#介数中心性（Betweenness-Centrality）" class="headerlink" title="介数中心性（Betweenness Centrality）"></a>介数中心性（Betweenness Centrality）</h5><p><a href="https://en.wikipedia.org/wiki/Betweenness_centrality" target="_blank" rel="external">介数中心性</a>：在网络中，一个节点的介数中心性是指其它两个节点的所有最短路径都经过这个节点，则这些所有最短路径数即为此节点的介数中心性。介数中心性是一种重要的度量，因为它可以鉴别出网络中的“信息中间人”或者网络聚类后的联结点。<br><img src="http://img0.ph.126.net/NVe2tFIgH-cRJVLeAn3cGQ==/6631645009303857231.png" alt="此处输入图片的描述"></p>
-<p>图6中红色节点是具有高的介数中心性，网络聚类的联结点。</p>
-<p>为了计算介数中心性，作者使用<a href="https://github.com/neo4j-contrib/neo4j-apoc-procedures" target="_blank" rel="external">Neo4j 3.x或者apoc库</a>。安装apoc后能用Cypher调用其170+的程序：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">MATCH (c:Character)</div><div class="line">WITH collect(c) AS characters</div><div class="line">CALL apoc.algo.betweenness([<span class="string">'INTERACTS'</span>], characters, <span class="string">'BOTH'</span>) YIELD node, score</div><div class="line">SET node.betweenness = score</div><div class="line">RETURN node.name AS name, score ORDER BY score DESC</div></pre></td></tr></table></figure></p>
-<pre><code>|name    |score             |
-</code></pre><p>—|—|<br>                        |Jon     |1279.7533534055322|<br>                        |Robert  |1165.6025171231624|<br>                        |Tyrion  |1101.3849724234349|<br>                        |Daenerys|874.8372110508583 |<br>                        |Robb    |706.5572832464792 |<br>                        |Sansa   |705.1985623519137 |<br>                        |Stannis |571.5247305125714 |<br>                        |Jaime   |556.1852522889822 |<br>                        |Arya    |443.01358430043337|<br>                        |Tywin   |364.7212195528086 |</p>
-<h5 id="紧度中心性（Closeness-centrality）"><a href="#紧度中心性（Closeness-centrality）" class="headerlink" title="紧度中心性（Closeness centrality）"></a>紧度中心性（Closeness centrality）</h5><p><a href="https://en.wikipedia.org/wiki/Centrality#Closeness_centrality" target="_blank" rel="external">紧度中心性</a>是指到网络中所有其他角色的平均距离的倒数。在图中，具有高紧度中心性的节点在聚类社区之间被高度联结，但在社区之外不一定是高度联结的。<br><img src="http://img1.ph.126.net/vJy1k9fWFZRryZLBHkG1MA==/6631732970234066134.png" alt="此处输入图片的描述"></p>
-<p>图7 ：网络中具有高紧度中心性的节点被其它节点高度联结<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">MATCH (c:Character)</div><div class="line">WITH collect(c) AS characters</div><div class="line">CALL apoc.algo.closeness([<span class="string">'INTERACTS'</span>], characters, <span class="string">'BOTH'</span>) YIELD node, score</div><div class="line">RETURN node.name AS name, score ORDER BY score DESC</div></pre></td></tr></table></figure></p>
-<pre><code>|name   |score                |
-</code></pre><p>—|—|<br>                        |Tyrion |0.004830917874396135 |<br>                        |Sansa  |0.004807692307692308 |<br>                        |Robert |0.0047169811320754715|<br>                        |Robb   |0.004608294930875576 |<br>                        |Arya   |0.0045871559633027525|<br>                        |Jaime  |0.004524886877828055 |<br>                        |Stannis|0.004524886877828055 |<br>                        |Jon    |0.004524886877828055 |<br>                        |Tywin  |0.004424778761061947 |<br>                        |Eddard |0.004347826086956522 |</p>
-<h4 id="使用python-igraph"><a href="#使用python-igraph" class="headerlink" title="使用python-igraph"></a>使用python-igraph</h4><p>Neo4j与其它工具（比如，R和Python数据科学工具）完美结合。我们继续使用apoc运行 <a href="https://neo4j-contrib.github.io/neo4j-apoc-procedures/#_pagerank_algorithm" target="_blank" rel="external">PageRank</a>和<a href="https://neo4j-contrib.github.io/neo4j-apoc-procedures/#_graph_algorithms" target="_blank" rel="external">社区发现</a>（community detection）算法。这里接着使用<a href="http://igraph.org/python/" target="_blank" rel="external">python-igraph</a>计算分析。Python-igraph移植自R的igraph图形分析库。 使用<em>pip install python-igraph</em>安装它。</p>
-<h5 id="从Neo4j构建一个igraph实例"><a href="#从Neo4j构建一个igraph实例" class="headerlink" title="从Neo4j构建一个igraph实例"></a>从Neo4j构建一个igraph实例</h5><p>为了在《权力的游戏》的数据的图分析中使用igraph，首先需要从Neo4j拉取数据，用Python建立igraph实例。作者使用 Neo4j 的Python驱动库<a href="http://py2neo.org/" target="_blank" rel="external">py2neo</a>。我们能直接传入Py2neo查询结果对象到igraph的<em>TupleList</em>构造器，创建igraph实例：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">from</span> py2neo <span class="keyword">import</span> Graph</div><div class="line"><span class="keyword">from</span> igraph <span class="keyword">import</span> Graph <span class="keyword">as</span> IGraph</div><div class="line">graph = Graph()</div><div class="line"></div><div class="line">query = <span class="string">'''</span></div><div class="line">MATCH (c1:Character)-[r:INTERACTS]-&gt;(c2:Character)</div><div class="line">RETURN c1.name, c2.name, r.weight AS weight</div><div class="line">'''</div><div class="line"></div><div class="line">ig = IGraph.TupleList(graph.run(query), weights=<span class="keyword">True</span>)</div></pre></td></tr></table></figure></p>
-<p>现在有了igraph对象，可以运行igraph实现的各种图算法来。</p>
-<h5 id="PageRank"><a href="#PageRank" class="headerlink" title="PageRank"></a>PageRank</h5><p>作者使用igraph运行的第一个算法是PageRank。PageRank算法源自Google的网页排名。它是一种特征向量中心性(<a href="https://en.wikipedia.org/wiki/Centrality#Eigenvector_centrality" target="_blank" rel="external">eigenvector centrality</a>)算法。</p>
-<p>在igraph实例中运行PageRank算法，然后把结果写回Neo4j，在角色节点创建一个pagerank属性存储igraph计算的值：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">pg = ig.pagerank()</div><div class="line">pgvs = []</div><div class="line"><span class="keyword">for</span> p <span class="keyword">in</span> zip(ig.vs, pg):</div><div class="line">    print(p)</div><div class="line">    pgvs.append(&#123;<span class="string">"name"</span>: p[<span class="number">0</span>][<span class="string">"name"</span>], <span class="string">"pg"</span>: p[<span class="number">1</span>]&#125;)</div><div class="line">pgvs</div><div class="line"></div><div class="line">write_clusters_query = <span class="string">'''</span></div><div class="line">UNWIND &#123;nodes&#125; AS n</div><div class="line">MATCH (c:Character) WHERE c.name = n.name</div><div class="line">SET c.pagerank = n.pg</div><div class="line">'''</div><div class="line"></div><div class="line">graph.run(write_clusters_query, nodes=pgvs)</div></pre></td></tr></table></figure></p>
-<p>现在可以在Neo4j的图中查询最高PageRank值的节点：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">MATCH (n:Character)</div><div class="line">RETURN n.name AS name, n.pagerank AS pagerank ORDER BY pagerank DESC LIMIT <span class="number">10</span></div></pre></td></tr></table></figure>
-<pre><code>|name    |pagerank            |
-</code></pre><p>—|—|<br>                        |Tyrion  |0.042884981999963316|<br>                        |Jon     |0.03582869669163558 |<br>                        |Robb    |0.03017114665594764 |<br>                        |Sansa   |0.030009716660108578|<br>                        |Daenerys|0.02881425425830273 |<br>                        |Jaime   |0.028727587587471206|<br>                        |Tywin   |0.02570016262642541 |<br>                        |Robert  |0.022292016521362864|<br>                        |Cersei  |0.022287327589773507|<br>                        |Arya    |0.022050209663844467|</p>
-<h5 id="社区发现（Community-detection）"><a href="#社区发现（Community-detection）" class="headerlink" title="社区发现（Community detection）"></a>社区发现（Community detection）</h5><p><img src="http://img0.ph.126.net/pNb2DRMcw-bj4O7C61rC_w==/6631491077675968998.png" alt="此处输入图片的描述"></p>
-<p>图8</p>
-<p>社区发现算法用来找出图中的社区聚类。作者使用igraph实现的<a href="http://arxiv.org/abs/physics/0512106" target="_blank" rel="external">随机游走算法</a>（ walktrap）来找到在社区中频繁有接触的角色社区，在社区之外角色不怎么接触。</p>
-<p>在igraph中运行随机游走的社区发现算法，然后把社区发现的结果导入Neo4j，其中每个角色所属的社区用一个整数来表示：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">clusters = IGraph.community_walktrap(ig, weights=<span class="string">"weight"</span>).as_clustering()</div><div class="line"></div><div class="line">nodes = [&#123;<span class="string">"name"</span>: node[<span class="string">"name"</span>]&#125; <span class="keyword">for</span> node <span class="keyword">in</span> ig.vs]</div><div class="line"><span class="keyword">for</span> node <span class="keyword">in</span> nodes:</div><div class="line">    idx = ig.vs.find(name=node[<span class="string">"name"</span>]).index</div><div class="line">    node[<span class="string">"community"</span>] = clusters.membership[idx]</div><div class="line"></div><div class="line">write_clusters_query = <span class="string">'''</span></div><div class="line">UNWIND &#123;nodes&#125; AS n</div><div class="line">MATCH (c:Character) WHERE c.name = n.name</div><div class="line">SET c.community = toInt(n.community)</div><div class="line">'''</div><div class="line"></div><div class="line">graph.run(write_clusters_query, nodes=nodes)</div></pre></td></tr></table></figure></p>
-<p>我们能在Neo4j中查询有多少个社区以及每个社区的成员数：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">MATCH (c:Character)</div><div class="line">WITH c.community AS cluster, collect(c.name) AS  members</div><div class="line">RETURN cluster, members ORDER BY cluster ASC</div></pre></td></tr></table></figure>
-<table>
-<thead>
-<tr>
-<th></th>
-<th>cluster</th>
-<th>members</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td></td>
-<td>0</td>
-<td>[Aemon, Alliser, Craster, Eddison, Gilly, Janos, Jon, Mance, Rattleshirt, Samwell, Val, Ygritte, Grenn, Karl, Bowen, Dalla, Orell, Qhorin, Styr]</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>1</td>
-<td>[Aerys, Amory, Balon, Brienne, Bronn, Cersei, Gregor, Jaime, Joffrey, Jon Arryn, Kevan, Loras, Lysa, Meryn, Myrcella, Oberyn, Podrick, Renly, Robert, Robert Arryn, Sansa, Shae, Tommen, Tyrion, Tywin, Varys, Walton, Petyr, Elia, Ilyn, Pycelle, Qyburn, Margaery, Olenna, Marillion, Ellaria, Mace, Chataya, Doran]</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>2</td>
-<td>[Arya, Beric, Eddard, Gendry, Sandor, Anguy, Thoros]</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>3</td>
-<td>[Brynden, Catelyn, Edmure, Hoster, Lothar, Rickard, Robb, Roose, Walder, Jeyne, Roslin, Ramsay]</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>4</td>
-<td>[Bran, Hodor, Jojen, Luwin, Meera, Rickon, Nan, Theon]</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>5</td>
-<td>[Belwas, Daario, Daenerys, Irri, Jorah, Missandei, Rhaegar, Viserys, Barristan, Illyrio, Drogo, Aegon, Kraznys, Rakharo, Worm]</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>6</td>
-<td>[Davos, Melisandre, Shireen, Stannis, Cressen, Salladhor]</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>7</td>
-<td>[Lancel]</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<h5 id="角色“大合影”"><a href="#角色“大合影”" class="headerlink" title="角色“大合影”"></a>角色“大合影”</h5><p>《权力的游戏》的权力图。节点的大小正比于介数中心性，颜色表示社区（由随机游走算法获得），边的厚度正比于两节点接触的次数。<br>现在已经计算好这些图的分析数据，让我们对其进行可视化，让数据看起来更有意义。</p>
-<p>Neo4j自带浏览器可以对Cypher查询的结果进行很好的可视化，但如果我们想把可视化好的图嵌入到其它应用中，可以使用Javascript可视化库<a href="http://visjs.org/" target="_blank" rel="external">Vis.js</a>。从Neo4j拉取数据，用Vis.js的<a href="https://github.com/johnymontana/neovis.js" target="_blank" rel="external">neovis.js</a>构建可视化图。Neovis.js提供简单的API配置，例如：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line">var config = &#123;</div><div class="line">  container_id: <span class="string">"viz"</span>,</div><div class="line">  server_url: <span class="string">"localhost"</span>,</div><div class="line">  labels: &#123;</div><div class="line">    <span class="string">"Character"</span>: <span class="string">"name"</span></div><div class="line">  &#125;,</div><div class="line">  label_size: &#123;</div><div class="line">    <span class="string">"Character"</span>: <span class="string">"betweenness"</span></div><div class="line">  &#125;,</div><div class="line">  relationships: &#123;</div><div class="line">    <span class="string">"INTERACTS"</span>: null</div><div class="line">  &#125;,</div><div class="line">  relationship_thickness: &#123;</div><div class="line">    <span class="string">"INTERACTS"</span>: <span class="string">"weight"</span></div><div class="line">  &#125;,</div><div class="line">  cluster_labels: &#123;</div><div class="line">    <span class="string">"Character"</span>: <span class="string">"community"</span></div><div class="line">  &#125;</div><div class="line">&#125;;</div><div class="line"></div><div class="line">var viz = new NeoVis(config);</div><div class="line">viz.render();</div></pre></td></tr></table></figure></p>
-<p>其中：</p>
-<ul>
-<li>节点带有标签Character，属性name；</li>
-<li>节点的大小正比于betweenness属性；</li>
-<li>可视化中包括INTERACTS关系；</li>
-<li>关系的厚度正比于weight属性；</li>
-<li>节点的颜色是根据网络中社区community属性决定；</li>
-<li>从本地服务器localhost拉取Neo4j的数据；</li>
-<li>在一个id为viz的DOM元素中展示可视化。</li>
-</ul>
-<p>译者介绍：侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。<br>英文原文：<a href="http://www.lyonwj.com/2016/06/26/graph-of-thrones-neo4j-social-network-analysis/" target="_blank" rel="external">Analyzing the Graph of Thrones</a></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1720,7 +1658,7 @@ Aerys,Jaime,18
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">27</span>
+              <span class="site-state-item-count">28</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1780,7 +1718,7 @@ Aerys,Jaime,18
         <div class="copyright" >
   
   &copy; 
-  <span itemprop="copyrightYear">2017</span>
+  <span itemprop="copyrightYear">2018</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

@@ -1,0 +1,667 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="神机喵算" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="第二章 神经网络的数学基础
+本章涉及的知识点：
+
+神经网络的MNIST手写数字识别（概览）
+张量（Tensor）和张量操作
+如何通过后向传播和梯度下降进行神经网络学习
+
+理解深度学习要求熟悉许多简单的数学概念：张量，张量操作，微分，梯度下降等等。本章目的是让读者对这些概念有个大体的认识。
+这里以一个实际的神经网络例子为开头，增加一些张量和梯度下降背景的了解。然后一点点的介绍新概念。记住，这些概念对">
+<meta property="og:type" content="article">
+<meta property="og:title" content="《Deep Learning with Python》第二章 2.1 神经网络的MNIST手写数字识别">
+<meta property="og:url" content="http://yoursite.com/2018/01/06/deep-learning-with-python-chapter-2-2.1/index.html">
+<meta property="og:site_name" content="神机喵算">
+<meta property="og:description" content="第二章 神经网络的数学基础
+本章涉及的知识点：
+
+神经网络的MNIST手写数字识别（概览）
+张量（Tensor）和张量操作
+如何通过后向传播和梯度下降进行神经网络学习
+
+理解深度学习要求熟悉许多简单的数学概念：张量，张量操作，微分，梯度下降等等。本章目的是让读者对这些概念有个大体的认识。
+这里以一个实际的神经网络例子为开头，增加一些张量和梯度下降背景的了解。然后一点点的介绍新概念。记住，这些概念对">
+<meta property="og:image" content="http://img1.ph.126.net/TePJYaz140JSSQ2-WFaJxg==/6632713734607017367.png">
+<meta property="og:image" content="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg">
+<meta property="og:updated_time" content="2018-01-06T09:57:12.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="《Deep Learning with Python》第二章 2.1 神经网络的MNIST手写数字识别">
+<meta name="twitter:description" content="第二章 神经网络的数学基础
+本章涉及的知识点：
+
+神经网络的MNIST手写数字识别（概览）
+张量（Tensor）和张量操作
+如何通过后向传播和梯度下降进行神经网络学习
+
+理解深度学习要求熟悉许多简单的数学概念：张量，张量操作，微分，梯度下降等等。本章目的是让读者对这些概念有个大体的认识。
+这里以一个实际的神经网络例子为开头，增加一些张量和梯度下降背景的了解。然后一点点的介绍新概念。记住，这些概念对">
+<meta name="twitter:image" content="http://img1.ph.126.net/TePJYaz140JSSQ2-WFaJxg==/6632713734607017367.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/01/06/deep-learning-with-python-chapter-2-2.1/"/>
+
+  <title> 《Deep Learning with Python》第二章 2.1 神经网络的MNIST手写数字识别 | 神机喵算 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">神机喵算</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                《Deep Learning with Python》第二章 2.1 神经网络的MNIST手写数字识别
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-01-06T17:57:12+08:00" content="2018-01-06">
+              2018-01-06
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>第二章 神经网络的数学基础</p>
+<p>本章涉及的知识点：</p>
+<ul>
+<li>神经网络的MNIST手写数字识别（概览）</li>
+<li>张量（Tensor）和张量操作</li>
+<li>如何通过后向传播和梯度下降进行神经网络学习</li>
+</ul>
+<p>理解深度学习要求熟悉许多简单的数学概念：张量，张量操作，微分，梯度下降等等。本章目的是让读者对这些概念有个大体的认识。</p>
+<p>这里以一个实际的神经网络例子为开头，增加一些张量和梯度下降背景的了解。然后一点点的介绍新概念。记住，这些概念对理解后续章节的例子有帮助。</p>
+<p>读完本章后，你将对神经网络的工作原理有个直观的认识。神经网络的应用实践将在第三章详细讲解。</p>
+<h6 id="2-1-神经网络的MNIST手写数字识别"><a href="#2-1-神经网络的MNIST手写数字识别" class="headerlink" title="2.1 神经网络的MNIST手写数字识别"></a>2.1 神经网络的MNIST手写数字识别</h6><p>第一个具体的神经网络例子是，使用Keras（Python库）学习手写数字分类。如果对Keras或者类似的库没有什么经验，那么你可能无法立即搞懂该例子的所有步骤。可能你压根还没安装Keras，那也没关系咯。下一章会详细讲解该例子的每一步。所以，不用担心啦，准备开始了。</p>
+<p>解决的问题：识别灰度的手写数字图片（28 x 28）的数字（0到9）。本例使用机器学习经典的MNIST手写数字数据集，包含60000张训练图片饿10000张测试图片。它是NIST（National Institute of Standards and Technology）数据库的子集，建立于1980年代。你可以把“MNIST手写数字识别”看成是深度学习的“Hello World”，其可以验证算法的正确性。如果成为机器学习工作者，你将会在科学论文、博客等上不断地看到它。图2.1 是MNIST数据集的图片。</p>
+<p><img src="http://img1.ph.126.net/TePJYaz140JSSQ2-WFaJxg==/6632713734607017367.png" alt="image"></p>
+<p>图2.1 MNIST手写数字图片</p>
+<blockquote>
+<p><strong>类（class）和标签（label）的区别</strong>：</p>
+<p>在机器学习中，分类问题中的一个类别称之为类（class）；数据点称为样本；类关联的具体样本称为标签（label）。</p>
+</blockquote>
+<p>你不需要立即重现本例，下一章3.3小结将会使用Keras。</p>
+<p> Keras会预加载MNIST数据集，得到的是四个Numpy数组：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 2.1. Loading the MNIST dataset in Keras</span></div><div class="line"><span class="keyword">from</span> keras.datasets <span class="keyword">import</span> mnist</div><div class="line">(train_images, train_labels), (test_images, test_labels) = mnist.load_data()</div></pre></td></tr></table></figure>
+<p><code>train_images</code> 和<code>train_labels</code>形成训练数据集。<code>test_images</code>和<code>test_labels</code>形成测试数据集。图片由NUmpy数组组成，标签是一个数字数组，范围是0到9。图片和标签是一一对应的。</p>
+<p>下面看下训练数据：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>train_images.shape</div><div class="line">(<span class="number">60000</span>, <span class="number">28</span>, <span class="number">28</span>)</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>len(train_labels)</div><div class="line"><span class="number">60000</span></div><div class="line"><span class="meta">&gt;&gt;&gt; </span>train_labels</div><div class="line">array([<span class="number">5</span>, <span class="number">0</span>, <span class="number">4</span>, ..., <span class="number">5</span>, <span class="number">6</span>, <span class="number">8</span>], dtype=uint8)</div></pre></td></tr></table></figure>
+<p>接着是测试数据：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>test_images.shape</div><div class="line">(<span class="number">10000</span>, <span class="number">28</span>, <span class="number">28</span>)</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>len(test_labels)</div><div class="line"><span class="number">10000</span></div><div class="line"><span class="meta">&gt;&gt;&gt; </span>test_labels</div><div class="line">array([<span class="number">7</span>, <span class="number">2</span>, <span class="number">1</span>, ..., <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>], dtype=uint8)</div></pre></td></tr></table></figure>
+<p>接下来的流程是：首先，将训练数据（<code>train_images</code> 和<code>train_labels</code>）赋值给神经网络模型；然后神经网络学习图片及相应的标签；最后训练好的模型输入测试图片<code>test_images</code>进行预测，并用<code>test_labels</code>验证预测值。</p>
+<p>下面构建神经网络：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 2.2. The network architecture</span></div><div class="line"><span class="keyword">from</span> keras <span class="keyword">import</span> models</div><div class="line"><span class="keyword">from</span> keras <span class="keyword">import</span> layers</div><div class="line"></div><div class="line">network = models.Sequential()</div><div class="line">network.add(layers.Dense(<span class="number">512</span>, activation=<span class="string">'relu'</span>, input_shape=(<span class="number">28</span> * <span class="number">28</span>,)))</div><div class="line">network.add(layers.Dense(<span class="number">10</span>, activation=<span class="string">'softmax'</span>))</div></pre></td></tr></table></figure>
+<p>神经网络的核心基础组件是层（layer），它是数据处理模块，可以认为是数据的过滤器（filter）。训练数据进入layer输出有用的形式，具体地说，layer抽取训练数据的学习特征。希望的是学习表征可以有效地解决问题。大部分深度学习包含多个layer形成链式，不断地进行数据提取。深度学习模型由一系列连续的数据过滤器（layer）提炼数据。</p>
+<p>本例中的神经网络由两个稠密层（Dense layer）序列组成，其中稠密层也称为全联接层（*fully connected layer）。第二层是个softmax layer，它将输出一个包含10个概率的数组（概率之和为1）。每个概率值表示当前的数字图片属于10个数字分类中某一个的概率。</p>
+<p>准备训练的步骤，下面是模型编译步骤（<em>compilation step</em>）中的三步：</p>
+<ul>
+<li>损失函数：度量神经网络模型在训练数据集上的性能，使得其向正确的方向迭代。</li>
+<li>优化器：基于训练数据和损失函数调整模型的机制。</li>
+<li>模型训练和测试的监控指标：本例只关注准确度（正确分类的图片比例）。</li>
+</ul>
+<p>后续两章会清晰的讲解损失函数和优化器的功能：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 2.3. The compilation step</span></div><div class="line">network.compile(optimizer=<span class="string">'rmsprop'</span>,</div><div class="line">                loss=<span class="string">'categorical_crossentropy'</span>,</div><div class="line">                metrics=[<span class="string">'accuracy'</span>])</div></pre></td></tr></table></figure>
+<p>在模型训练之前进行数据预处理，将数据集按神经网络模型的要求重塑（即，改变大小形状），并归一化到[0, 1]区间。例如，前面训练图片存储为(60000, 28, 28)维德数组，数值类型为uint8，其大小为[0, 255]。这里将其转换成值为0到1的float32类型的(60000, 28 * 28) 维数据。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 2.4. Preparing the image data</span></div><div class="line">train_images = train_images.reshape((<span class="number">60000</span>, <span class="number">28</span> * <span class="number">28</span>))</div><div class="line">train_images = train_images.astype(<span class="string">'float32'</span>) / <span class="number">255</span></div><div class="line"></div><div class="line">test_images = test_images.reshape((<span class="number">10000</span>, <span class="number">28</span> * <span class="number">28</span>))</div><div class="line">test_images = test_images.astype(<span class="string">'float32'</span>) / <span class="number">255</span></div></pre></td></tr></table></figure>
+<p>下面对标签进行编码，具体解释将在第三章给出：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 2.5. Preparing the labels</span></div><div class="line"><span class="keyword">from</span> keras.utils <span class="keyword">import</span> to_categorical</div><div class="line"></div><div class="line">train_labels = to_categorical(train_labels)</div><div class="line">test_labels = to_categorical(test_labels)</div></pre></td></tr></table></figure>
+<p>Keras调用<code>fit</code>方法开始训练神经网络模型：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>network.fit(train_images, train_labels, epochs=<span class="number">5</span>, batch_size=<span class="number">128</span>)</div><div class="line">Epoch <span class="number">1</span>/<span class="number">5</span></div><div class="line"><span class="number">60000</span>/<span class="number">60000</span> [==============================] - <span class="number">9</span>s - loss: <span class="number">0.2524</span> - acc: <span class="number">0.9273</span></div><div class="line">Epoch <span class="number">2</span>/<span class="number">5</span></div><div class="line"><span class="number">51328</span>/<span class="number">60000</span> [========================&gt;.....] - ETA: <span class="number">1</span>s - loss: <span class="number">0.1035</span> - acc: <span class="number">0.9692</span></div></pre></td></tr></table></figure>
+<p>上面显示的两个数字是训练神经网络模型时的损失值和准确度。</p>
+<p>可以看到，很快在训练数据上达到0.989 (98.9%) 的准确度。下面在测试数据集上验证模型的性能：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>test_loss, test_acc = network.evaluate(test_images, test_labels)</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>print(<span class="string">'test_acc:'</span>, test_acc)</div><div class="line">test_acc: <span class="number">0.9785</span></div></pre></td></tr></table></figure>
+<p>测试数据集上的准确度为97.8%，比训练数据集上的小一点。训练数据集上的准确度和测试数据集上的差距意味着过拟合，机器学习模型在新数据集上的效果比训练数据集的差。过拟合将在第三章详细讲解。</p>
+<p>从上面可以看到：只用不到20行Python代码实现构建和训练一个神经网络模型来进行手写数字图片识别。下一小结，你将学习张量（，神经网络的数据存储对象），张量操作，梯度下降。</p>
+<p>未完待续。。。</p>
+<p>Enjoy!</p>
+<blockquote>
+<p>翻译本书系列的初衷是，觉得其中把深度学习讲解的通俗易懂。不光有实例，也包含作者多年实践对深度学习概念、原理的深度理解。最后说不重要的一点，François Chollet是Keras作者。<br>声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。</p>
+</blockquote>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/12/28/deep-learning-with-python-chapter-1-1.1/" rel="next" title="《Deep Learning with Python》第一章 1.1 人工智能、机器学习和深度学习">
+                <i class="fa fa-chevron-left"></i> 《Deep Learning with Python》第一章 1.1 人工智能、机器学习和深度学习
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="http://img0.ph.126.net/3vPAbMoh_6fH3-g_I0zo-w==/6631748363397501906.jpg"
+               alt="侠天" />
+          <p class="site-author-name" itemprop="name">侠天</p>
+          <p class="site-description motion-element" itemprop="description">侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">28</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/1333564335" target="_blank" title="微博">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  微博
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://www.infoq.com/cn/author/%E4%BE%A0%E5%A4%A9" target="_blank" title="InfoQ">
+                  
+                    <i class="fa fa-fw fa-infoq"></i>
+                  
+                  InfoQ
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-6"><a class="nav-link" href="#2-1-神经网络的MNIST手写数字识别"><span class="nav-number">1.</span> <span class="nav-text">2.1 神经网络的MNIST手写数字识别</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">侠天</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+  </script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+    });
+  </script>
+  <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+  
+
+  
+
+</body>
+</html>

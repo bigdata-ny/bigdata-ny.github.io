@@ -238,6 +238,158 @@
             
               
                 
+                <a class="post-title-link" href="/2018/01/06/deep-learning-with-python-chapter-2-2.1/" itemprop="url">
+                  《Deep Learning with Python》第二章 2.1 神经网络的MNIST手写数字识别
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-01-06T17:57:12+08:00" content="2018-01-06">
+              2018-01-06
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>第二章 神经网络的数学基础</p>
+<p>本章涉及的知识点：</p>
+<ul>
+<li>神经网络的MNIST手写数字识别（概览）</li>
+<li>张量（Tensor）和张量操作</li>
+<li>如何通过后向传播和梯度下降进行神经网络学习</li>
+</ul>
+<p>理解深度学习要求熟悉许多简单的数学概念：张量，张量操作，微分，梯度下降等等。本章目的是让读者对这些概念有个大体的认识。</p>
+<p>这里以一个实际的神经网络例子为开头，增加一些张量和梯度下降背景的了解。然后一点点的介绍新概念。记住，这些概念对理解后续章节的例子有帮助。</p>
+<p>读完本章后，你将对神经网络的工作原理有个直观的认识。神经网络的应用实践将在第三章详细讲解。</p>
+<h6 id="2-1-神经网络的MNIST手写数字识别"><a href="#2-1-神经网络的MNIST手写数字识别" class="headerlink" title="2.1 神经网络的MNIST手写数字识别"></a>2.1 神经网络的MNIST手写数字识别</h6><p>第一个具体的神经网络例子是，使用Keras（Python库）学习手写数字分类。如果对Keras或者类似的库没有什么经验，那么你可能无法立即搞懂该例子的所有步骤。可能你压根还没安装Keras，那也没关系咯。下一章会详细讲解该例子的每一步。所以，不用担心啦，准备开始了。</p>
+<p>解决的问题：识别灰度的手写数字图片（28 x 28）的数字（0到9）。本例使用机器学习经典的MNIST手写数字数据集，包含60000张训练图片饿10000张测试图片。它是NIST（National Institute of Standards and Technology）数据库的子集，建立于1980年代。你可以把“MNIST手写数字识别”看成是深度学习的“Hello World”，其可以验证算法的正确性。如果成为机器学习工作者，你将会在科学论文、博客等上不断地看到它。图2.1 是MNIST数据集的图片。</p>
+<p><img src="http://img1.ph.126.net/TePJYaz140JSSQ2-WFaJxg==/6632713734607017367.png" alt="image"></p>
+<p>图2.1 MNIST手写数字图片</p>
+<blockquote>
+<p><strong>类（class）和标签（label）的区别</strong>：</p>
+<p>在机器学习中，分类问题中的一个类别称之为类（class）；数据点称为样本；类关联的具体样本称为标签（label）。</p>
+</blockquote>
+<p>你不需要立即重现本例，下一章3.3小结将会使用Keras。</p>
+<p> Keras会预加载MNIST数据集，得到的是四个Numpy数组：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 2.1. Loading the MNIST dataset in Keras</span></div><div class="line"><span class="keyword">from</span> keras.datasets <span class="keyword">import</span> mnist</div><div class="line">(train_images, train_labels), (test_images, test_labels) = mnist.load_data()</div></pre></td></tr></table></figure>
+<p><code>train_images</code> 和<code>train_labels</code>形成训练数据集。<code>test_images</code>和<code>test_labels</code>形成测试数据集。图片由NUmpy数组组成，标签是一个数字数组，范围是0到9。图片和标签是一一对应的。</p>
+<p>下面看下训练数据：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>train_images.shape</div><div class="line">(<span class="number">60000</span>, <span class="number">28</span>, <span class="number">28</span>)</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>len(train_labels)</div><div class="line"><span class="number">60000</span></div><div class="line"><span class="meta">&gt;&gt;&gt; </span>train_labels</div><div class="line">array([<span class="number">5</span>, <span class="number">0</span>, <span class="number">4</span>, ..., <span class="number">5</span>, <span class="number">6</span>, <span class="number">8</span>], dtype=uint8)</div></pre></td></tr></table></figure>
+<p>接着是测试数据：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>test_images.shape</div><div class="line">(<span class="number">10000</span>, <span class="number">28</span>, <span class="number">28</span>)</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>len(test_labels)</div><div class="line"><span class="number">10000</span></div><div class="line"><span class="meta">&gt;&gt;&gt; </span>test_labels</div><div class="line">array([<span class="number">7</span>, <span class="number">2</span>, <span class="number">1</span>, ..., <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>], dtype=uint8)</div></pre></td></tr></table></figure>
+<p>接下来的流程是：首先，将训练数据（<code>train_images</code> 和<code>train_labels</code>）赋值给神经网络模型；然后神经网络学习图片及相应的标签；最后训练好的模型输入测试图片<code>test_images</code>进行预测，并用<code>test_labels</code>验证预测值。</p>
+<p>下面构建神经网络：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 2.2. The network architecture</span></div><div class="line"><span class="keyword">from</span> keras <span class="keyword">import</span> models</div><div class="line"><span class="keyword">from</span> keras <span class="keyword">import</span> layers</div><div class="line"></div><div class="line">network = models.Sequential()</div><div class="line">network.add(layers.Dense(<span class="number">512</span>, activation=<span class="string">'relu'</span>, input_shape=(<span class="number">28</span> * <span class="number">28</span>,)))</div><div class="line">network.add(layers.Dense(<span class="number">10</span>, activation=<span class="string">'softmax'</span>))</div></pre></td></tr></table></figure>
+<p>神经网络的核心基础组件是层（layer），它是数据处理模块，可以认为是数据的过滤器（filter）。训练数据进入layer输出有用的形式，具体地说，layer抽取训练数据的学习特征。希望的是学习表征可以有效地解决问题。大部分深度学习包含多个layer形成链式，不断地进行数据提取。深度学习模型由一系列连续的数据过滤器（layer）提炼数据。</p>
+<p>本例中的神经网络由两个稠密层（Dense layer）序列组成，其中稠密层也称为全联接层（*fully connected layer）。第二层是个softmax layer，它将输出一个包含10个概率的数组（概率之和为1）。每个概率值表示当前的数字图片属于10个数字分类中某一个的概率。</p>
+<p>准备训练的步骤，下面是模型编译步骤（<em>compilation step</em>）中的三步：</p>
+<ul>
+<li>损失函数：度量神经网络模型在训练数据集上的性能，使得其向正确的方向迭代。</li>
+<li>优化器：基于训练数据和损失函数调整模型的机制。</li>
+<li>模型训练和测试的监控指标：本例只关注准确度（正确分类的图片比例）。</li>
+</ul>
+<p>后续两章会清晰的讲解损失函数和优化器的功能：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 2.3. The compilation step</span></div><div class="line">network.compile(optimizer=<span class="string">'rmsprop'</span>,</div><div class="line">                loss=<span class="string">'categorical_crossentropy'</span>,</div><div class="line">                metrics=[<span class="string">'accuracy'</span>])</div></pre></td></tr></table></figure>
+<p>在模型训练之前进行数据预处理，将数据集按神经网络模型的要求重塑（即，改变大小形状），并归一化到[0, 1]区间。例如，前面训练图片存储为(60000, 28, 28)维德数组，数值类型为uint8，其大小为[0, 255]。这里将其转换成值为0到1的float32类型的(60000, 28 * 28) 维数据。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 2.4. Preparing the image data</span></div><div class="line">train_images = train_images.reshape((<span class="number">60000</span>, <span class="number">28</span> * <span class="number">28</span>))</div><div class="line">train_images = train_images.astype(<span class="string">'float32'</span>) / <span class="number">255</span></div><div class="line"></div><div class="line">test_images = test_images.reshape((<span class="number">10000</span>, <span class="number">28</span> * <span class="number">28</span>))</div><div class="line">test_images = test_images.astype(<span class="string">'float32'</span>) / <span class="number">255</span></div></pre></td></tr></table></figure>
+<p>下面对标签进行编码，具体解释将在第三章给出：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 2.5. Preparing the labels</span></div><div class="line"><span class="keyword">from</span> keras.utils <span class="keyword">import</span> to_categorical</div><div class="line"></div><div class="line">train_labels = to_categorical(train_labels)</div><div class="line">test_labels = to_categorical(test_labels)</div></pre></td></tr></table></figure>
+<p>Keras调用<code>fit</code>方法开始训练神经网络模型：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>network.fit(train_images, train_labels, epochs=<span class="number">5</span>, batch_size=<span class="number">128</span>)</div><div class="line">Epoch <span class="number">1</span>/<span class="number">5</span></div><div class="line"><span class="number">60000</span>/<span class="number">60000</span> [==============================] - <span class="number">9</span>s - loss: <span class="number">0.2524</span> - acc: <span class="number">0.9273</span></div><div class="line">Epoch <span class="number">2</span>/<span class="number">5</span></div><div class="line"><span class="number">51328</span>/<span class="number">60000</span> [========================&gt;.....] - ETA: <span class="number">1</span>s - loss: <span class="number">0.1035</span> - acc: <span class="number">0.9692</span></div></pre></td></tr></table></figure>
+<p>上面显示的两个数字是训练神经网络模型时的损失值和准确度。</p>
+<p>可以看到，很快在训练数据上达到0.989 (98.9%) 的准确度。下面在测试数据集上验证模型的性能：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>test_loss, test_acc = network.evaluate(test_images, test_labels)</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>print(<span class="string">'test_acc:'</span>, test_acc)</div><div class="line">test_acc: <span class="number">0.9785</span></div></pre></td></tr></table></figure>
+<p>测试数据集上的准确度为97.8%，比训练数据集上的小一点。训练数据集上的准确度和测试数据集上的差距意味着过拟合，机器学习模型在新数据集上的效果比训练数据集的差。过拟合将在第三章详细讲解。</p>
+<p>从上面可以看到：只用不到20行Python代码实现构建和训练一个神经网络模型来进行手写数字图片识别。下一小结，你将学习张量（，神经网络的数据存储对象），张量操作，梯度下降。</p>
+<p>未完待续。。。</p>
+<p>Enjoy!</p>
+<blockquote>
+<p>翻译本书系列的初衷是，觉得其中把深度学习讲解的通俗易懂。不光有实例，也包含作者多年实践对深度学习概念、原理的深度理解。最后说不重要的一点，François Chollet是Keras作者。<br>声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。</p>
+</blockquote>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2017/12/28/deep-learning-with-python-chapter-1-1.1/" itemprop="url">
                   《Deep Learning with Python》第一章 1.1 人工智能、机器学习和深度学习
                 </a>
@@ -2261,234 +2413,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/10/24/visual-tools-for-machine-learning-part-3/" itemprop="url">
-                  机器学习可视化系统完结篇：模型评估和参数调优
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-10-24T01:30:30+08:00" content="2016-10-24">
-              2016-10-24
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>机器学习可视化系统完结篇：模型评估和参数调优</p>
-<p><em>写在之前：前两篇讲述了特征分析：《<a href="http://mp.weixin.qq.com/s?__biz=MzI0MDIxMDM0MQ==&amp;mid=2247483684&amp;idx=1&amp;sn=428cf35632b2408e1dc7d36dff497c53&amp;scene=0#wechat_redirect" target="_blank" rel="external">可视化图表让机器学习“biu”的一样简单：特征分析</a>》和模型选择：《<a href="http://mp.weixin.qq.com/s?__biz=MzI0MDIxMDM0MQ==&amp;mid=2247483750&amp;idx=1&amp;sn=34d9979d6e2608535d9921db54d57a8d&amp;chksm=e91f19acde6890baa7e6950b7133bcf290549c8b2ef150e5422a3c2f0df233e51cbde2b5baf3&amp;scene=0#wechat_redirect" target="_blank" rel="external">机器学习模型选择如此简单</a>》。</em></p>
-<p>本篇文章详细阐述机器学习模型评估和参数调优。将主要围绕两个问题来阐述：</p>
-<ol>
-<li>“知其所以然”：当你选择的一个机器学习模型运行时，你要知道它是如何工作的；</li>
-<li>“青出于蓝”：更进一步，你得知道如何让此机器学习模型工作的更优。</li>
-</ol>
-<h4 id="模型评估的方法"><a href="#模型评估的方法" class="headerlink" title="模型评估的方法"></a>模型评估的方法</h4><p>一般情况来说，F1评分或者R平方(R-Squared value)等数值评分可以告诉我们训练的机器学习模型的好坏。也有其它许多度量方式来评估拟合模型。</p>
-<p>你应该猜出来，我将提出使用可视化的方法结合数值评分来更直观的评判机器学习模型。接下来的几个部分将分享一些有用的工具。</p>
-<p>首先想声明的，单单一个评分或者一条线，是无法完全评估一个机器学习模型。偏离真实场景来评估机器学习模型（’good’ or ‘bad’）都是“耍流氓”。某个机器学习模型若可“驾驭”小样本数据集生成最多预测模型（即，命中更多预测数据集）。如果一个拟合模型比其它拟合过的模型形式或者你昨天的预测模型能够得到更好的结果，那即是好（’good’）。</p>
-<p>下面是一些标准指标： <em>confusion_matrix</em>，<em>mean_squared_error</em>， <em>r2_score</em>，这些可以用来评判分类器或者回归的好坏。表格中给出的是<strong><em>Scikit-Learn</em></strong>中的函数以及描述：</p>
-<p>评估分类模型：</p>
-<table>
-<thead>
-<tr>
-<th>指标</th>
-<th>描述</th>
-<th>Scikit-learn函数</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Precision</td>
-<td>精准度</td>
-<td>from sklearn.metrics import precision_score</td>
-</tr>
-<tr>
-<td>Recall</td>
-<td>召回率</td>
-<td>from sklearn.metrics import recall_score</td>
-</tr>
-<tr>
-<td>F1</td>
-<td>F1值</td>
-<td>from sklearn.metrics import f1_score</td>
-</tr>
-<tr>
-<td>Confusion Matrix</td>
-<td>混淆矩阵</td>
-<td>from sklearn.metrics import confusion_matrix</td>
-</tr>
-<tr>
-<td>ROC</td>
-<td>ROC曲线</td>
-<td>from sklearn.metrics import roc</td>
-</tr>
-<tr>
-<td>AUC</td>
-<td>ROC曲线下的面积</td>
-<td>from sklearn.metrics import auc</td>
-</tr>
-</tbody>
-</table>
-<p>评估回归模型：</p>
-<table>
-<thead>
-<tr>
-<th>指标</th>
-<th>描述</th>
-<th>Scikit-learn函数</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Mean Square Error (MSE, RMSE)</td>
-<td>平均方差</td>
-<td>from sklearn.metrics import mean_squared_error</td>
-</tr>
-<tr>
-<td>Absolute Error (MAE, RAE)</td>
-<td>绝对误差</td>
-<td>from sklearn.metrics import mean_absolute_error, median_absolute_error</td>
-</tr>
-<tr>
-<td>R-Squared</td>
-<td>R平方值</td>
-<td>from sklearn.metrics import r2_score</td>
-</tr>
-</tbody>
-</table>
-<p>下面开始使用<strong><em>Scikit-Learn</em></strong>的可视化工具来更直观的展现模型的好坏。</p>
-<h6 id="评估分类模型"><a href="#评估分类模型" class="headerlink" title="评估分类模型"></a>评估分类模型</h6><p>我们评估分类器是判断预测值时否很好的与实际标记值相匹配。正确的鉴别出正样本（True Positives）或者负样本（True Negatives）都是True。同理，错误的判断正样本（False Positive，即一类错误）或者负样本（False Negative，即二类错误）。</p>
-<p>注意：True和False是对于评价预测结果而言，也就是评价预测结果是正确的(True)还是错误的(False)。而Positive和Negative则是样本分类的标记。</p>
-<p>通常，我们希望通过一些参数来告知模型评估如何。为此，我们使用混淆矩阵。</p>
-<h5 id="混淆矩阵"><a href="#混淆矩阵" class="headerlink" title="混淆矩阵"></a>混淆矩阵</h5><p><img src="https://silvrback.s3.amazonaws.com/uploads/4ab81a17-4a77-4e9e-b092-de5fac2afa07/confusionmatrix_large.png" alt="Confusion Matrix"></p>
-<p>幸运的是，<strong><em>Scikit-Learn</em></strong>提供内建函数（<em>sklearn.metrics.confusion_matrix</em>）来计算混淆矩阵。输入数据集实际值和模型预测值作为参数，输出即为混淆矩阵，结果类似这样：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">[[<span class="number">1238</span>   <span class="number">19</span>]   <span class="comment"># True Positives = 1238, False Negatives = 19</span></div><div class="line"> [   <span class="number">2</span>  <span class="number">370</span>]]  <span class="comment"># False Positives = 2, True Negatives = 370</span></div></pre></td></tr></table></figure>
-<h5 id="分类报告"><a href="#分类报告" class="headerlink" title="分类报告"></a>分类报告</h5><p>分类报告除了包括混淆矩阵，也增加了其它优势，比如，混淆矩阵会标示样例是否被正确鉴别，同时也提供precision，recall和 F1 值三种评估指标。</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> classification_report</div><div class="line"></div><div class="line">print(classification_report(y_true, y_pred, target_names=target_names))</div></pre></td></tr></table></figure>
-<p> 更进一步，可以对<strong><em>Scikit-Learn</em></strong>的内建函数做些加强，比如，使用带颜色区分的热力图，它将帮助我们的眼睛更容易的辨别预测成功（橘黄色）和失败（灰色）。代码如下：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">from</span> matplotlib <span class="keyword">import</span> colors</div><div class="line"><span class="keyword">from</span> matplotlib.colors <span class="keyword">import</span> ListedColormap</div><div class="line"></div><div class="line">ddl_heat = [<span class="string">'#DBDBDB'</span>,<span class="string">'#DCD5CC'</span>,<span class="string">'#DCCEBE'</span>,<span class="string">'#DDC8AF'</span>,<span class="string">'#DEC2A0'</span>,<span class="string">'#DEBB91'</span>,\</div><div class="line">            <span class="string">'#DFB583'</span>,<span class="string">'#DFAE74'</span>,<span class="string">'#E0A865'</span>,<span class="string">'#E1A256'</span>,<span class="string">'#E19B48'</span>,<span class="string">'#E29539'</span>]</div><div class="line">ddlheatmap = colors.ListedColormap(ddl_heat)</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">plot_classification_report</span><span class="params">(cr, title=None, cmap=ddlheatmap)</span>:</span></div><div class="line">    title = title <span class="keyword">or</span> <span class="string">'Classification report'</span></div><div class="line">    lines = cr.split(<span class="string">'\n'</span>)</div><div class="line">    classes = []</div><div class="line">    matrix = []</div><div class="line"></div><div class="line">    <span class="keyword">for</span> line <span class="keyword">in</span> lines[<span class="number">2</span>:(len(lines)<span class="number">-3</span>)]:</div><div class="line">        s = line.split()</div><div class="line">        classes.append(s[<span class="number">0</span>])</div><div class="line">        value = [float(x) <span class="keyword">for</span> x <span class="keyword">in</span> s[<span class="number">1</span>: len(s) - <span class="number">1</span>]]</div><div class="line">        matrix.append(value)</div><div class="line"></div><div class="line">    fig, ax = plt.subplots(<span class="number">1</span>)</div><div class="line"></div><div class="line">    <span class="keyword">for</span> column <span class="keyword">in</span> range(len(matrix)+<span class="number">1</span>):</div><div class="line">        <span class="keyword">for</span> row <span class="keyword">in</span> range(len(classes)):</div><div class="line">            txt = matrix[row][column]</div><div class="line">            ax.text(column,row,matrix[row][column],va=<span class="string">'center'</span>,ha=<span class="string">'center'</span>)</div><div class="line"></div><div class="line">    fig = plt.imshow(matrix, interpolation=<span class="string">'nearest'</span>, cmap=cmap)</div><div class="line">    plt.title(title)</div><div class="line">    plt.colorbar()</div><div class="line">    x_tick_marks = np.arange(len(classes)+<span class="number">1</span>)</div><div class="line">    y_tick_marks = np.arange(len(classes))</div><div class="line">    plt.xticks(x_tick_marks, [<span class="string">'precision'</span>, <span class="string">'recall'</span>, <span class="string">'f1-score'</span>], rotation=<span class="number">45</span>)</div><div class="line">    plt.yticks(y_tick_marks, classes)</div><div class="line">    plt.ylabel(<span class="string">'Classes'</span>)</div><div class="line">    plt.xlabel(<span class="string">'Measures'</span>)</div><div class="line">    plt.show()</div><div class="line"></div><div class="line">cr = classification_report(y_true, y_pred)</div><div class="line">plot_classification_report(cr)</div></pre></td></tr></table></figure>
-<p><img src="https://silvrback.s3.amazonaws.com/uploads/8a76cb0d-6ead-494f-b000-d3bd3ec58aad/classificationreport_large.png" alt="Classification Report"></p>
-<p>看起来挺容易，对不？发现分类热力图的另外一个好处，它可以让我们看出一类错误 VS 二类错误。但有一个缺陷，它并不能垮模型进行比较，而这对评估拟合模型是相当重要的。因为这个原因，接下来将使用第二篇文章中的<em>classify</em>和<em>regress</em>代码。</p>
-<p>下面的<em>get_preds</em>函数将输出一个实际标记值和预测值的二元组，这个二元组将会使得后续的跨模型的可视化比较变得容易：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_preds</span><span class="params">(attributes, targets, model)</span>:</span></div><div class="line">    <span class="string">'''</span></div><div class="line">    Executes classification or regression using the specified model</div><div class="line">    and returns expected and predicted values.</div><div class="line">    Useful for comparison plotting!</div><div class="line">    '''</div><div class="line">    splits = cv.train_test_split(attributes, targets, test_size=<span class="number">0.2</span>)</div><div class="line">    X_train, X_test, y_train, y_test = splits</div><div class="line"></div><div class="line">    model.fit(X_train, y_train)</div><div class="line">    y_true = y_test</div><div class="line">    y_pred = model.predict(X_test)</div><div class="line">    <span class="keyword">return</span> (y_true,y_pred)</div></pre></td></tr></table></figure>
-<h5 id="ROC曲线"><a href="#ROC曲线" class="headerlink" title="ROC曲线"></a>ROC曲线</h5><p>另一种评估分类模型的方法是ROC（Receiver Operating Characteristic）曲线。我们能从<strong><em>Scikit-Learn</em></strong> 指标模块中import <em>roc_curve</em>，计算 true positive率和false positive 率的数值。我们也可以画出ROC曲线来权衡模型的敏感性和特异性。</p>
-<p>下面的代码将画出ROC，Y轴代表true positive率，X轴代表false positive 率。同时，我们也可以增加同时比较两种不同的拟合模型，这里看到的是 <em>KNeighborsClassifier</em> 分类器远胜 <em>LinearSVC</em> 分类器：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">roc_compare_two</span><span class="params">(y, yhats, models)</span>:</span></div><div class="line">    f, (ax1, ax2) = plt.subplots(<span class="number">1</span>, <span class="number">2</span>, sharey=<span class="keyword">True</span>)</div><div class="line">    <span class="keyword">for</span> yhat, m, ax <span class="keyword">in</span> ((yhats[<span class="number">0</span>], models[<span class="number">0</span>], ax1), (yhats[<span class="number">1</span>], models[<span class="number">1</span>], ax2)):</div><div class="line">        false_positive_rate, true_positive_rate, thresholds = roc_curve(y,yhat)</div><div class="line">        roc_auc = auc(false_positive_rate, true_positive_rate)</div><div class="line">        ax.set_title(<span class="string">'ROC for %s'</span> % m)</div><div class="line">        ax.plot(false_positive_rate, true_positive_rate, \</div><div class="line">                c=<span class="string">'#2B94E9'</span>, label=<span class="string">'AUC = %0.2f'</span>% roc_auc)</div><div class="line">        ax.legend(loc=<span class="string">'lower right'</span>)</div><div class="line">        ax.plot([<span class="number">0</span>,<span class="number">1</span>],[<span class="number">0</span>,<span class="number">1</span>],<span class="string">'m--'</span>,c=<span class="string">'#666666'</span>)</div><div class="line">    plt.xlim([<span class="number">0</span>,<span class="number">1</span>])</div><div class="line">    plt.ylim([<span class="number">0</span>,<span class="number">1.1</span>])</div><div class="line">    plt.show()</div><div class="line"></div><div class="line">y_true_svc, y_pred_svc = get_preds(stdfeatures, labels, LinearSVC())</div><div class="line">y_true_knn, y_pred_knn = get_preds(stdfeatures, labels, KNeighborsClassifier())</div><div class="line"></div><div class="line">actuals = np.array([y_true_svc,y_true_knn])</div><div class="line">predictions = np.array([y_pred_svc,y_pred_knn])</div><div class="line">models = [<span class="string">'LinearSVC'</span>,<span class="string">'KNeighborsClassifier'</span>]</div><div class="line"></div><div class="line">roc_compare_two(actuals, predictions, models)</div></pre></td></tr></table></figure>
-<p><img src="https://silvrback.s3.amazonaws.com/uploads/27a127d5-5486-4175-9194-6f0f520bbe03/roc_auc_compare_large.png" alt="ROC_AUC Curve"></p>
-<p>在ROC空间，ROC曲线越凸向左上方向效果越好；越靠近对角线，分类器越趋向于随机分类器。</p>
-<p>同时，我们也会计算曲线下的面积（AUC），可以结合上图。如果AUC的值达到0.80，那说明分类器分类非常准确；如果AUC值在0.60～0.80之间，那分类器还算好，但是我们调调参数可能会得到更好的性能；如果AUC值小于0.60，那就惨不忍睹了，你得好好分析下咯。</p>
-<h5 id="评估回归模型"><a href="#评估回归模型" class="headerlink" title="评估回归模型"></a>评估回归模型</h5><p>对于混凝土数据集试验一些不同的机器学习模型，然后评判哪种更好。在第二篇文章中，我们使用的平均方差和 R 平方值，比如：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">Mean squared error = <span class="number">116.268</span></div><div class="line">R2 score = <span class="number">0.606</span></div></pre></td></tr></table></figure>
-<p>这些数值是有用的，特别是对不同的拟合模型比较平均方差和 R 平方值。但是，这是不够的，它不能告诉我们为什么一个模型远胜于另外一个；也不能告诉我们如何对模型调参数提高评分。接下来，我们将看到两种可视化的评估技术来帮助诊断模型有效性：预测错误曲线 和 残差曲线。</p>
-<h5 id="预测错误曲线"><a href="#预测错误曲线" class="headerlink" title="预测错误曲线"></a>预测错误曲线</h5><p>为了知道我们的模型预测值与期望值到底有多接近，我们将拿混凝土数据集（混凝土强度）做例子，画出其期望值和模型预测值曲线。下面是不同回归模型的错误曲线：<em>Ridge</em>， <em>SVR</em> 和<em>RANSACRegressor</em>。</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">error_compare_three</span><span class="params">(mods,X,y)</span>:</span></div><div class="line">    f, (ax1, ax2, ax3) = plt.subplots(<span class="number">3</span>, sharex=<span class="keyword">True</span>, sharey=<span class="keyword">True</span>)</div><div class="line">    <span class="keyword">for</span> mod, ax <span class="keyword">in</span> ((mods[<span class="number">0</span>], ax1),(mods[<span class="number">1</span>], ax2),(mods[<span class="number">2</span>], ax3)):</div><div class="line">        predicted = cv.cross_val_predict(mod[<span class="number">0</span>], X, y, cv=<span class="number">12</span>)</div><div class="line">        ax.scatter(y, predicted, c=<span class="string">'#F2BE2C'</span>)</div><div class="line">        ax.set_title(<span class="string">'Prediction Error for %s'</span> % mod[<span class="number">1</span>])</div><div class="line">        ax.plot([y.min(), y.max()], [y.min(), y.max()], <span class="string">'k--'</span>, lw=<span class="number">4</span>, c=<span class="string">'#2B94E9'</span>)</div><div class="line">        ax.set_ylabel(<span class="string">'Predicted'</span>)</div><div class="line">    plt.xlabel(<span class="string">'Measured'</span>)</div><div class="line">    plt.show()</div><div class="line"></div><div class="line">models = np.array([(Ridge(),<span class="string">'Ridge'</span>), (SVR(),<span class="string">'SVR'</span>), (RANSACRegressor(),<span class="string">'RANSAC'</span>)])</div><div class="line">error_compare_three(models, features, labels)</div></pre></td></tr></table></figure>
-<p><img src="https://silvrback.s3.amazonaws.com/uploads/65b6159a-1745-41ac-a71e-d77624566774/model_error_large.png" alt="Visualizing error in regression models"></p>
-<p>从这里可以很清晰的看出预测值和期望值的关系。同时也发现线性回归模型效果好。</p>
-<h5 id="残差曲线"><a href="#残差曲线" class="headerlink" title="残差曲线"></a>残差曲线</h5><p> 残差是数据集每个实例的实际标记值和预测值之间的差值。通过画出一系列实例的残差，可以帮助我们检测它们是否随机错误。</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">resids_compare_three</span><span class="params">(mods,X,y)</span>:</span></div><div class="line">    f, (ax1, ax2, ax3) = plt.subplots(<span class="number">3</span>, sharex=<span class="keyword">True</span>, sharey=<span class="keyword">True</span>)</div><div class="line">    plt.title(<span class="string">'Plotting residuals using training (blue) and test (green) data'</span>)</div><div class="line">    <span class="keyword">for</span> m, ax <span class="keyword">in</span> ((mods[<span class="number">0</span>], ax1),(mods[<span class="number">1</span>], ax2),(mods[<span class="number">2</span>], ax3)):</div><div class="line">        <span class="keyword">for</span> feature <span class="keyword">in</span> list(X):</div><div class="line">            splits = cv.train_test_split(X[[feature]], y, test_size=<span class="number">0.2</span>)</div><div class="line">            X_tn, X_tt, y_tn, y_tt = splits</div><div class="line">            m[<span class="number">0</span>].fit(X_tn, y_tn)</div><div class="line">            ax.scatter(m[<span class="number">0</span>].predict(X_tn),m[<span class="number">0</span>].predict(X_tn)-y_tn,c=<span class="string">'#2B94E9'</span>,s=<span class="number">40</span>,alpha=<span class="number">0.5</span>)</div><div class="line">            ax.scatter(m[<span class="number">0</span>].predict(X_tt), m[<span class="number">0</span>].predict(X_tt)-y_tt,c=<span class="string">'#94BA65'</span>,s=<span class="number">40</span>)</div><div class="line">        ax.hlines(y=<span class="number">0</span>, xmin=<span class="number">0</span>, xmax=<span class="number">100</span>)</div><div class="line">        ax.set_title(m[<span class="number">1</span>])</div><div class="line">        ax.set_ylabel(<span class="string">'Residuals'</span>)</div><div class="line">    plt.xlim([<span class="number">20</span>,<span class="number">70</span>])        <span class="comment"># Adjust according to your dataset</span></div><div class="line">    plt.ylim([<span class="number">-50</span>,<span class="number">50</span>])  </div><div class="line">    plt.show()</div><div class="line"></div><div class="line">models = np.array([(Ridge(),<span class="string">'Ridge'</span>), (LinearRegression(),<span class="string">'Linear Regression'</span>), (SVR(),<span class="string">'SVR'</span>)])</div><div class="line">resids_compare_three(models, features, labels)</div></pre></td></tr></table></figure>
-<p><img src="https://silvrback.s3.amazonaws.com/uploads/f4280e91-f5b1-43f8-a2a8-5a0e5b7174b2/residuals_large.png" alt="Plotting residuals in regression models"></p>
-<h5 id="Bias-VS-Variance"><a href="#Bias-VS-Variance" class="headerlink" title="Bias VS Variance"></a>Bias VS Variance</h5><p>每种评估器都有是有利有弊。</p>
-<p>首先 Error = Bias + Variance。Error反映的是整个模型的准确度，Bias反映的是模型在样本上的输出与真实值之间的误差，即模型本身的精准度，Variance反映的是模型每一次输出结果与模型输出期望之间的误差，即模型的稳定性。</p>
-<h5 id="机器学习可视化调参"><a href="#机器学习可视化调参" class="headerlink" title="机器学习可视化调参"></a>机器学习可视化调参</h5><p>在文章开篇，我们提出了两个问题：我们如何知道一个机器学习模型可以工作？我们如何让这个模型工作（运行）的更好？</p>
-<p>接下来，我们将回答第二个问题。如果你有注意，我们用的模型都是使用<strong><em>Scikit-Learn</em></strong> 默认的参数。对于我们的大部分拟合模型来讲，评分已经相当好了。但有时并没有那么幸运，这时我们就得自己调参数。</p>
-<h6 id="可视化训练和验证模型"><a href="#可视化训练和验证模型" class="headerlink" title="# 可视化训练和验证模型"></a># 可视化训练和验证模型</h6><p> 如何选择最好的模型参数呢？一种方法是，用单一参数的不同值去验证一个模型的评估分数。让我们拿<em>SVC</em> 分类器来试验，通过调不同的gama值来画出训练值和测试纸的曲线。</p>
-<p>我们的关注点是训练值和测试值都高的点。如果两者都低，那是欠拟合（underfit）；如果训练值高但是测试值低，那说明是过拟合（overfit）。</p>
-<p>下面的代码画出来的曲线是拿信用卡数据集来做例子，这里用的 6折交叉验证。</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">plot_val_curve</span><span class="params">(features, labels, model)</span>:</span></div><div class="line">    p_range = np.logspace(<span class="number">-5</span>, <span class="number">5</span>, <span class="number">5</span>)</div><div class="line"></div><div class="line">    train_scores, test_scores = validation_curve(</div><div class="line">        model, features, labels, param_name=<span class="string">'gamma'</span>, param_range=p_range,</div><div class="line">        cv=<span class="number">6</span>, scoring=<span class="string">'accuracy'</span>, n_jobs=<span class="number">1</span></div><div class="line">    )</div><div class="line"></div><div class="line">    train_scores_mean = np.mean(train_scores, axis=<span class="number">1</span>)</div><div class="line">    train_scores_std = np.std(train_scores, axis=<span class="number">1</span>)</div><div class="line">    test_scores_mean = np.mean(test_scores, axis=<span class="number">1</span>)</div><div class="line">    test_scores_std = np.std(test_scores, axis=<span class="number">1</span>)</div><div class="line"></div><div class="line">    plt.title(<span class="string">'Validation Curve'</span>)</div><div class="line">    plt.xlabel(<span class="string">'$\gamma$'</span>)</div><div class="line">    plt.ylabel(<span class="string">'Score'</span>)</div><div class="line">    plt.semilogx(p_range, train_scores_mean, label=<span class="string">'Training score'</span>, color=<span class="string">'#E29539'</span>)</div><div class="line">    plt.semilogx(p_range, test_scores_mean, label=<span class="string">'Cross-validation score'</span>, color=<span class="string">'#94BA65'</span>)</div><div class="line">    plt.legend(loc=<span class="string">'best'</span>)</div><div class="line">    plt.show()</div><div class="line"></div><div class="line">X = scale(credit[[<span class="string">'limit'</span>,<span class="string">'sex'</span>,<span class="string">'edu'</span>,<span class="string">'married'</span>,<span class="string">'age'</span>,<span class="string">'apr_delay'</span>]])</div><div class="line">y = credit[<span class="string">'default'</span>]</div><div class="line">plot_val_curve(X, y, SVC())</div></pre></td></tr></table></figure>
-<p><img src="https://silvrback.s3.amazonaws.com/uploads/5b3cc5b4-a6f3-4146-b951-94a2b3547bfc/validation_curve_large.png" alt="Validation curve"></p>
-<h5 id="Grid-Search"><a href="#Grid-Search" class="headerlink" title="Grid Search"></a>Grid Search</h5><p>对于超参数调优，大部分人使用的grid search。Grid search是一种暴力调参方法，即遍历所有可能的参数值。</p>
-<p>对于信用卡数据集使用 <em>SVC</em>模型，我们通过试验不同内核系数gama来提高预测准确性：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">from</span> sklearn.grid_search <span class="keyword">import</span> GridSearchCV</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">blind_gridsearch</span><span class="params">(model, X, y)</span>:</span></div><div class="line">    C_range = np.logspace(<span class="number">-2</span>, <span class="number">10</span>, <span class="number">5</span>)</div><div class="line">    gamma_range = np.logspace(<span class="number">-5</span>, <span class="number">5</span>, <span class="number">5</span>)</div><div class="line">    param_grid = dict(gamma=gamma_range, C=C_range)</div><div class="line">    grid = GridSearchCV(SVC(), param_grid=param_grid)</div><div class="line">    grid.fit(X, y)</div><div class="line"></div><div class="line">    print(</div><div class="line">        <span class="string">'The best parameters are &#123;&#125; with a score of &#123;:0.2f&#125;.'</span>.format(</div><div class="line">            grid.best_params_, grid.best_score_</div><div class="line">        )</div><div class="line">    )</div><div class="line">features = credit[[<span class="string">'limit'</span>,<span class="string">'sex'</span>,<span class="string">'edu'</span>,<span class="string">'married'</span>,<span class="string">'age'</span>,<span class="string">'apr_delay'</span>]]</div><div class="line">labels   = credit[<span class="string">'default'</span>]</div><div class="line">blind_gridsearch(SVC(), features, labels)</div></pre></td></tr></table></figure>
-<p>但是，grid search需要我们理解哪些参数是合适的，参数的意义，参数是如何影响模型的以及参数的合理的搜索范围来初始化搜索。</p>
-<p>这里，我们使用 <em>visual_gridsearch</em> 代替 <em>blind_gridsearch</em> 函数：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">visual_gridsearch</span><span class="params">(model, X, y)</span>:</span></div><div class="line">    C_range = np.logspace(<span class="number">-2</span>, <span class="number">10</span>, <span class="number">5</span>)</div><div class="line">    gamma_range = np.logspace(<span class="number">-5</span>, <span class="number">5</span>, <span class="number">5</span>)</div><div class="line">    param_grid = dict(gamma=gamma_range, C=C_range)</div><div class="line">    grid = GridSearchCV(SVC(), param_grid=param_grid)</div><div class="line">    grid.fit(X, y)</div><div class="line"></div><div class="line">    scores = [x[<span class="number">1</span>] <span class="keyword">for</span> x <span class="keyword">in</span> grid.grid_scores_]</div><div class="line">    scores = np.array(scores).reshape(len(C_range), len(gamma_range))</div><div class="line"></div><div class="line">    plt.figure(figsize=(<span class="number">8</span>, <span class="number">6</span>))</div><div class="line">    plt.subplots_adjust(left=<span class="number">.2</span>, right=<span class="number">0.95</span>, bottom=<span class="number">0.15</span>, top=<span class="number">0.95</span>)</div><div class="line">    plt.imshow(scores, interpolation=<span class="string">'nearest'</span>, cmap=ddlheatmap)</div><div class="line">    plt.xlabel(<span class="string">'gamma'</span>)</div><div class="line">    plt.ylabel(<span class="string">'C'</span>)</div><div class="line">    plt.colorbar()</div><div class="line">    plt.xticks(np.arange(len(gamma_range)), gamma_range, rotation=<span class="number">45</span>)</div><div class="line">    plt.yticks(np.arange(len(C_range)), C_range)</div><div class="line">    plt.title(</div><div class="line">        <span class="string">"The best parameters are &#123;&#125; with a score of &#123;:0.2f&#125;."</span>.format(</div><div class="line">        grid.best_params_, grid.best_score_)</div><div class="line">    )</div><div class="line">    plt.show()</div><div class="line"></div><div class="line">visual_gridsearch(SVC(), features, labels)</div></pre></td></tr></table></figure>
-<p><img src="https://silvrback.s3.amazonaws.com/uploads/e440eb11-0bbd-44be-a9fb-4264581d654b/validation_heatmap_large.png" alt="Validation accuracy as a function of gamma and C"></p>
-<p> <em>visual_gridsearch</em> 的方法可以帮助我们理解不同的模型参数下的精确值。但是超参数调优的路程很长，好些人为此研究了几十年。</p>
-<h5 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h5><p>这是可视化机器学习部分的最后一篇，可视化在机器学习的过程占用重要的角色。许多工具都提供这个功能，比如， <em>Scikit-Learn</em> ，<em>Matplotlib</em> ， <em>Pandas</em> ，<em>Bokeh</em> 和 <em>Seaborn</em>。</p>
-<p><em>希望我写的对部分人有用，如果是这样，请让我知道，谢谢。</em></p>
-<p>Enjoy!</p>
-<hr>
-<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
-<p>若发现以上文章有任何不妥，请联系我。</p>
-<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -2534,7 +2458,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">27</span>
+              <span class="site-state-item-count">28</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -2594,7 +2518,7 @@
         <div class="copyright" >
   
   &copy; 
-  <span itemprop="copyrightYear">2017</span>
+  <span itemprop="copyrightYear">2018</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
