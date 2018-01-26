@@ -238,6 +238,237 @@
             
               
                 
+                <a class="post-title-link" href="/2018/01/26/deep-learning-with-python-chapter-2-2.2/" itemprop="url">
+                  《Deep Learning with Python》第二章 2.2 神经网络的数据表示
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-01-26T23:07:52+08:00" content="2018-01-26">
+              2018-01-26
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>2.2 神经网络的数据表示</p>
+<p>在上面的例子中，数据存储为多维Numpy数组，也称为张量（tensor）。当前流行的机器学习系统都以张量作为基本数据结构。所以Google的TensorFlow也拿张量命名。那张量是什么呢？</p>
+<p>张量是数据的容器（container）。这里的数据一般是数值型数据，所以是数字的容器。大家所熟悉的矩阵是二维（2D）张量。张量是广义的矩阵，它的某一维也称为轴（axis）。</p>
+<ul>
+<li>标量（Scalar，0D 张量）</li>
+</ul>
+<p>只包含一个数字的张量称为标量（或者数量张量，零维张量，0D张量）。在Numpy中，一个float32或者float64位的数值称为数量张量。Numpy张量可用其ndim属性显示轴的序数，数量张量有0个轴（ndim == 0）。张量的轴的序数也称为阶（rank）。下面是Numpy标量：</p>
+<pre><code>&gt;&gt;&gt; import numpy as np
+        &gt;&gt;&gt; x = np.array(12)
+        &gt;&gt;&gt; x
+        array(12)
+&gt;&gt;&gt; x.ndim 0
+</code></pre><ul>
+<li>向量（1D张量）</li>
+</ul>
+<p>数字的数组也称为向量，或者一维张量（1D张量）。一维张量只有一个轴。下面来看一个Numpy向量：</p>
+<pre><code>&gt;&gt;&gt; x = np.array([12, 3, 6, 14])
+        &gt;&gt;&gt; x
+        array([12, 3, 6, 14])
+        &gt;&gt;&gt; x.ndim
+1
+</code></pre><p>该向量有5项，也称为5维的向量。但是不要混淆5D向量和5D张量！一个5D向量只有一个轴，以及沿该轴有5个维数（元素）；然而一个5D张量有5个轴，并且沿每个轴可以有任意个的维数。维度既能表示沿某个轴的项的数量（比如，上面的5D向量），又能表示一个张量中轴的数量（比如，上面的5D张量），时常容易混淆。对于后者，用更准确地技术术语来讲，应该称为5阶张量（张量的阶即是轴的数量），但人们更常用的表示方式是5D张量。</p>
+<ul>
+<li>矩阵（2D张量）</li>
+</ul>
+<p>向量的数组称为矩阵，或者二维张量（2D张量）。矩阵有两个轴，也常称为行和列。你可以将数字排成的矩形网格看成矩阵，下面是一个Numpy矩阵：</p>
+<pre><code>&gt;&gt;&gt; x = np.array([[5, 78, 2, 34, 0],
+                  [6, 79, 3, 35, 1],
+                  [7, 80, 4, 36, 2]])
+&gt;&gt;&gt; x.ndim
+2
+</code></pre><p>沿着第一个轴的项称为行，沿着第二个轴的项称为列。上面的例子中，[5, 78, 2, 34, 0]是矩阵 x 第一行，[5, 6, 7]是第一列。</p>
+<ul>
+<li>三维张量（3D张量）和更高维张量</li>
+</ul>
+<p>矩阵的数组称为三维张量（3D张量），你可以将其看成是数字排列成的立方体，下面是一个Numpy三维张量：</p>
+<pre><code>&gt;&gt;&gt; x = np.array([[[5, 78, 2, 34, 0],
+                   [6, 79, 3, 35, 1],
+                   [7, 80, 4, 36, 2]],
+                   [[5, 78, 2, 34, 0],
+                   [6, 79, 3, 35, 1],
+                   [7, 80, 4, 36, 2]],
+                   [[5, 78, 2, 34, 0],
+                   [6, 79, 3, 35, 1],
+                   [7, 80, 4, 36, 2]]])
+&gt;&gt;&gt; x.ndim
+3
+</code></pre><p>同理，将三维张量放进数组可以创建四维张量，其它更高维的张量亦是如此。深度学习中常用的张量是 0D 到 4D。如果处理视频数据，你会用到5D。</p>
+<ul>
+<li>关键属性<br>张量具有如下三个关键属性：<ul>
+<li>轴的数量（阶数，rank）：一个三维张量有3个轴，矩阵有2个轴。Python Numpy中的张量维度为ndim。</li>
+<li>形状（shape）：它是一个整数元组，描述张量沿每个轴有多少维。例如，前面的例子中，矩阵的形状为（3，5），三维张量的形状为（3，3，5）。向量的形状只有三个元素，比如（3，），标量有空形状，（）。</li>
+<li>数据类型：张量中包含的数据类型有float32，unit8，float64等等，调用Python的dtype属性获取。字符型张量是极少见的。注意，Numpy中不存在字符串张量，其它大部分库也不存在。因为张量存在于预先申请的、连续的内存分段；而字符是变长的。</li>
+</ul>
+</li>
+</ul>
+<p>下面来几个具体的例子，回看MNIST数据集。首先加载MNIST数据集：</p>
+<pre><code>from keras.datasets import mnist
+(train_images, train_labels), (test_images, test_labels) = mnist.load_data()
+</code></pre><p>接着，用ndim属性显示张量train_images的轴数量：</p>
+<pre><code>&gt;&gt;&gt; print(train_images.ndim)
+3
+</code></pre><p>打印形状：</p>
+<pre><code>&gt;&gt;&gt; print(train_images.shape)
+(60000, 28, 28)
+</code></pre><p>使用dtype属性打印数据类型：</p>
+<pre><code>&gt;&gt;&gt; print(train_images.dtype)
+uint8
+</code></pre><p>所以train_images是一个8-bit 整数的三维张量。更确切地说，它是一个包含60,000个矩阵的数组，其中每个矩阵是28 x 28 的整数。每个矩阵是一个灰度图，其值为0到255。</p>
+<p>下面使用Python Matplotlib库显示三维张量中的第四幅数字图，见图2.2：</p>
+<pre><code>#Listing 2.6 Displaying the fourth digit
+digit = train_images[4]
+import matplotlib.pyplot as plt
+plt.imshow(digit, cmap=plt.cm.binary)
+plt.show()
+</code></pre><p>图2.2 数字图样例</p>
+<ul>
+<li>Numpy中的张量操作</li>
+</ul>
+<p>上面的例子中，使用了train_images[i]沿第一个轴选择指定的数字图。选择张量的指定元素称为张量分片（tensor slicing），下面看Numpy数组中的张量切片操作：</p>
+<p>选择#10到#100（不包括#100）的数字图，对应的张量形状为（90，28，28）：</p>
+<pre><code>&gt;&gt;&gt; my_slice = train_images[10:100]
+&gt;&gt;&gt; print(my_slice.shape)
+(90, 28, 28)
+</code></pre><p>其等效的表示方法有，沿每个轴为张量分片指定起始索引和终止索引。注意，“:”等效于选择整个轴的数据：</p>
+<pre><code>&gt;&gt;&gt; my_slice = train_images[10:100, :, :]
+&gt;&gt;&gt; my_slice.shape
+(90, 28, 28)
+&gt;&gt;&gt; my_slice = train_images[10:100, 0:28, 0:28]
+&gt;&gt;&gt; my_slice.shape
+(90, 28, 28)
+</code></pre><p>一般，你可以沿着张量每个轴任意选择两个索引之间的元素。例如，选择所有图片的右下角的14 x 14的像素：</p>
+<pre><code>my_slice = train_images[:, 14:, 14:]
+</code></pre><p>你也可以用负索引。就像Python list中的负索引一样，它表示相对于当前轴末端的位置。剪切图片中间14 x 14像素，使用如下的方法：</p>
+<pre><code>my_slice = train_images[:, 7:-7, 7:-7]
+</code></pre><ul>
+<li><p>批量数据（batch）的表示<br>在深度学习中，张量数据的第一个轴（axis 0，轴的序数从0开始）一般是样本轴（sample axis），有时也称为样本维度（sample dimension ）。在MNIST手写数字识别的例子中，样本是数字图片。<br>另外，深度学习模型不会一次处理整个数据集，而是将其拆分成小批量的数据集。下面是一个MNIST手写数字的batch，其中batch大小为128:</p>
+<pre><code>batch = train_images[:128]
+</code></pre><p>接着下一个batch：</p>
+<pre><code>batch = train_images[128:256]
+</code></pre><p>第n个batch：</p>
+<pre><code>batch = train_images[128 * n:128 * (n + 1)]
+</code></pre><p>对于张量batch来说，第一个轴（axis 0）称为batch轴或者batch维度。在使用Keras和其它深度学习库时会遇到这个术语。</p>
+</li>
+<li><p>真实世界中的张量数据<br>下面来一些具体的张量例子，后续也会用到。大部分张量都可以归为以下几类：</p>
+<ul>
+<li>向量数据：形状为（样本，特征） (samples, features) 的二维张量</li>
+<li>时序数据（timeseries data）或者序列数据（sequence data）：形状为（样本，时间戳，特征）(samples, timesteps, features)的三维张量</li>
+<li>图片数据：形状为（样本，高度，宽度，管道）(samples, height, width, channels)或者（样本，管道，高度，宽度）(samples, channels, height, width)的四维张量</li>
+<li>视频数据：形状为（样本，帧，高度，宽度，管道）(samples, frames, height, width, channels)或者（样本，帧，管道，高度，宽度）(samples, frames, channels, height, width)的五维张量</li>
+</ul>
+</li>
+<li>向量数据<br>向量数据是最常见的例子。在数据集中，单个数据点可以编码成一个向量，然后一批向量数据可以编码成二维张量（即，向量的数组），其中第一个轴为样本轴（samples axis），第二个轴为特征轴（features axis）。<br>下面来看两个实例：<ul>
+<li>人口数据：这里考虑人的年龄，邮政编码和收入。每个人的特征是一个包含3个值的向量，因此100,000个人的数据集存储为形状为（100000，3）的二维张量</li>
+<li>文本数据：这里每个文档用词汇表（考虑20,000个常用词的字典）中每个词出现的次数来表示。那么每个文档编码成一个包含20,000个值（词汇表中每个词一个值）的向量。因此，500个文档的数据集存储为形状为（500，20000）的张量</li>
+</ul>
+</li>
+<li><p>时序数据或者序列数据<br>当样本数据集中时间或者序列的排序较为重要，你应该将数据集存储为带显式的时间轴（time axis）的三维张量。每个样本编码成一个向量的序列（二维张量），因此，一批二维张量数据可以编码成三维张量，见图2.3：</p>
+<p>图2.3 三维时序张量数据<br>习惯上，时间轴是第二个轴（轴序数为1）。下面看几个例子：</p>
+<ul>
+<li>股票价格数据：每分钟保存股票的当前价格，上一分钟的最高价格，上一分钟的最低价格。每分钟的股票价格编码成一个三维向量，一整天的股票交易编码成形状为（390，3）的二维张量（股票交易每天有390分钟）。250天的股票数据存储为（250，390，3）的三维张量。这里每个样本为一天的股票交易数据。</li>
+<li>推特消息数据：这里用128个不重复的字符表将每条推文编码成280字符序列。每个字符编码成大小为128的二进制向量（该字符所在的索引位置的项为1，其它值都为0）。每条推文编码成形状为（280，128）的二维张量，那么1亿条推文存储为（1000000，280，128）的张量。</li>
+</ul>
+</li>
+<li><p>图片数据<br>图片典型有三个维度：高度、宽度和颜色深度。灰度图片（比如MNIST手写数字图片）仅有一个颜色通道，因此可以存储为二维张量，但是习惯上图片张量都是三维的，因此灰度图片只用一维颜色管道表示。128张大小为256 x 256的灰度图片存储成形状为（128，256，256，1）的张量，128张彩色图片存储成形状为（128，256，256，1）的张量，见图2.4。</p>
+<p>图片张量有两种写法：颜色管道在后（TensorFlow的写法），颜色管道在前（Theano的写法）。谷歌的TensorFlow机器学习框架将颜色深度轴放在末尾：（样本，高度，宽度，管道）(samples, height, width, channels)。同时，Theano将颜色深度轴放在batch轴右边。按Theano的写法，前面的例子写成（128，1，256，256）和（128，3，256，256）。Keras深度学习框架对两种表示方法都支持。</p>
+</li>
+<li>视频数据<br>视频数据是现实世界中少有的几种需用五维张量表示的数据。视频可以理解成帧的序列，每帧是一副彩色图片。因为每帧是三维张量（高度，宽度，管道），所以帧的序列存储成四维张量（帧，高度，宽度，管道）。那不同的视频就要存储为五维张量了（样本，帧，高度，宽度，管道）(samples, frames, height, width, channels)。<br>例如，一个60秒，144 x 256的油管视频按每秒采样4帧将会有240帧。那么4个不同的视频采样存储为形状为（4，240，144，256，3），总共有106,168,320个值。如果数据类型dtype为float32，那每个值保存为32位，所以该张量表示占405MB。而在真实生活中，你看到的视频都不用float32保存，一般都用大块数据存储格式（比如MPEG格式）压缩。</li>
+</ul>
+<p>未完待续。。。</p>
+<p>Enjoy!</p>
+<blockquote>
+<p>翻译本书系列的初衷是，觉得其中把深度学习讲解的通俗易懂。不光有实例，也包含作者多年实践对深度学习概念、原理的深度理解。最后说不重要的一点，François Chollet是Keras作者。<br>声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。</p>
+</blockquote>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2018/01/06/deep-learning-with-python-chapter-2-2.1/" itemprop="url">
                   《Deep Learning with Python》第二章 2.1 神经网络的MNIST手写数字识别
                 </a>
@@ -2261,158 +2492,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/12/05/kafka-cluster-optimize/" itemprop="url">
-                  Kafka Cluster优化两三事
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-12-05T09:18:52+08:00" content="2016-12-05">
-              2016-12-05
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p><em>写在之前</em>：本文将讲述Kafka Cluster配置和优化。</p>
-<p>Kafka Cluster（相对于单个server）最大的优点：可扩展性和容错性。</p>
-<p><img src="http://img0.ph.126.net/InezSQTEYGXiSj-q7IAZ8Q==/6631959469629171084.png" alt="image"></p>
-<p>​                               Kafka集群简图</p>
-<h6 id="Kafka-Broker个数"><a href="#Kafka-Broker个数" class="headerlink" title="Kafka Broker个数"></a>Kafka Broker个数</h6><p>决定Kafka集群大小的因素有以下几点：</p>
-<ul>
-<li>磁盘容量：首先考虑的是所需保存的消息所占用的总磁盘容量和每个broker所能提供的磁盘空间。如果Kafka集群需要保留 10 TB数据，单个broker能存储 2 TB，那么我们需要的最小Kafka集群大小 5 个broker。此外，如果启用副本参数，则对应的存储空间需至少增加一倍（取决于副本参数）。这意味着对应的Kafka集群至少需要 10 个broker。</li>
-<li>请求量：另外一个要考虑的是Kafka集群处理请求的能力。这主要取决于对Kafka client请求的网络处理能力，特别是，有多个consumer或者网路流量不稳定。如果，高峰时刻，单个broker的网络流量达到80%，这时是撑不住两个consumer的，除非有两个broker。再者，如果启用了副本参数，则需要考虑副本这个额外的consumer。也可以扩展多个broker来减少磁盘的吞吐量和系统内存。</li>
-</ul>
-<h6 id="Kafka-Broker配置"><a href="#Kafka-Broker配置" class="headerlink" title="Kafka Broker配置"></a>Kafka Broker配置</h6><p>同一个Kafka集群的所有broker机器必须满足以下两个参数：</p>
-<ul>
-<li>所有broker机器需配置相同的zookeeper连接参数（.connect）。这决定了Kafka集群存储的元数据位置；</li>
-<li>所有broker机器需配置唯一的broker id（ .id）。如果一个集群下的两个broker配置了相同的broker id，则第二个broker启动时会失败并报错。</li>
-</ul>
-<h6 id="操作系统优化"><a href="#操作系统优化" class="headerlink" title="操作系统优化"></a>操作系统优化</h6><p>大部分Linux发布版本默认的内核参数配置能让大部分应用工作的相当好。但对于实际的Kafka broker场景来说，做稍些改变会提升broker性能。主要涉及的配置：虚拟内存、网络和磁盘挂载（用来存储log segment），一般在<em>/etc/sysctl.conf</em> (CentOS系统)。</p>
-<ul>
-<li>Virtual Memory</li>
-</ul>
-<p>一般来说，Linux的虚拟内存会根据系统负载自动调整。内存页（page）swap到磁盘会显著的影响Kafka的性能，并且Kafka重度使用page cache，如果VM系统swap到磁盘，那说明没有足够的内存来分配page cache。</p>
-<p>避免swap的一种方式是设置swap空间为0。但是，swap会在系统崩溃时提供安全机制，或者会在out of memory的情况下阻止操作系统 kill 掉进程。由于这个原因，推荐 <em>vm.swappiness</em>参数设置为一个非常低的值：1 。这个参数表示 VM系统中的多少百分比用来作为swap空间。</p>
-<p>另外一种方式是通过内核调节“脏页”（注：“脏页”会被刷到磁盘上）。Kafka依赖磁盘I/O性能来提高producer的响应时间。这也是为什么通常优先把log segment功能放在可以快速响应的磁盘中（比如，SSD）。这样使得flush进程把“脏数据”写入磁盘前，“脏页”数目就减少了，可以设置<em>vm.dirty_background_ratio</em>（表示占用系统内存的百分比）参数的值为 10 以下。大部分应用场景下，<em>vm.dirty_background_ratio</em>设置为 5 就够用了，要注意了：这个参数值不能设置为 0 ，因为设置为 0 后会引起内核持续刷“脏页”，使得内核的buffer write功能没法施展。</p>
-<p>“脏页”的总量可以通过<em>vm.dirty_ratio</em> 来改变，默认值是 20 （此处也是百分比），这个值的设置范围较大，一般建议设置 60 到 80 为合理的值。但是<em>vm.dirty_ratio</em> 参数也引来了不小的风险，会造成大量unflush的数据在硬刷到磁盘时产生较长的I/O停顿。如果<em>vm.dirty_ratio</em> 值设置的较大时，强烈建议Kafka开启备份功能，以备系统崩溃。</p>
-<p>在设置了这些参数后，需要监控Kafka集群运行时“脏页”的数量，当前“脏页”数量可由如下方式查看（/proc/vmstat文件）：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"># cat /proc/vmstat | egrep &quot;dirty|writeback&quot; nr_dirty 3875</div><div class="line">nr_writeback 29</div><div class="line">nr_writeback_temp 0</div></pre></td></tr></table></figure>
-<ul>
-<li>磁盘</li>
-</ul>
-<p>除了考虑磁盘硬件本身和RAID配置外，磁盘的filesystem对Kafka集群的影响最大。虽然有许多filesystem，但最常用的是EXT4或者XFS。在这里XFS文件系统比EXT4稍好，具体原因Google下。</p>
-<p>另外一点是，建议开启mount的<em>noatime</em> mount选项。文件系统在文件被访问、创建、修改等的时候会记录文件的一些时间戳，比如：文件创建时间（ctime）、最近一次修改时间（mtime）和最近一次访问时间（atime）。默认情况下，atime的更新会有一次读操作，这会产生大量的磁盘读写，然而atime对Kafka完全没用。</p>
-<ul>
-<li>网络</li>
-</ul>
-<p>Linux发布版本的网络参数对高网络流量不适用。对于Kafka集群，推荐更改每个socket发送和接收buffer的最大内存：<em>net.core.wmem_default</em> 和 <em>net.core.rmem_default</em> 为128 kb，<em>net.core.wmem_max</em> 和<em>net.core.rmem_max</em> 为 2 Mb。另外一个socket参数是TCP socket的发送和接收buffer： <em>net.ipv4.tcp_wmem</em> 和 <em>net.ipv4.tcp_rmem</em>。</p>
-<h6 id="Kafka集群稳定"><a href="#Kafka集群稳定" class="headerlink" title="Kafka集群稳定"></a>Kafka集群稳定</h6><p>主要涉及到GC、数据中心布局和ZK使用：</p>
-<ul>
-<li>GC调优</li>
-</ul>
-<p>调GC是门手艺活，幸亏Java 7引进了G1 垃圾回收，使得GC调优变的没那么难。G1主要有两个配置选项来调优：<em>MaxGCPauseMillis</em>和<em>InitiatingHeapOccupancyPercent</em>，具体参数设置可以参考Google，这里不赘述。</p>
-<p>Kafka broker能够有效的利用堆内存和对象回收，所以这些值可以调小点。对于 64Gb内存，Kafka运行堆内存5Gb，<em>MaxGCPauseMillis</em>和<em>InitiatingHeapOccupancyPercent</em> 分别设置为 20毫秒和 35。</p>
-<p>Kafka的启动脚本使用的不是 G1回收，需要在环境变量中加入：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"># export JAVA_HOME=/usr/java/jdk1.8.0_51</div><div class="line"># export KAFKA_JVM_PERFORMANCE_OPTS=&quot;-server -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35 -XX:+DisableExplicitGC -Djava.awt.headless=true&quot;</div><div class="line"># /usr/local/kafka/bin/kafka-server-start.sh -daemon /usr/local/kafka/config/server.properties</div></pre></td></tr></table></figure>
-<ul>
-<li>数据中心布局</li>
-</ul>
-<p>原则上Kafka broker不建议都在一个机架上，为了容灾，但现实情况大部分公司做不到，此处略去。</p>
-<ul>
-<li>Zookeeper</li>
-</ul>
-<p>Kafka集群利用ZK来存储broker、topic和partition的元数据信息。</p>
-<p>在Kafka 0.9.0之前，consumer利用ZK来直接存储consumer group的信息，包括topic的消费情况、每个partition消费的周期性commit。在0.9.0版本，提供新的consumer接口利用Kafka broker来管理。</p>
-<p>Consumer可以选择使用Zk或者Kafka来提交 offset和 提交间隔。如果consumer使用ZK管理offset，那每个consumer在每个partition的每个时间间隔写入ZK。合理的offset提交间隔是1分钟，但如果一个Kafka集群有大量的consumer消费时，这个ZK流量将是巨大的。所以如果ZK不能处理大流量，那只能把offset提交间隔设大，但同时也带来丢数据的风险。最保险的建议是使用Kafka来提交offset。</p>
-<p>另外，建议Kafka集群不要和其他应用使用同一组ZK，因为Kafka对于ZK的延迟和超时是相当敏感的，ZK的不通将会导致Kafka的不可预测性。</p>
-<h6 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h6><p>Kafka在各大互联公司应用广泛，希望上述Kafka集群调优对各位有帮助。</p>
-<p>PS：最近在负责招聘，有Hadoop、Spark、Flink、Kafka、Storm等相关经验的优秀人才，请联系我或者后台留言。</p>
-<p>Enjoy!</p>
-<hr>
-<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
-<p>若发现以上文章有任何不妥，请联系我。</p>
-<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -2458,7 +2537,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">28</span>
+              <span class="site-state-item-count">29</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
