@@ -1,0 +1,714 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="神机喵算" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="2.2 神经网络的数据表示在上面的例子中，数据存储为多维Numpy数组，也称为张量（tensor）。当前流行的机器学习系统都以张量作为基本数据结构。所以Google的TensorFlow也拿张量命名。那张量是什么呢？
+张量是数据的容器（container）。这里的数据一般是数值型数据，所以是数字的容器。大家所熟悉的矩阵是二维（2D）张量。张量是广义的矩阵，它的某一维也称为轴（axis）。
+
+标量（">
+<meta property="og:type" content="article">
+<meta property="og:title" content="《Deep Learning with Python》第二章 2.2 神经网络的数据表示">
+<meta property="og:url" content="http://yoursite.com/2018/01/27/deep-learning-with-python-chapter-2-2.2/index.html">
+<meta property="og:site_name" content="神机喵算">
+<meta property="og:description" content="2.2 神经网络的数据表示在上面的例子中，数据存储为多维Numpy数组，也称为张量（tensor）。当前流行的机器学习系统都以张量作为基本数据结构。所以Google的TensorFlow也拿张量命名。那张量是什么呢？
+张量是数据的容器（container）。这里的数据一般是数值型数据，所以是数字的容器。大家所熟悉的矩阵是二维（2D）张量。张量是广义的矩阵，它的某一维也称为轴（axis）。
+
+标量（">
+<meta property="og:image" content="http://img2.ph.126.net/HFQ9QC5QHRxolxEKfV0sXA==/6632699440956084761.png">
+<meta property="og:image" content="http://img0.ph.126.net/QsAxhiYNNp6Xehzatzy2ag==/6632623574653766754.png">
+<meta property="og:image" content="http://img1.ph.126.net/tj2C-Dip2UIJH3gnHm0Uqg==/6632730227281661839.png">
+<meta property="og:image" content="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg">
+<meta property="og:updated_time" content="2018-01-27T03:40:44.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="《Deep Learning with Python》第二章 2.2 神经网络的数据表示">
+<meta name="twitter:description" content="2.2 神经网络的数据表示在上面的例子中，数据存储为多维Numpy数组，也称为张量（tensor）。当前流行的机器学习系统都以张量作为基本数据结构。所以Google的TensorFlow也拿张量命名。那张量是什么呢？
+张量是数据的容器（container）。这里的数据一般是数值型数据，所以是数字的容器。大家所熟悉的矩阵是二维（2D）张量。张量是广义的矩阵，它的某一维也称为轴（axis）。
+
+标量（">
+<meta name="twitter:image" content="http://img2.ph.126.net/HFQ9QC5QHRxolxEKfV0sXA==/6632699440956084761.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/01/27/deep-learning-with-python-chapter-2-2.2/"/>
+
+  <title> 《Deep Learning with Python》第二章 2.2 神经网络的数据表示 | 神机喵算 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">神机喵算</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                《Deep Learning with Python》第二章 2.2 神经网络的数据表示
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-01-27T11:40:44+08:00" content="2018-01-27">
+              2018-01-27
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h6 id="2-2-神经网络的数据表示"><a href="#2-2-神经网络的数据表示" class="headerlink" title="2.2 神经网络的数据表示"></a>2.2 神经网络的数据表示</h6><p>在上面的例子中，数据存储为多维Numpy数组，也称为张量（tensor）。当前流行的机器学习系统都以张量作为基本数据结构。所以Google的TensorFlow也拿张量命名。那张量是什么呢？</p>
+<p>张量是数据的容器（container）。这里的数据一般是数值型数据，所以是数字的容器。大家所熟悉的矩阵是二维（2D）张量。张量是广义的矩阵，它的某一维也称为轴（axis）。</p>
+<ul>
+<li>标量（Scalar，0D 张量）</li>
+</ul>
+<p>只包含一个数字的张量称为标量（或者数量张量，零维张量，0D张量）。在Numpy中，一个float32或者float64位的数值称为数量张量。Numpy张量可用其<code>ndim</code>属性显示轴的序数，数量张量有0个轴（ndim == 0）。张量的轴的序数也称为阶（rank）。下面是Numpy标量：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">import</span> numpy <span class="keyword">as</span> np</div><div class="line">        &gt;&gt;&gt; x = np.array(<span class="number">12</span>)</div><div class="line">        &gt;&gt;&gt; x</div><div class="line">        array(<span class="number">12</span>)</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>x.ndim <span class="number">0</span></div></pre></td></tr></table></figure>
+<ul>
+<li>向量（1D张量）</li>
+</ul>
+<p>数字的数组也称为向量，或者一维张量（1D张量）。一维张量只有一个轴。下面来看一个Numpy向量：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>x = np.array([<span class="number">12</span>, <span class="number">3</span>, <span class="number">6</span>, <span class="number">14</span>])</div><div class="line">        &gt;&gt;&gt; x</div><div class="line">        array([<span class="number">12</span>, <span class="number">3</span>, <span class="number">6</span>, <span class="number">14</span>])</div><div class="line">        &gt;&gt;&gt; x.ndim</div><div class="line"><span class="number">1</span></div></pre></td></tr></table></figure>
+<p>该向量有5项，也称为5维的向量。但是不要混淆5D向量和5D张量！一个5D向量只有一个轴，以及沿该轴有5个维数（元素）；然而一个5D张量有5个轴，并且沿每个轴可以有任意个的维数。维度既能表示沿某个轴的项的数量（比如，上面的5D向量），又能表示一个张量中轴的数量（比如，上面的5D张量），时常容易混淆。对于后者，用更准确地技术术语来讲，应该称为5阶张量（张量的阶即是轴的数量），但人们更常用的表示方式是5D张量。</p>
+<ul>
+<li>矩阵（2D张量）</li>
+</ul>
+<p>向量的数组称为矩阵，或者二维张量（2D张量）。矩阵有两个轴，也常称为行和列。你可以将数字排成的矩形网格看成矩阵，下面是一个Numpy矩阵：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>x = np.array([[<span class="number">5</span>, <span class="number">78</span>, <span class="number">2</span>, <span class="number">34</span>, <span class="number">0</span>],</div><div class="line">                  [<span class="number">6</span>, <span class="number">79</span>, <span class="number">3</span>, <span class="number">35</span>, <span class="number">1</span>],</div><div class="line">                  [<span class="number">7</span>, <span class="number">80</span>, <span class="number">4</span>, <span class="number">36</span>, <span class="number">2</span>]])</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>x.ndim</div><div class="line"><span class="number">2</span></div></pre></td></tr></table></figure>
+<p>沿着第一个轴的项称为行，沿着第二个轴的项称为列。上面的例子中，[5, 78, 2, 34, 0]是矩阵 x 第一行，[5, 6, 7]是第一列。</p>
+<ul>
+<li>三维张量（3D张量）和更高维张量</li>
+</ul>
+<p>矩阵的数组称为三维张量（3D张量），你可以将其看成是数字排列成的立方体，下面是一个Numpy三维张量：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>x = np.array([[[<span class="number">5</span>, <span class="number">78</span>, <span class="number">2</span>, <span class="number">34</span>, <span class="number">0</span>],</div><div class="line">                   [<span class="number">6</span>, <span class="number">79</span>, <span class="number">3</span>, <span class="number">35</span>, <span class="number">1</span>],</div><div class="line">                   [<span class="number">7</span>, <span class="number">80</span>, <span class="number">4</span>, <span class="number">36</span>, <span class="number">2</span>]],</div><div class="line">                   [[<span class="number">5</span>, <span class="number">78</span>, <span class="number">2</span>, <span class="number">34</span>, <span class="number">0</span>],</div><div class="line">                   [<span class="number">6</span>, <span class="number">79</span>, <span class="number">3</span>, <span class="number">35</span>, <span class="number">1</span>],</div><div class="line">                   [<span class="number">7</span>, <span class="number">80</span>, <span class="number">4</span>, <span class="number">36</span>, <span class="number">2</span>]],</div><div class="line">                   [[<span class="number">5</span>, <span class="number">78</span>, <span class="number">2</span>, <span class="number">34</span>, <span class="number">0</span>],</div><div class="line">                   [<span class="number">6</span>, <span class="number">79</span>, <span class="number">3</span>, <span class="number">35</span>, <span class="number">1</span>],</div><div class="line">                   [<span class="number">7</span>, <span class="number">80</span>, <span class="number">4</span>, <span class="number">36</span>, <span class="number">2</span>]]])</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>x.ndim</div><div class="line"><span class="number">3</span></div></pre></td></tr></table></figure>
+<p>同理，将三维张量放进数组可以创建四维张量，其它更高维的张量亦是如此。深度学习中常用的张量是 0D 到 4D。如果处理视频数据，你会用到5D。</p>
+<ul>
+<li><p>关键属性</p>
+<p>张量具有如下三个关键属性：</p>
+<ul>
+<li>轴的数量（阶数，rank）：一个三维张量有3个轴，矩阵有2个轴。Python Numpy中的张量维度为<code>ndim</code>。</li>
+<li>形状（shape）：它是一个整数元组，描述张量沿每个轴有多少维。例如，前面的例子中，矩阵的形状为（3，5），三维张量的形状为（3，3，5）。向量的形状只有三个元素，比如（3，），标量有空形状，（）。</li>
+<li>数据类型：张量中包含的数据类型有float32，unit8，float64等等，调用Python的dtype属性获取。字符型张量是极少见的。注意，Numpy中不存在字符串张量，其它大部分库也不存在。因为张量存在于预先申请的、连续的内存分段；而字符是变长的。</li>
+</ul>
+</li>
+</ul>
+<p>下面来几个具体的例子，回看MNIST数据集。首先加载MNIST数据集：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">from</span> keras.datasets <span class="keyword">import</span> mnist</div><div class="line">(train_images, train_labels), (test_images, test_labels) = mnist.load_data()</div></pre></td></tr></table></figure>
+<p>接着，用<code>ndim</code>属性显示张量train_images的轴数量：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>print(train_images.ndim)</div><div class="line"><span class="number">3</span></div></pre></td></tr></table></figure>
+<p>打印形状：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>print(train_images.shape)</div><div class="line">(<span class="number">60000</span>, <span class="number">28</span>, <span class="number">28</span>)</div></pre></td></tr></table></figure>
+<p>使用<code>dtype</code>属性打印数据类型：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>print(train_images.dtype)</div><div class="line">uint8</div></pre></td></tr></table></figure>
+<p>所以train_images是一个8-bit 整数的三维张量。更确切地说，它是一个包含60,000个矩阵的数组，其中每个矩阵是28 x 28 的整数。每个矩阵是一个灰度图，其值为0到255。</p>
+<p>下面使用Python Matplotlib库显示三维张量中的第四幅数字图，见图2.2：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 2.6 Displaying the fourth digit</span></div><div class="line">digit = train_images[<span class="number">4</span>]</div><div class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</div><div class="line">plt.imshow(digit, cmap=plt.cm.binary)</div><div class="line">plt.show()</div></pre></td></tr></table></figure>
+<p><img src="http://img2.ph.126.net/HFQ9QC5QHRxolxEKfV0sXA==/6632699440956084761.png" alt="image"></p>
+<p>图2.2 数字图样例</p>
+<ul>
+<li>Numpy中的张量操作</li>
+</ul>
+<p>上面的例子中，使用了train_images[i]沿第一个轴选择指定的数字图。选择张量的指定元素称为张量分片（tensor slicing），下面看Numpy数组中的张量切片操作：</p>
+<p>选择#10到#100（不包括#100）的数字图，对应的张量形状为（90，28，28）：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>my_slice = train_images[<span class="number">10</span>:<span class="number">100</span>]</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>print(my_slice.shape)</div><div class="line">(<span class="number">90</span>, <span class="number">28</span>, <span class="number">28</span>)</div></pre></td></tr></table></figure>
+<p>其等效的表示方法有，沿每个轴为张量分片指定起始索引和终止索引。注意，“:”等效于选择整个轴的数据：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>my_slice = train_images[<span class="number">10</span>:<span class="number">100</span>, :, :]</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>my_slice.shape</div><div class="line">(<span class="number">90</span>, <span class="number">28</span>, <span class="number">28</span>)</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>my_slice = train_images[<span class="number">10</span>:<span class="number">100</span>, <span class="number">0</span>:<span class="number">28</span>, <span class="number">0</span>:<span class="number">28</span>]</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>my_slice.shape</div><div class="line">(<span class="number">90</span>, <span class="number">28</span>, <span class="number">28</span>)</div></pre></td></tr></table></figure>
+<p>一般，你可以沿着张量每个轴任意选择两个索引之间的元素。例如，选择所有图片的右下角的14 x 14的像素：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">my_slice = train_images[:, <span class="number">14</span>:, <span class="number">14</span>:]</div></pre></td></tr></table></figure>
+<p>你也可以用负索引。就像Python list中的负索引一样，它表示相对于当前轴末端的位置。剪切图片中间14 x 14像素，使用如下的方法：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">my_slice = train_images[:, <span class="number">7</span>:<span class="number">-7</span>, <span class="number">7</span>:<span class="number">-7</span>]</div></pre></td></tr></table></figure>
+<ul>
+<li><p>批量数据（batch）的表示</p>
+<p>在深度学习中，张量数据的第一个轴（axis 0，轴的序数从0开始）一般是样本轴（sample axis），有时也称为样本维度（sample dimension ）。在MNIST手写数字识别的例子中，样本是数字图片。</p>
+<p>另外，深度学习模型不会一次处理整个数据集，而是将其拆分成小批量的数据集。下面是一个MNIST手写数字的batch，其中batch大小为128:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">batch = train_images[:<span class="number">128</span>]</div></pre></td></tr></table></figure>
+<p>接着下一个batch：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">batch = train_images[<span class="number">128</span>:<span class="number">256</span>]</div></pre></td></tr></table></figure>
+<p>第n个batch：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">batch = train_images[<span class="number">128</span> * n:<span class="number">128</span> * (n + <span class="number">1</span>)]</div></pre></td></tr></table></figure>
+<p>对于张量batch来说，第一个轴（axis 0）称为batch轴或者batch维度。在使用Keras和其它深度学习库时会遇到这个术语。</p>
+</li>
+</ul>
+<ul>
+<li><p>真实世界中的张量数据</p>
+<p>下面来一些具体的张量例子，后续也会用到。大部分张量都可以归为以下几类：</p>
+<ul>
+<li>向量数据：形状为（样本，特征）[^ (samples, features) ]的二维张量</li>
+<li>时序数据（timeseries data）或者序列数据（sequence data）：形状为（样本，时间戳，特征）[^(samples, timesteps, features)]的三维张量</li>
+<li>图片数据：形状为（样本，高度，宽度，管道）[^(samples, height, width, channels)]或者（样本，管道，高度，宽度）[^(samples, channels, height, width)]的四维张量</li>
+<li>视频数据：形状为（样本，帧，高度，宽度，管道）[^(samples, frames, height, width, channels)]或者（样本，帧，管道，高度，宽度）[^(samples, frames, channels, height, width)]的五维张量</li>
+</ul>
+</li>
+<li><p>向量数据</p>
+<p>向量数据是最常见的例子。在数据集中，单个数据点可以编码成一个向量，然后一批向量数据可以编码成二维张量（即，向量的数组），其中第一个轴为样本轴（samples axis），第二个轴为特征轴（features axis）。</p>
+<p>下面来看两个实例：</p>
+<ul>
+<li>人口数据：这里考虑人的年龄，邮政编码和收入。每个人的特征是一个包含3个值的向量，因此100,000个人的数据集存储为形状为（100000，3）的二维张量</li>
+<li>文本数据：这里每个文档用词汇表（考虑20,000个常用词的字典）中每个词出现的次数来表示。那么每个文档编码成一个包含20,000个值（词汇表中每个词一个值）的向量。因此，500个文档的数据集存储为形状为（500，20000）的张量</li>
+</ul>
+</li>
+<li><p>时序数据或者序列数据</p>
+<p>当样本数据集中时间或者序列的排序较为重要，你应该将数据集存储为带显式的时间轴（time axis）的三维张量。每个样本编码成一个向量的序列（二维张量），因此，一批二维张量数据可以编码成三维张量，见图2.3：</p>
+<p><img src="http://img0.ph.126.net/QsAxhiYNNp6Xehzatzy2ag==/6632623574653766754.png" alt="image"></p>
+<p>图2.3 三维时序张量数据</p>
+<p>习惯上，时间轴是第二个轴（轴序数为1）。下面看几个例子：</p>
+<ul>
+<li>股票价格数据：每分钟保存股票的当前价格，上一分钟的最高价格，上一分钟的最低价格。每分钟的股票价格编码成一个三维向量，一整天的股票交易编码成形状为（390，3）的二维张量（股票交易每天有390分钟）。250天的股票数据存储为（250，390，3）的三维张量。这里每个样本为一天的股票交易数据。</li>
+<li>推特消息数据：这里用128个不重复的字符表将每条推文编码成280字符序列。每个字符编码成大小为128的二进制向量（该字符所在的索引位置的项为1，其它值都为0）。每条推文编码成形状为（280，128）的二维张量，那么1亿条推文存储为（1000000，280，128）的张量。</li>
+</ul>
+</li>
+<li><p>图片数据</p>
+<p>图片典型有三个维度：高度、宽度和颜色深度。灰度图片（比如MNIST手写数字图片）仅有一个颜色通道，因此可以存储为二维张量，但是习惯上图片张量都是三维的，因此灰度图片只用一维颜色管道表示。128张大小为256 x 256的灰度图片存储成形状为（128，256，256，1）的张量，128张彩色图片存储成形状为（128，256，256，1）的张量，见图2.4。</p>
+<p><img src="http://img1.ph.126.net/tj2C-Dip2UIJH3gnHm0Uqg==/6632730227281661839.png" alt="image"></p>
+<p>图片张量有两种写法：颜色管道在后（TensorFlow的写法），颜色管道在前（Theano的写法）。谷歌的TensorFlow机器学习框架将颜色深度轴放在末尾：（样本，高度，宽度，管道）[^(samples, height, width, channels)]。同时，Theano将颜色深度轴放在batch轴右边。按Theano的写法，前面的例子写成（128，1，256，256）和（128，3，256，256）。Keras深度学习框架对两种表示方法都支持。</p>
+</li>
+<li><p>视频数据</p>
+<p>视频数据是现实世界中少有的几种需用五维张量表示的数据。视频可以理解成帧的序列，每帧是一副彩色图片。因为每帧是三维张量（高度，宽度，管道），所以帧的序列存储成四维张量（帧，高度，宽度，管道）。那不同的视频就要存储为五维张量了（样本，帧，高度，宽度，管道）[^(samples, frames, height, width, channels)]。</p>
+<p>例如，一个60秒，144 x 256的油管视频按每秒采样4帧将会有240帧。那么4个不同的视频采样存储为形状为（4，240，144，256，3），总共有106,168,320个值。如果数据类型dtype为float32，那每个值保存为32位，所以该张量表示占405MB。而在真实生活中，你看到的视频都不用float32保存，一般都用大块数据存储格式（比如MPEG格式）压缩。</p>
+</li>
+</ul>
+<p>未完待续。。。</p>
+<p>Enjoy!</p>
+<blockquote>
+<p>翻译本书系列的初衷是，觉得其中把深度学习讲解的通俗易懂。不光有实例，也包含作者多年实践对深度学习概念、原理的深度理解。最后说不重要的一点，François Chollet是Keras作者。<br>声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。</p>
+</blockquote>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/01/06/deep-learning-with-python-chapter-2-2.1/" rel="next" title="《Deep Learning with Python》第二章 2.1 神经网络的MNIST手写数字识别">
+                <i class="fa fa-chevron-left"></i> 《Deep Learning with Python》第二章 2.1 神经网络的MNIST手写数字识别
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="http://img0.ph.126.net/3vPAbMoh_6fH3-g_I0zo-w==/6631748363397501906.jpg"
+               alt="侠天" />
+          <p class="site-author-name" itemprop="name">侠天</p>
+          <p class="site-description motion-element" itemprop="description">侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">29</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/1333564335" target="_blank" title="微博">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  微博
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://www.infoq.com/cn/author/%E4%BE%A0%E5%A4%A9" target="_blank" title="InfoQ">
+                  
+                    <i class="fa fa-fw fa-infoq"></i>
+                  
+                  InfoQ
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-6"><a class="nav-link" href="#2-2-神经网络的数据表示"><span class="nav-number">1.</span> <span class="nav-text">2.2 神经网络的数据表示</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">侠天</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+  </script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+    });
+  </script>
+  <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+  
+
+  
+
+</body>
+</html>
