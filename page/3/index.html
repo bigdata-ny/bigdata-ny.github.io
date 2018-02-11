@@ -238,6 +238,151 @@
             
               
                 
+                <a class="post-title-link" href="/2016/08/21/airbnb-hadoop-hive/" itemprop="url">
+                  Airbnb的大数据平台架构
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-08-21T19:40:30+08:00" content="2016-08-21">
+              2016-08-21
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>Airbnb成立于2008年8月，拥有世界一流的客户服务和日益增长的用户社区。随着Airbnb的业务日益复杂，其大数据平台数据量也迎来了爆炸式增长。<br>本文为Airbnb公司工程师James Mayfield分析的Airbnb大数据平台构架，提供了详尽的思想和实施。</p>
+<h4 id="Part-1：大数据架构背后的哲理"><a href="#Part-1：大数据架构背后的哲理" class="headerlink" title="Part 1：大数据架构背后的哲理"></a>Part 1：大数据架构背后的哲理</h4><p>Airbnb公司提倡数据信息化，凡事以数据说话。收集指标，通过实验验证假设、构建机器学习模型和挖掘商业机会使得Airbnb公司高速、灵活的成长。</p>
+<p>经过多版本迭代之后，大数据架构栈基本稳定、可靠和可扩展的。本文分享了Airbnb公司大数据架构经验给社区。后续会给出一系列的文章来讲述分布式架构和使用的相应的组件。James Mayfield说，“我们每天使用着开源社区提供的优秀的项目，这些项目让大家更好的工作。我们在使用这些有用的项目得到好处之后也得反馈社区。”</p>
+<p>下面基于在Airbnb公司大数据平台架构构建过程的经验，给出一些有效的观点。</p>
+<ul>
+<li>多关注开源社区：在开源社区有很多大数据架构方面优秀的资源，需要去采用这些系统。同样，当我们自己开发了有用的项目也最好回馈给社区，这样会良性循环。</li>
+<li>多采用标准组件和方法：有时候自己造轮子并不如使用已有的更好资源。当凭直觉去开发出一种“与众不同”的方法时，你得考虑维护和修复这些程序的隐性成本。</li>
+<li>确保大数据平台的可扩展性：当前业务数据已不仅仅是随着业务线性增长了，而是爆发性增长。我们得确保产品能满足这种业务的增长。</li>
+<li>多倾听同事的反馈来解决问题：倾听公司数据的使用者反馈意见是架构路线图中非常重要的一步。</li>
+<li>预留多余资源：集群资源的超负荷使用让我们培养了一种探索无限可能的文化。对于架构团队来说，经常沉浸在早期资源充足的兴奋中，但Airbnb大数据团队总是假设数据仓库的新业务规模比现有机器资源大。</li>
+</ul>
+<h4 id="Part-2：大数据架构预览"><a href="#Part-2：大数据架构预览" class="headerlink" title="Part 2：大数据架构预览"></a>Part 2：大数据架构预览</h4><p>这里是大数据平台架构一览图。<br><img src="http://img0.ph.126.net/4vmHHpYNkP4mBEcqBi6atw==/6598179173949160803.jpg" alt="此处输入图片的描述"><br>Airbnb数据源主要来自两方面：数据埋点发送事件日志到Kafka；MySQL数据库dumps存储在AWS的RDS，通过数据传输组件Sqoop传输到Hive“金”集群（其实就是Hive集群，只是Airbnb内部有两个Hive集群，分别为“金”集群和“银”集群，具体分开两个集群的原因会在文章末尾给出。）。</p>
+<p>包含用户行为以及纬度快照的数据发送到Hive“金”集群存储，并进行数据清洗。这步会做些业务逻辑计算，聚合数据表，并进行数据校验。</p>
+<p>在以上架构图中，Hive集群单独区分“金”集群和“银”集群大面上的原因是为了把数据存储和计算进行分离。这样可以保证灾难性恢复。这个架构中，“金”集群运行着更重要的作业和服务，对资源占用和即席查询可以达到无感知。“银”集群只是作为一个产品环境。</p>
+<p>“金”集群存储的是原始数据，然后复制“金”集群上的所有数据到“银”集群。但是在“银”集群上生成的数据不会再复制到“金”集群。你可以认为 “银”集群是所有数据的一个超集。由于Airbnb大部分数据分析和报表都出自“银”集群，所以得保证“银”集群能够无延迟的复制数据。更严格的讲，对于“金”集群上已存在的数据进行更新也得迅速的同步到“银”集群。集群间的数据同步优化在开源社区并没有很好的解决方案，Airbnb自己实现了一个工具，后续文章会详细的讲。</p>
+<p>在HDFS存储和Hive表的管理方面做了不少优化。数据仓库的质量依赖于数据的不变性（Hive表的分区）。更进一步，Airbnb不提倡建立不同的数据系统，也不想单独为数据源和终端用户报表维护单独的架构。以以往的经验看，中间数据系统会造成数据的不一致性，增加ETL的负担，让回溯数据源到数据指标的演化链变得异常艰难。Airbnb采用Presto来查询Hive表，代替Oracle、 Teradata、 Vertica、 Redshift等。在未来，希望可以直接用Presto连接Tableau。</p>
+<p>另外一个值得注意的几个事情，在架构图中的<a href="http://airbnb.io/airpal" target="_blank" rel="external">Airpal</a>，一个基于Presto，web查询系统，已经开源。Airpal是Airbnb公司用户基于数据仓库的即席SQL查询借口，有超过1/3的Airbnb同事在使用此工具查询。任务调度系统<a href="http://airbnb.io/projects/airflow" target="_blank" rel="external">Airflow</a> ，可以跨平台运行Hive，Presto，Spark，MySQL等Job，并提供调度和监控功能。Spark集群时工程师和数据分析师偏爱的工具，可以提供机器学习和流处理。S3作为一个独立的存储，大数据团队从HDFS上收回部分数据，这样可以减少存储的成本。并更新Hive的表指向S3文件，容易访问数据和元数据管理。</p>
+<h4 id="Part-2：Hadoop集群演化"><a href="#Part-2：Hadoop集群演化" class="headerlink" title="Part 2：Hadoop集群演化"></a>Part 2：Hadoop集群演化</h4><p>Airbnb公司在今年迁移集群到“金和银”集群。为了后续的可扩展，两年前迁移Amazon EMR到 EC2实例上运行HDFS，存储有300 TB数据。现在，Airbnb公司有两个独立的HDFS集群，存储的数据量达11PB。S3上也存储了几PB数据。</p>
+<p>下面是遇到的主要问题和解决方案：<br>A)    基于Mesos运行Hadoop<br>早期Airbnb工程师发现Mesos计算框架可以跨服务发布。在AWS c3.8xlarge机器上搭建集群，在EBS上存储3TB的数据。在Mesos上运行所有Hadoop、 Hive、Presto、 Chronos和Marathon。</p>
+<p>基于Mesos的Hadoop集群遇到的问题：</p>
+<ul>
+<li>Job运行和产生的日志不可见</li>
+<li>Hadoop集群健康状态不可见</li>
+<li>Mesos只支持MR1</li>
+<li>task tracker连接导致性能问题</li>
+<li>系统的高负载，并很难定位</li>
+<li>不兼容Hadoop安全认证Kerberos</li>
+</ul>
+<p>解决方法：不自己造轮子，直接采用其它大公司的解决方案。</p>
+<p>B)    远程读数据和写数据<br>所有的HDFS数据都存储在持久性数据块级存储卷（EBS），当查询时都是通过网络访问Amazon EC2。Hadoop设计在节点本地读写速度会更快，而现在的部署跟这相悖。</p>
+<p>Hadoop集群数据分成三部分存储在AWS一个分区三个节点上，每个节点都在不同的机架上。所以三个不同的副本就存储在不同的机架上，导致一直在远程的读数据和写入数据。这个问题导致在数据移动或者远程复制的过程出现丢失或者崩溃。</p>
+<p>解决方法：使用本地存储的实例，并运行在单个节点上。</p>
+<p>C)    在同构机器上混布任务<br>纵观所有的任务，发现整体的架构中有两种完全不同的需求配置。Hive/Hadoop/HDFS是存储密集型，基本不耗内存和CPU。而Presto和Spark是耗内存和CPU型，并不怎么需要存储。在AWS c3.8xlarge机器上持久性数据块级存储卷（EBS）里存储3 TB是非常昂贵的。</p>
+<p>解决方法：迁移到Mesos计算框架后，可以选择不同类型的机器运行不同的集群。比如，选择AWS c3.8xlarge实例运行Spark。AWS后来发布了“D系列”实例。从AWS c3.8xlarge实例每节点远程的3 TB存储迁移数据到AWS d2.8xlarge 4 TB本地存储，这给Airbnb公司未来三年节约了上亿美元。</p>
+<p>D)    HDFS Federation<br>早期Airbnb公司使用Pinky和Brain两个集群联合，数据存储共享，但mappers和reducers是在每个集群上逻辑独立的。这导致用户访问数据需要在Pinky和Brain两个集群都查询一遍。并且这种集群联合不能广泛被支持，运行也不稳定。</p>
+<p>解决方法：迁移数据到各HDFS节点，达到机器水平的隔离性，这样更容易容灾。</p>
+<p>E)    繁重的系统监控<br>个性化系统架构的严重问题之一是需要自己开发独立的监控和报警系统。Hadoop、Hive和HDFS都是复杂的系统，经常出现各种bug。试图跟踪所有失败的状态，并能设置合适的阈值是一项非常具有挑战性的工作。</p>
+<p>解决方法：通过和大数据公司Cloudera签订协议获得专家在架构和运维这些大系统的支持。减少公司维护的负担。Cloudera提供的Manager工具减少了监控和报警的工作。</p>
+<h4 id="最后陈述"><a href="#最后陈述" class="headerlink" title="最后陈述"></a>最后陈述</h4><p>在评估老系统的问题和低效率后进行了系统的修复。无感知的迁移PB级数据和成百上千的Jobs是一个长期的过程。作者提出后面会单独写相关的文章，并开源对于的工具给开源社区。</p>
+<p>大数据平台的演化给公司减少大量成本，并且优化集群的性能，下面是一些统计数据：</p>
+<ul>
+<li>磁盘读写数据的速度从70 – 150 MB / sec到400 + MB / sec。</li>
+<li>Hive任务提高了两倍的CPU时间</li>
+<li>读吞吐量提高了三倍</li>
+<li>写吞吐量提高了两倍</li>
+<li>成本减少百分之七十</li>
+</ul>
+<p>本文为Airbnb公司工程师James Mayfield分析的<a href="https://medium.com/airbnb-engineering/data-infrastructure-at-airbnb-8adfb34f169c" target="_blank" rel="external">Airbnb大数据平台构架</a>。</p>
+<h4 id="参考"><a href="#参考" class="headerlink" title="参考:"></a><em>参考</em>:</h4><hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"><br>~</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2016/08/15/spark-two-series-part-1/" itemprop="url">
                   【Spark 2.0系列】：Spark Session API和Dataset API
                 </a>
@@ -1635,7 +1780,7 @@ Aerys,Jaime,18
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">29</span>
+              <span class="site-state-item-count">30</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
