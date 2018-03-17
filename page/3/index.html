@@ -238,246 +238,6 @@
             
               
                 
-                <a class="post-title-link" href="/2016/08/21/tiwtter_discover_and_consume_data/" itemprop="url">
-                  Twitter数据平台的架构演化：分析数据的数据发现和消费
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-08-21T19:42:48+08:00" content="2016-08-21">
-              2016-08-21
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p><em>导读</em>：本文详细讲述Twitter数据平台的架构演化：分析数据的数据发现和消费。</p>
-<h4 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h4><p> Twitter数据平台维护数据系统来支持和管理各种业务的数据生产和消费，包括，公用报表指标（比如，月活跃或者天活跃），个性化推荐，A/B测试，广告营销等。 Twitter数据平台运维着一些全球最大的Hadoop集群，其中有几个集群超过1万个节点，存储着数百PB级数据集，每天有超过10万个日常job作业处理数十PB级数据量。<a href="http://github.com/twitter/scalding" target="_blank" rel="external">Scalding</a>用来在HDFS上进行数据清洗（ETL：Extract，Transform和Load），数据科学家和数据分析师使用<a href="https://github.com/prestodb/presto" target="_blank" rel="external">Presto</a>进行交互式查询。MySQL或者Vertica用来作普通的数据集聚合，然后Tableau仪表板展示。<a href="https://blog.twitter.com/2014/manhattan-our-real-time-multi-tenant-distributed-database-for-twitter-scale" target="_blank" rel="external">Manhattan</a>是Twitter的分布式数据库，其为实时服务服务。</p>
-<p>Twitter数据平台团队从刚开始的单个数据分析组，其仅仅拥有核心的数据集，到成百上千的员工（团队）产生和消费这些数据集。这意味着：数据源发现，数据源的完成链（例如，这些数据源是如何产生和消费的）的获取，不考虑数据源的格式、位置和工具的数据集消费和它们整个生命周期内的一致性管理，将成为一个比较现实的问题。</p>
-<p>为了满足这些需求，数据平台团队开发出数据访问层（Data Access Layer (DAL)）：</p>
-<ul>
-<li>数据发现：如何发现最重要的数据集？谁拥有这些数据集？数据集的语义和其它相关的元数据是什么？</li>
-<li>数据审计：数据集的创建这或者消费者是哪位？数据集是如何创建这些数据的？数据集的依赖和服务等级协议（SLAs）是什么？数据集的报警规则是什么？数据集和它们的依赖是否一致？数据集的生命周期是如何管理的？</li>
-<li>数据抽象：数据的逻辑描述是什么？数据的物理描述是什么？数据存储在哪里？数据副本在哪里？数据格式是什么？</li>
-<li>数据消费：各种客户端（比如，Scalding，Presto，Hive等等）是如何交互地使用数据平台的各数据集？</li>
-</ul>
-<p>本文中将讨论DAL更高层次的设计和使用，DAL是如何符合整个大数据平台生态，以及分析一些实践和经验教训。</p>
-<h4 id="DAL架构设计"><a href="#DAL架构设计" class="headerlink" title="DAL架构设计"></a>DAL架构设计</h4><p>为了让数据抽象，DAL有一个逻辑数据集和物理数据集的概念。逻辑数据集代表着数据集要独立于存储类型、存储位置、存储格式和存储副本之外。一个逻辑数据集可以物化到多个存储位置，甚至可以存储到不同的存储系统上，比如，HDFS或者Vertica。物理数据集是和物理存储位置（比如，HDFS namenode，像Vertica或MySQL这样的数据库等）关联的，所有的分片（物理数据块）在物理存储上。根据它们的类型，分片可以是分区或者快照。消费的数据集的元数据（Metadata）存储在物理数据集层。<br>这种抽象的好处：<br>a）：跨多种物理实现，分组聚合相同的逻辑数据集，更易数据集发现；<br>b）：提供消费数据集所需要的所有信息，包括数据集存储格式，数据集存储位置，以及调用的客户端（比如，Scalding或者Presto）。DAL数据集附加元数据，使得数据发现和数据消费更容易（如下所示）。因为所有的数据访问都通过DAL层，我们使用DAL层获取所有数据集的生产和消费的完整链。（其实跟阿里内部的数据地图差不多的意义）。</p>
-<p>下面的架构图显示DAL层是如何配合数据平台的架构：<br><img src="http://img1.ph.126.net/FEKRG1rW3QV61GWGt6PdKg==/6631557048373689499.jpg" alt="此处输入图片的描述"></p>
-<p>在技术栈的底层，核心基础设施包括Hadoop集群和数据库（比如，Vertica，MySQL和Manhattan）。核心数据服务层包括数据访问层（DAL），checkpoit作业状态和依赖的应用状态管理服务，以及job作业延迟报警服务。建立在核心数据服务层之上的是数据生命周期管理，包括数据复制服务和数据删除服务，数据复制服务会管理跨Hadoop集群的数据复制；数据删除服务会根据数据过期策略来删除数据。数据处理工具包括前面提到的Scalding和Presto，也包括自建的ETL工具来实现不同后端（比如，HDFS，Vertica或者MySQL）间的数据转换。</p>
-<p>数据展示的UI（外界称为EagleEye）通过核心数据服务层聚合元数据（Metadata），也作为Twitter数据入口的控制。EagleEye用来发现数据集和应用，以及展示它们之间依赖的关系图。</p>
-<h4 id="如何发现和消费数据集？"><a href="#如何发现和消费数据集？" class="headerlink" title="如何发现和消费数据集？"></a>如何发现和消费数据集？</h4><p>像前面涉及到的，DAL数据集带有额外的元数据，可以轻松做到数据发现和消费。Twitter数据平台团队使用下面的数据资源管理来发现和消费数据集。</p>
-<h5 id="发现一个数据集"><a href="#发现一个数据集" class="headerlink" title="发现一个数据集"></a>发现一个数据集</h5><p>数据平台提供的数据资源管理中 “Discover Data Sources”模块能发现使用过的数据集，或者搜索感兴趣的数据集。数据资源管理通过DAL层搜索这个数据集。<br><img src="http://img2.ph.126.net/rDzMYLctfac6cUUkbZjHQA==/6631478983048121372.jpg" alt="此处输入图片的描述"></p>
-<h5 id="数据集的预览信息"><a href="#数据集的预览信息" class="headerlink" title="数据集的预览信息"></a>数据集的预览信息</h5><p>如果数据资源管理找到了我们想查询的数据集，它将展示给使用者预览信息。如下图，数据集在HDFS上被找到，数据资源管理中可以看到数据拥有者的描述，以及通过一定的启发式计算数据集的整体健康状态。我们也能预览的元数据字段有数据集的拥有者，数据集的访问频率，代表数据schema的thrift类，HDFS上的物理位置。<br><img src="http://img2.ph.126.net/JzYMozxQTLRtmOK7x8j26A==/6631502072792305004.jpg" alt="此处输入图片的描述"></p>
-<p>我们也可以检验数据集的schema，包括用户对特殊字段添加的评论。类似的，schema也可以让其它系统（Vertica或者MySQL）发现。<br><img src="http://img0.ph.126.net/tPUwFyvntZgM4T4hmJr4GA==/6631754960466694542.jpg" alt="此处输入图片的描述"></p>
-<p>接下来给个例子，下面给出的代码截图是使用Scalding的例子。注意到，对读者来说，数据存储格式和位置都经过抽象。当通过Scalding运行下面的代码，时间范围提供给DAL，DAL提供数据分片的位置和格式。DAL的Scalding客户端接收刚才的信息，以Hadoop的合适的split数目来构造合适的Cascading Tap。</p>
-<p><img src="http://img0.ph.126.net/q0EO2PDu337DcBl_QLCtuQ==/6631602128350431009.jpg" alt="此处输入图片的描述"></p>
-<h5 id="数据集的完整链和依赖"><a href="#数据集的完整链和依赖" class="headerlink" title="数据集的完整链和依赖"></a>数据集的完整链和依赖</h5><p>数据集资源管理也可以查看生产和消费数据集的作业和作业的完整链。从图中可以看出，有一个job作业产生数据集（图中红框），同时有好几个job作业在消费这个数据集。红框中的数据的生成依赖HDFS上的好几个数据集。并且，如果其中的某个job作业生成数据集延迟了，将会发出告警。<br><img src="http://img0.ph.126.net/gKCb7V9eheRIf62pZGTdHQ==/6631780249234131459.png" alt="此处输入图片的描述"></p>
-<h4 id="实践-amp-经验教训"><a href="#实践-amp-经验教训" class="headerlink" title="实践 &amp; 经验教训"></a>实践 &amp; 经验教训</h4><p>在这样Twitter体量的公司，想简化数据集跨所有数据格式和存储系统进行消费是很难的。也有一些像<a href="https://cwiki.apache.org/confluence/display/Hive/Design#Design-Metastore" target="_blank" rel="external">Hive Metastore</a>这样开源的工具可以解决数据抽象，但其只有一部分功能。其它功能，比如数据集的审计和依赖链，管理数据集过期和复制和数据更易消费，也是很重要。</p>
-<p>在实现DAL时做出了设计上的选择：把DAL设计成一个抽象和消费层，而不是仅仅聚焦在数据发现和审计。这么做的目的是为了让DAL成为数据集真实的来源，这将帮助我们透明的转换数据格式（比如，从lzo压缩的Thrift转换到Parquet格式），帮助我们使用相同的元数据从各种工具中产生和消费数据（比如，Scalding和Presto），帮助我们进行job作业角色的迁移（因为job作业的所有者和团队角色的不断演化，发生的相当频繁），让数据集的过期管理和复制管理在同一个地方完成。</p>
-<p>在DAL刚开始实现阶段，Twitter团队把DAL作为一种library，并且DAL可以直接喝后端数据库会话。这是相当脆弱的，有这么几个原因：安全很弱，因为证书不得不分发到各个客户端；每个客户端都直接连接到数据库是相当困难的；由于客户端的重新发布对所有用户来说，更新是非常缓慢的。数据平台团队移除了这个模块，构建了服务层。</p>
-<p>数据平台团队开发DAL涉及到成千上万的job作业需要重新部署依赖（例如，从HDFS到DAL），这个过程中却有正在线上运行的产品。需要严密和严谨的工作而不中断这些job作业。如果仅仅在意数据依赖链和审计，那这个实现将是相当的简单和安全，因为作者可以通过异步或者离线处理。迁移是困难的，耗时的，做好的做法是增量式迁移。但作者知道元数据服务是每个数据平台都需要的，所以，强烈推荐首先要做的是构建一个数据平台基础。</p>
-<h4 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h4><hr>
-<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
-<p>若发现以上文章有任何不妥，请联系我。</p>
-<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"><br>~</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/08/21/airbnb_repair_tools/" itemprop="url">
-                  Airbnb开源ReAir工具，提供PB级数据仓库的迁移和备份
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-08-21T19:41:49+08:00" content="2016-08-21">
-              2016-08-21
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p><em>摘要</em>：本篇讲述Airbnb的开源ReAir工具，提供PB级数据仓库的迁移和备份。</p>
-<p><a href="https://bigdata-ny.github.io/2016/08/21/airbnb-hadoop-hive" target="_blank" rel="external">Airbnb大数据平台架构</a>成为Airbnb公司提升产品决策的关键部分。其Hive数据仓库从2013年中旬的350 TB暴增到11 PB （2015年末统计的数据）。随着公司的成长，数据仓库的可靠性需求日益剧增。我们寻求迁移数据仓库，但现有的迁移工具要么在大数据仓库时有问题，要么就是有很明显的操作负荷，所以Airbnb开发了<a href="https://github.com/airbnb/reair" target="_blank" rel="external">ReAir</a>解决这种状况。这篇文章将详细介绍ReAir是如何工作的以及它是怎样轻松的实现PB级数据仓库的备份。</p>
-<h4 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h4><p>最开始Airbnb所有数据存放在单个HDFS／HIve数据仓库。单个命名空间简单、易管理，然而产品复杂后之后即席查询就影响其可靠性。因此，我们把数据仓库分成了两个：一个数据仓库是支持关键产品的任务；另一个是专为即席查询用的。分离这么大的数据仓库将面临两个问题：我们如何容易的迁移庞大的数据仓库？；分离完之后，我们又该怎么保持数据的同步？为了解决这些问题，Airbnb开发ReAir项目并开源给社区。</p>
-<p>ReAir对基于Hive元数据的数据仓库进行备份非常有效，可以实现PB级别的集群扩展。使用ReAir极其简单，你只要连接Hive的metastore Thrift服务，通过MapReduce进行数据复制。ReAir可以兼容Hive和Hadoop的各种版本，并支持单机模式操作——只有Hadoop和Hive是必须要有，MySQL DB是用来进行增量复制。由于ReAir同时处理数据和元数据，所以，只要复制任务一完成就可以进行表和分区的查询。</p>
-<p>在没有ReAir的时候，迁移Hive数据仓库最典型的用法是启动一个DistCp，并且通过数据库操作手动管理元数据。这种方法既费力又容易出错，甚至会引起脏数据导致数据不一致，有时复制不断变化的数据仓库目录时也会出现问题。另外其它的迁移方法要求指定Hive版本，当我们需要从旧版本的Hive数据仓库迁移就变得异常困难。</p>
-<p>ReAir工具包含两种迁移工具：批量迁移和增量式迁移。批量式迁移工具允许你一次复制指定的一系列表，它适合对一个集群的迁移。相对应的，增量式迁移工具可以跟踪数据仓库的变化，并复制生成的对象或者修改的对象。增量式迁移工具适合保持集群间数据的同步，它可以实现秒级数据同步。两种方式更详细的对比请见下面部分。</p>
-<h4 id="批量迁移"><a href="#批量迁移" class="headerlink" title="批量迁移"></a>批量迁移</h4><p>批量式迁移一般用来备份整个数据仓库。复制的速度和吞吐量取决于reducer的数量和吞吐量，在Airbnb公司，使用500个reducer复制2.2 PB数据仅仅用了24小时。</p>
-<p>启动批量迁移的过程非常简单：用户允许shell命令启动一系列MR 任务。其执行协议是从源数据仓库复制Hive表和分区等实体到目的数据仓库。批量式复制过程是占有带宽的，它会探测源数据仓库和目的数据仓库，并只复制两者之间的不同文件。同时元数据也仅仅更新变化过的。这些策略可以保证ReAir工作的高效率。</p>
-<p>批量式迁移也有一些挑战。最明显的一个是，产品数据仓库中实体（Hive表和分区）的大小不同，但是迁移的延迟并不能依赖于最大的一个实体。例如，一般的Hive表不到100个分区，然后最大的表有超过10万个分区。为了保证正常的延迟，需要并行运行迁移工作。</p>
-<p>为了解决负载均衡的问题，批量式迁移运行一系列MR任务。批量迁移中两个最昂贵的操作是文件复制和元数据更新，所以这些步骤都是在shuffle阶段分布式进行。每个任务都会打印运行日志数据存储在HDFS，通过日志数据能清晰的看到任务的完成情况。</p>
-<p><img src="http://img1.ph.126.net/-svfsAdr08aw8WdKBzFDVg==/6598244045136349852.jpg" alt="此处输入图片的描述"></p>
-<p>第一个MR任务从HDFS读取实体标识符并shuffle后均匀的发到reducer。reducer先验证各实体，再对要复制的HDFS目录和实体进行映射；第二个MR任务扫描第一个MR产生的文件目录，并在对应的目录下创建文件。对文件名称进行hash shuffle后发到reducer，一旦shuffle之后reducer执行复制操作；第三个MR任务处理Hive元数据的提交逻辑。</p>
-<p>三阶段MR任务计划的扩展性和负载均衡都很好：复制1百万实体的2.2 PB数据消耗大改24小时；同步20 TB 数据量的更新仅花了一个小时。阶段1和阶段3的瓶颈在于Hive元数据MySQL数据库；而阶段2的瓶颈在于网络带宽。</p>
-<p>对于我们的迁移，需要开发定制化的文件复制MR来处理HDFS上的数据。然而，对比DistCp这样通用化的工具，在测试ReAir过程中也发现了一些问题：<br>在复制百万个文件或者整个数据仓库时，MR任务初始化比较慢；<br>错误率较高，并且需要定制错误处理；<br>却少易用的日志分析功能。</p>
-<p>为了解决这些问题，我们开发了两个MR任务来处理通用HDFS数据复制。第一个任务采用一个启发式的、文件夹遍历的多线程进行一系列分隔。一旦有足够的文件夹，mapper遍历这些文件夹生成文件列表来复制。文件名经过shuffle发送到reducer来决定是否有必要复制。第二个MR任务读取文件列表来复制，并通过一个shuffle进行分布式复制工作。</p>
-<h4 id="增量式迁移"><a href="#增量式迁移" class="headerlink" title="增量式迁移"></a>增量式迁移</h4><p>在两个集群的情况下，我们需要在两个集群之间共享数据。例如，日志数据需要每天在生产集群聚会，但同时即席查询的用户也需要这些数据。批量式复制任务对于这种需求显得太重，这时需要两个数据仓库间可以按小时进行更新。即席查询集群的用户需要尽快同步生产集群的数据，因此有必要找到一个尽可能快的方法来更新新的内容。虽然<a href="https://cwiki.apache.org/confluence/display/Hive/Replication" target="_blank" rel="external">有一些开源项目</a>能解决这个问题，但由于Hive版本依赖等问题并不是很理想，后来我们开发增量式复制工具来保证即席查询集群和生产集群的数据同步。</p>
-<p>增量式复制工具设计到实体（Hive表和分区）的记录变化，一旦发生变化尽快复制变化量。为了记录源集群上的变化，我们使用了Hive的钩子机制（hook函数）把查询成功的实体写入MySQL数据库。采用这种方法，我们可以跟踪生产集群的所有变化。HDFS上的变化或者元数据的更新都能触发复制。</p>
-<p>一旦有了数据库里的变化的记录，我们需要一种方法来复制这些变化到即席查询集群。这个执行机制是通过一个Java服务实现，读取变化的日志中实体，并转化成一系列的行为集合。比如，在源集群成功创建一个表，会在目标集群上翻译成“复制表”的行为。Java进程将调用元数据，并启动MR任务执行。</p>
-<p>由于源集群上的变化是序列化到日志里，它将在目的集群中以相同的顺序进行执行。但是，实际情况是，单独的复制一个表或者分区花费几秒钟或者几分钟实在太慢，后面改成多线程并行复制。为了处理并发，所有的行为基于并发限制形成DAG。通常限制都是对于同一个表，比如，在复制分区之前要建立好表。通过并发执行，复制的延迟降低到最小。</p>
-<p>用增量式复制可以实现快速、可靠的复制。两个数据仓库之间的同步复制可以实现容灾恢复——如果一个集群宕机，另外一个集群还可以正常提供服务。对比批量式复制，增量式复制对数据仓库体量巨大但改变的数据量比较小的情况更有效率。当前在Airbnb，每天的数据量增长不到2 TB，所以增量式复制比较有意义。<br>使用批量式迁移和增量式迁移，可以快速的迁移两个集群。我们希望这些工具对社区也一样有用。</p>
-<h4 id="参考"><a href="#参考" class="headerlink" title="参考:"></a><em>参考</em>:</h4><hr>
-<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
-<p>若发现以上文章有任何不妥，请联系我。</p>
-<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
                 <a class="post-title-link" href="/2016/08/21/airbnb-hadoop-hive/" itemprop="url">
                   Airbnb的大数据平台架构
                 </a>
@@ -1762,11 +1522,224 @@ Aerys,Jaime,18
 
 
     
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/07/30/introducing-apache-spark-2-0/" itemprop="url">
+                  Apache Spark 2.0 正式发布：Easier、Faster、Smarter
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-07-30T00:25:44+08:00" content="2016-07-30">
+              2016-07-30
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p><em>摘要</em>：Apache Spark 2.0 正式发布，下面来深度解读一下。主要从Apache Spark 2.0的Easier、Faster和Smarter三方面来体现。</p>
+<h4 id="Easier-ANSI-SQL-and-Streamlined-APIs"><a href="#Easier-ANSI-SQL-and-Streamlined-APIs" class="headerlink" title="Easier: ANSI SQL and Streamlined APIs"></a>Easier: ANSI SQL and Streamlined APIs</h4><p>除了Spark一贯“引以为傲”的简单易用API外，Spark 2.0主要聚焦在两方面：<br>(1) standard SQL support；<br>(2) DataFrame/Dataset API的统一。</p>
+<p>在SQL方面，扩展了Spark的SQL支持，引入ANSI SQL解析器和子查询。Spark 2.0 可执行所有99 TPC-DS查询（支持SQL:2003）。</p>
+<p>在API编程方面，主要是提供了简化的Spark APIs：</p>
+<ul>
+<li>DataFrames和Datasets的API统一，支持Scala/Java，关于RDD、DataFrames和Datasets三种API的详细解析见《<a href="http://mp.weixin.qq.com/s?__biz=MzI0MDIxMDM0MQ==&amp;mid=2247483705&amp;idx=1&amp;sn=5e836945a9951e0cbfd2e3f3dfed4f82&amp;scene=21#wechat_redirect" target="_blank" rel="external">Apache Spark 2.0三种API的传说：RDD，DataFrame和Dataset</a>》；</li>
+<li>SparkSession：SparkSession在Spark 2.0中是替代SQLContext和HiveContext的，作为新的入口点。老的SQLContext和HiveContext继续保留，味了向后兼容；</li>
+<li>更简单、更高效的Accumulator API；</li>
+<li>基于DataFrame的Machine Learning API作为主要的ML API；</li>
+<li>机器学习管道的持久化，详细解析见《<a href="http://mp.weixin.qq.com/s?__biz=MzI0MDIxMDM0MQ==&amp;mid=2247483651&amp;idx=1&amp;sn=f500ab53b594428ac00d3fe26cf558df&amp;scene=21#wechat_redirect" target="_blank" rel="external">Apache Spark 2.0预览： 机器学习模型持久化</a>》；</li>
+<li>R语言支持Distributed algorithm。</li>
+</ul>
+<h4 id="Faster-Apache-Spark-as-a-Compiler"><a href="#Faster-Apache-Spark-as-a-Compiler" class="headerlink" title="Faster: Apache Spark as a Compiler"></a>Faster: Apache Spark as a Compiler</h4><p>重新思考Spark的物理执行层时，发现大部分CPU时间花费在毫无意义的工作上了，比如，虚拟函数的调用或者读/写中间数据到CPU cache或者内存，着在其它现代数据引擎中都存在（Spark或者MPP数据库）。所以得想办法减少CPU时间浪费。</p>
+<p>Spark 2.0 使用第二代Tungsten engine。Tungsten engine应用现代编译器原理和MPP数据库技术到Spark。主要得方法是“whole-stage code generation”。具体分析见我在InfoQ上的文章。</p>
+<h4 id="Smarter-Structured-Streaming"><a href="#Smarter-Structured-Streaming" class="headerlink" title="Smarter: Structured Streaming"></a>Smarter: Structured Streaming</h4><p>Spark Streaming在Spark 2.0之前仅仅是个streaming engine。但广大使用者需要的是离线处理和实时处理深度结合的系统，并能处理业务逻辑的变化，和外部数据存储交互。</p>
+<p>对比之前的streaming系统，Structured Streaming有三方面的优化：</p>
+<ul>
+<li>和批处理job作业的API整合：开发者简单的用DataFrame / Dataset API写完批处理计算，Spark会以Streaming形式自动的进行增量计算;</li>
+<li>和存储系统交互中保持事务性：Structured Streaming会在跨引擎和存储系统中处理fault tolerance和consistency;</li>
+<li>和Spark其它组件紧密集成： Structured Streaming处理完的数据可直接放入Spark SQL和MLlib等处理。</li>
+</ul>
+<h4 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h4><p>以上即为Apache Spark 2.0的解读，主要在用户的易用性和性能上做了优化。</p>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/07/23/first-blog/" itemprop="url">
+                  Hello 小小妮
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-07-23T00:12:01+08:00" content="2016-07-23">
+              2016-07-23
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="主题"><a href="#主题" class="headerlink" title="主题"></a>主题</h3><p>you’re my world!</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
   </section>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/2/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/4/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/page/2/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span>
   </nav>
 
 
@@ -1807,7 +1780,7 @@ Aerys,Jaime,18
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">32</span>
+              <span class="site-state-item-count">30</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
