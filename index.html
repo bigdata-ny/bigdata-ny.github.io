@@ -238,6 +238,350 @@
             
               
                 
+                <a class="post-title-link" href="/2018/03/17/deep-learning-with-python-chapter-3-3.4/" itemprop="url">
+                  《Deep Learning with Python》第三章 3.4 走进神经网络之电影影评分类
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-03-17T12:15:58+08:00" content="2018-03-17">
+              2018-03-17
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h5 id="3-4-电影影评分类"><a href="#3-4-电影影评分类" class="headerlink" title="3.4 电影影评分类"></a>3.4 电影影评分类</h5><p>二元分类，或者称为二值分类，可能是应用最广泛的机器学习问题。通过学习本例，你将掌握如何基于文本内容将影评分为正、负二类。</p>
+<h6 id="3-4-1-IMDB数据集"><a href="#3-4-1-IMDB数据集" class="headerlink" title="3.4.1 IMDB数据集"></a>3.4.1 IMDB数据集</h6><p>本文将从互联网电影数据库（IMDB）获取50,000个流行电影影评作为数据集。这里将其分割为25,000个影评的训练集和25,000个影评的测试集。其中每个数据集都包含50%的好评和50%的差评。</p>
+<p>为什么要将数据集分割成训练集和测试集呢？因为测试机器学习模型所使用的数据集不能和训练该模型的数据集是同一个。在训练集上表现良好的模型，并不意味着一定会在“未曾见过”的测试集上也有相同的表现。也就是说，你更关注的是训练的模型在新数据集上的性能（因为训练集数据的标签是已知的，很显然这些是不需要去预测的）。例如，可能你的模型可以将训练样本和对应的目标在内存中进行一一映射，但是这个模型对从“未见过的”数据无法进行预测。下一章会更详细的讨论该观点。</p>
+<p>Keras已经包括IMDB数据集，并进行了数据预处理：影评（单词序列）转换成整数序列，这里每个整数代表对应单词在字典的索引值。</p>
+<p>下面的代码将加载IMDB数据集，当你首次运行该代码，将会在服务器上下载大约80M的数据。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.1 Loading the IMDB dataset</span></div><div class="line"><span class="keyword">from</span> keras.datasets <span class="keyword">import</span> imdv</div><div class="line">(train_data, train_labels), (test_data, test_labels) = imdb.load_data(</div><div class="line">num_words=<span class="number">10000</span>)</div></pre></td></tr></table></figure>
+<p>设置参数num_words=10000，保留训练集中词频为top 10000的单词，低频单词丢弃。变量train_data和test_data是影评列表（list），每条影评看成是单词序列，用单词索引进行编码。train_labels和test_labels是0和1的列表，其中0代表差评（negative），1代表好评（positive）。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>train_data[<span class="number">0</span>]</div><div class="line">[<span class="number">1</span>, <span class="number">14</span>, <span class="number">22</span>, <span class="number">16</span>, ... <span class="number">178</span>, <span class="number">32</span>]</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>train_labels[<span class="number">0</span>]</div><div class="line"><span class="number">1</span></div></pre></td></tr></table></figure>
+<p>前面限制影评中的单词词频为top 10000，所以单词的索引不会超过10000：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>max([max(sequence) <span class="keyword">for</span> sequence <span class="keyword">in</span> train_data])</div><div class="line"><span class="number">9999</span></div></pre></td></tr></table></figure>
+<p>下面来个好玩的，如何将编码后的影评进行解码得到单词呢？</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line"><span class="string">'''</span></div><div class="line">word_index is a dictionary mapping</div><div class="line">words to an integer index.</div><div class="line">'''</div><div class="line">word_index = imdb.get_word_index()</div><div class="line">reverse_word_index = dict(</div><div class="line"><span class="string">'''</span></div><div class="line">Reverses it, mapping integer indices to words</div><div class="line">'''</div><div class="line">    [(value, key) <span class="keyword">for</span> (key, value) <span class="keyword">in</span> word_index.items()])</div><div class="line">decoded_review = <span class="string">' '</span>.join(</div><div class="line"><span class="string">'''</span></div><div class="line">Decodes the review. Note that the indices</div><div class="line">are offset by 3 because 0, 1, and 2 are</div><div class="line">reserved indices for “padding,” “start of</div><div class="line">sequence,” and “unknown.”</div><div class="line">'''</div><div class="line">    [reverse_word_index.get(i - <span class="number">3</span>, <span class="string">'?'</span>) <span class="keyword">for</span> i <span class="keyword">in</span> train_data[<span class="number">0</span>]])</div></pre></td></tr></table></figure>
+<h6 id="3-4-2-准备数据"><a href="#3-4-2-准备数据" class="headerlink" title="3.4.2 准备数据"></a>3.4.2 准备数据</h6><p>神经网络不能输入整数列表，所以需要将整数列表转换成张量。有两种方式可以实现：</p>
+<ul>
+<li>填充列表：先将列表填充成相同长度的，再转成形状为（样本数，单词索引长度）的整数张量。接着用神经网络的第一层layer（Embedding layer）处理整数张量。</li>
+<li>one-hot编码：one-hot编码是将单词索引转成0、1的向量。比如，将序列[3, 5]转成10,000维向量，其中索引3和5的值为1，其它索引对应的值为0。然后使用神经网络的Dense layer作为第一层layer处理浮点型向量数据。</li>
+</ul>
+<p>下面采用后一种方法向量化数据：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">vectorize_sequences</span><span class="params">(sequences, dimension=<span class="number">10000</span>)</span>:</span></div><div class="line">    <span class="comment">#Creates an all-zero matrix of shape (len(sequences), dimension)</span></div><div class="line">    results = np.zeros((len(sequences), dimension))</div><div class="line">    <span class="keyword">for</span> i, sequence <span class="keyword">in</span> enumerate(sequences):</div><div class="line">         <span class="string">'''</span></div><div class="line">         Sets specific indices of results[i] to 1s</div><div class="line">         '''</div><div class="line">          results[i, sequence] = <span class="number">1.</span></div><div class="line">    <span class="keyword">return</span> results</div><div class="line"><span class="string">'''</span></div><div class="line">Vectorized training data and test data</div><div class="line">'''</div><div class="line">x_train = vectorize_sequences(train_data)</div><div class="line">x_test = vectorize_sequences(test_data)</div></pre></td></tr></table></figure>
+<p>下面看下向量化后的结果：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>x_train[<span class="number">0</span>]</div><div class="line">array([ <span class="number">0.</span>,  <span class="number">1.</span>,  <span class="number">1.</span>, ...,  <span class="number">0.</span>,  <span class="number">0.</span>,  <span class="number">0.</span>]</div></pre></td></tr></table></figure>
+<p>同理，向量化对应的label：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">y_train = np.asarray(train_labels).astype(<span class="string">'float32'</span>)</div><div class="line">y_test = np.asarray(test_labels).astype(<span class="string">'float32'</span>)</div></pre></td></tr></table></figure>
+<p>数据准备好了，就等着传入神经网络模型。</p>
+<h6 id="3-4-3-构建神经网络模型"><a href="#3-4-3-构建神经网络模型" class="headerlink" title="3.4.3 构建神经网络模型"></a>3.4.3 构建神经网络模型</h6><p>输入数据为向量，label为标量（1和0），相当简单。一系列带有relu激活函数的全联接层（Dense layer）的神经网络就可以很好的解决影评分类：Dense(16, activation=’relu’)。</p>
+<p>每个Dense layer设置隐藏单元（<em>hidden unit</em>）数为16。<em>hidden unit</em>是layer的一维表征空间。由第二章得知，每个带有relu激励函数的Dense layer可以实现下面链式的张量操作：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">output = relu(dot(W, input) + b)</div></pre></td></tr></table></figure>
+<p>16个<em>hidden unit</em>意味着权重矩阵的形状为（输入维度，16）:输入数据与权重矩阵W点积的结果是投影到16维表征空间（，接着加上偏置向量b，然后应用relu激活操作）。给人的直觉是表征空间的维数即是中间学习表示的自由度。<em>hidden unit</em>越多（高维表征空间）允许神经网络学习更复杂的表示，但同时也让神经网络计算成本增加，可能导致不可预期的模式（模式会提高训练集上的性能，降低测试集上的表现，也就是常说的“过拟合”现象）。</p>
+<p>逐层排列的Dense layer架构有两个关键点：</p>
+<ul>
+<li>选择多少层Dense layer</li>
+<li>每个Dense layer选择多少个<em>hidden unit</em></li>
+</ul>
+<p>在第四章中的常规性原则将会指导你对上述问题做出选择。此时，你就暂时相信下面的架构选择哦：</p>
+<ul>
+<li>两个具有16个<em>hidden unit</em>的中间层</li>
+<li>第三层layer将输出当前影评的情感预测值（标量）</li>
+</ul>
+<p>中间层使用relu作为激活函数，最后一层layer使用sigmoid激活函数，输出0到1之间的概率值。激活函数relu（rectified linear unit（修正线性单元），ReLU），对于所有负值都置为0，而正值不变，见图3.4；而激活函数sigmoid将变量值映射为[0, 1]区间，可以看作是概率值，见图3.5。</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/9803709-8c1b32ee4e274044..png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image"></p>
+<p>图3.4 Relu激活函数</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/9803709-59e3a51f28a20168..png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image"></p>
+<p>图3.5 Sigmoid激活函数</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/9803709-c1ef5755c15b6a15..png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image"></p>
+<p>图3.6 三层layer神经网络</p>
+<p>图3.6显示了神经网络的大体架构。下面是Keras的实现，和前面MNIST数字识别的例子类似：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.3 The model definition</span></div><div class="line"><span class="keyword">from</span> keras <span class="keyword">import</span> models</div><div class="line"><span class="keyword">from</span> keras <span class="keyword">import</span> layers</div><div class="line">model = models.Sequential()</div><div class="line">model.add(layers.Dense(<span class="number">16</span>, activation=<span class="string">'relu'</span>, input_shape=(<span class="number">10000</span>,)))</div><div class="line">model.add(layers.Dense(<span class="number">16</span>, activation=<span class="string">'relu'</span>)) model.add(layers.Dense(<span class="number">1</span>, activation=<span class="string">'sigmoid'</span>))</div></pre></td></tr></table></figure>
+<blockquote>
+<p>什么是激活函数呢？为什么要使用激活函数？</p>
+<p>没有像relu这样的激活函数（俗称非线性单元）的话，那Dense layer只剩下两个线性操作：点积和加法。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">&gt; output = dot(W, input) + b</div><div class="line">&gt;</div></pre></td></tr></table></figure>
+</blockquote>
+<p>&gt;</p>
+<blockquote>
+<p>这样layer只能学习到输入数据的线性变换（仿射变换）：layer的假设空间就成了输入数据的所有可能的线性变换到16维表征空间的集合。这样的假设空间并不能学习到多层layer的表征，因为一系列的线性layer等效于一个线性操作：layer数的增加并不会扩展假设空间。</p>
+<p>为了从深度学习中得到更丰富的假设空间，你需要加入非线性部分，或者激活函数。relu是深度学习中最常用的激活函数之一，但是也有其它可选：prelu激活函数、elu激活函数等等。</p>
+</blockquote>
+<p>接着，选择损失函数和优化器。因为本例是二值分类问题，神经网络模型输出是概率值（网络的最后一层layer带有sigmoid激活函数，输出一维数据），所以最好的损失函数是binary_crossentropy损失函数。但这不是唯一的选择，你也可以使用mean_squared_error损失函数。一般输出为概率值的模型优先选择交叉熵损失函数（<em>crossentropy</em>）。交叉熵是信息论中的指标，用来度量概率分布之间的距离。本例是用来度量实际分布与预测值的差距。</p>
+<p>这里为模型选择binary_crossentropy损失函数和rmsprop优化器。注意监控模型训练过程中的准确度。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.4 Compiling the model</span></div><div class="line">model.compile(optimizer=<span class="string">'rmsprop'</span>,</div><div class="line">loss=<span class="string">'binary_crossentropy'</span>,</div><div class="line">metrics=[<span class="string">'accuracy'</span>])</div></pre></td></tr></table></figure>
+<p>上面传入的优化器<em>optimizer</em>、损失函数<em>loss</em>和指标<em>metrics</em>三个参数都是字符串型，这是因为’rmsprop’、’binary_crossentropy’和’accuracy’都是Keras内置实现的。如果想配置自定义的优化器或者损失函数或者指标函数，你可以用参数<em>optimizer</em>传入优化器类，见代码3.5；用参数<em>loss</em>和<em>metrics</em>传入函数对象，见代码3.6：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.5 Configuring the optimiser</span></div><div class="line"><span class="keyword">from</span> keras <span class="keyword">import</span> optimisers</div><div class="line">model.compile(optimizer=optimizers.RMSprop(lr=<span class="number">0.001</span>),</div><div class="line">loss=<span class="string">'binary_crossentropy'</span>,</div><div class="line">metrics=[<span class="string">'accuracy'</span>])</div><div class="line"></div><div class="line"><span class="comment">#Listing 3.6 Using custom losses and metrics</span></div><div class="line"><span class="keyword">from</span> keras <span class="keyword">import</span> losses</div><div class="line"><span class="keyword">from</span> keras <span class="keyword">import</span> metrics</div><div class="line">model.compile(optimizer=optimizers.RMSprop(lr=<span class="number">0.001</span>),</div><div class="line">loss=losses.binary_crossentropy,</div><div class="line">metrics=[metrics.binary_accuracy])</div></pre></td></tr></table></figure>
+<h6 id="3-4-4-验证模型"><a href="#3-4-4-验证模型" class="headerlink" title="3.4.4 验证模型"></a>3.4.4 验证模型</h6><p>为了监控模型训练过程中模型在新数据上的准确度，需要从原始的训练数据集中分出10,000个样本作为验证集。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.7 Setting aside a validation set</span></div><div class="line">x_val = x_train[:<span class="number">10000</span>]</div><div class="line">partial_x_train = x_train[<span class="number">10000</span>:]</div><div class="line"></div><div class="line">y_val = y_train[:<span class="number">10000</span>]</div><div class="line">partial_y_train = y_train[<span class="number">10000</span>:]</div></pre></td></tr></table></figure>
+<p>现在开始模型训练，迭代训练的epoch（在所有训练集数据上跑完一次称为一个epoch）为20个，mini-batch大小为512。训练过程中监控验证集数据上的损失函数和准确度，设置参数validation_data。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.8 Training your model</span></div><div class="line">model.compile(optimizer=<span class="string">'rmsprop'</span>,</div><div class="line">loss=<span class="string">'binary_crossentropy'</span>,</div><div class="line">metrics=[<span class="string">'acc'</span>])</div><div class="line">history = model.fit(partial_x_train,</div><div class="line">partial_y_train,</div><div class="line">epochs=<span class="number">20</span>,</div><div class="line">batch_size=<span class="number">512</span>,</div><div class="line">validation_data=(x_val, y_val))</div></pre></td></tr></table></figure>
+<p>在CPU上训练模型时，每个epoch耗时不到2秒，整个训练过程大概持续20秒。每个epoch结束时，会有个短暂的停顿，这时模型会计算验证集数据上的损失值和准确度。</p>
+<p>注意，调用model.fit()会返回一个History对象，该对象有个history成员，它是一个包含训练过程的每个数据的字典。下面来看下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>history_dict = history.history</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>history_dict.keys()</div><div class="line">[<span class="string">u'acc'</span>, <span class="string">u'loss'</span>, <span class="string">u'val_acc'</span>, <span class="string">u'val_loss'</span>]</div></pre></td></tr></table></figure>
+<p>history字典有四项：模型训练和验证中每个指标一项。接下来的两段代码，使用Matplotlib在同一幅图中绘制训练集损失和验证集损失，见图3.7；同时将训练集准确度和验证集准确度绘制在同一幅图中，见图3.8。注意，因为神经网络的初始化是随机的，可能会导致你的结果与本例稍有差别。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.9 Plotting the training and validation loss</span></div><div class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> pet</div><div class="line"></div><div class="line">history_dict = history.history</div><div class="line">loss_values = history_dict[<span class="string">'loss'</span>]</div><div class="line">val_loss_values = history_dict[<span class="string">'val_loss'</span>]</div><div class="line"></div><div class="line">epochs = range(<span class="number">1</span>, len(acc) + <span class="number">1</span>)</div><div class="line"></div><div class="line"><span class="string">'''</span></div><div class="line">“bo” is for “blue dot.”</div><div class="line">“b” is for “solid blue line.”</div><div class="line">'''</div><div class="line">plt.plot(epochs, loss_values, <span class="string">'bo'</span>, label=<span class="string">'Training loss'</span>) plt.plot(epochs, val_loss_values, <span class="string">'b'</span>, label=<span class="string">'Validation loss'</span>)</div><div class="line">plt.title(<span class="string">'Training and validation loss'</span>)</div><div class="line">plt.xlabel(<span class="string">'Epochs'</span>)</div><div class="line">plt.ylabel(<span class="string">'Loss'</span>)</div><div class="line">plt.legend()</div><div class="line">plt.show()</div></pre></td></tr></table></figure>
+<p><img src="http://upload-images.jianshu.io/upload_images/9803709-7dc921898c9a6b17..png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image"></p>
+<p>图3.7 迭代训练中训练集和验证集的损失趋势</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.10 Plotting the training and validation accuracy</span></div><div class="line"><span class="comment">#Clears the figure</span></div><div class="line">plt.clf()</div><div class="line">acc_values = history_dict[<span class="string">'acc'</span>]</div><div class="line">val_acc_values = history_dict[<span class="string">'val_acc'</span>]</div><div class="line"></div><div class="line">plt.plot(epochs, acc, <span class="string">'bo'</span>, label=<span class="string">'Training acc'</span>)</div><div class="line">plt.plot(epochs, val_acc, <span class="string">'b'</span>, label=<span class="string">'Validation acc'</span>)</div><div class="line">plt.title(<span class="string">'Training and validation accuracy'</span>)</div><div class="line">plt.xlabel(<span class="string">'Epochs'</span>)</div><div class="line">plt.ylabel(<span class="string">'Loss'</span>)</div><div class="line">plt.legend()</div><div class="line">plt.show()</div></pre></td></tr></table></figure>
+<p><img src="http://upload-images.jianshu.io/upload_images/9803709-45638c54a2426c6a..png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image"></p>
+<p>图3.8 迭代训练中的训练集和验证集的准确度趋势</p>
+<p>正如你所见，随着迭代训练的epoch，训练损失值不断减小，而准确度不断提升。这也是执行梯度下降优化器期待的结果：不断迭代训练减小损失。但是验证集数据上的损失值和准确度表现的并不是如此：验证集在第四个epoch后效果达到最好。这也是前面提醒过的：模型在训练集上表现良好并不代表在新数据集上也有同样的表现。准确地来讲，这是过拟合（<em>overfiting</em>）：在迭代训练第2个epoch后，模型在训练集上出现了过度优化，最终的学习表征像是为训练集特制的，对新数据丧失了泛化能力。</p>
+<p>本例中，为了防止过拟合出现，需要在迭代训练3个epoch后停止训练。一般来讲，我们可以使用多种技术解决过拟合，这些会在第四章中详细介绍。</p>
+<p>下面从头迭代训练4个epoch生成新的神经网络，并在测试集上评估效果：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.11 Retraining a model from scratch</span></div><div class="line">model = models.Sequential()</div><div class="line">model.add(layers.Dense(<span class="number">16</span>, activation=<span class="string">'relu'</span>, input_shape=(<span class="number">10000</span>,))) model.add(layers.Dense(<span class="number">16</span>, activation=<span class="string">'relu'</span>)) model.add(layers.Dense(<span class="number">1</span>, activation=<span class="string">'sigmoid'</span>))</div><div class="line">model.compile(optimizer=<span class="string">'rmsprop'</span>,</div><div class="line">              loss=<span class="string">'binary_crossentropy'</span>,</div><div class="line">              metrics=[<span class="string">'accuracy'</span>])</div><div class="line">model.fit(x_train, y_train, epochs=<span class="number">4</span>, batch_size=<span class="number">512</span>)</div><div class="line">results = model.evaluate(x_test, y_test)</div></pre></td></tr></table></figure>
+<p>最好的评估结果如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>results</div><div class="line">[<span class="number">0.2929924130630493</span>, <span class="number">0.88327999999999995</span>]</div></pre></td></tr></table></figure>
+<p>这个相当直白的方法获得了88%的准确度。使用最新的方法，你将会得到接近95%的准确度。</p>
+<h6 id="3-4-5-模型预测"><a href="#3-4-5-模型预测" class="headerlink" title="3.4.5 模型预测"></a>3.4.5 模型预测</h6><p>训练完神经网络模型，使用predict方法进行影评情感预测：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>model.predict(x_test)</div><div class="line">array([[ <span class="number">0.98006207</span>]</div><div class="line">       [ <span class="number">0.99758697</span>]</div><div class="line">       [ <span class="number">0.99975556</span>]</div><div class="line">       ...,</div><div class="line">       [ <span class="number">0.82167041</span>]</div><div class="line">       [ <span class="number">0.02885115</span>]</div><div class="line">       [ <span class="number">0.65371346</span>]], dtype=float32)</div></pre></td></tr></table></figure>
+<p>正如你所看到的结果，神经网络模型对一些样本数据的预测结果自信（概率为0.99或者更高，或者0.01或者更小），但是对另外一些的预测结果不是太自信（概率为0.6，0.4的情况）。</p>
+<h6 id="3-4-6-延伸实验"><a href="#3-4-6-延伸实验" class="headerlink" title="3.4.6 延伸实验"></a>3.4.6 延伸实验</h6><p>下面的一些实验使得神经网络的架构选择更合理些（虽然还是有待提升的空间）：</p>
+<ul>
+<li>本例使用的两个隐藏层。可以尝试选择一个或者三个隐藏层，看下会怎样影响验证集和测试集的准确度；</li>
+<li>选择更多的<em>hidden unit</em>或者更少的<em>hidden unit</em>：32个unit，64个unit等等；</li>
+<li>使用mse损失函数代替binary_crossentropy损失函数；</li>
+<li>使用tanh激活函数（在神经网络早期常用的激活函数）代替relu激活函数。</li>
+</ul>
+<h6 id="3-4-7-总结"><a href="#3-4-7-总结" class="headerlink" title="3.4.7 总结"></a>3.4.7 总结</h6><p>从本实例学到的知识点：</p>
+<ul>
+<li>原始数据集预处理为张量传入神经网络。单词序列编码为二值向量或者其它形式；</li>
+<li>一系列带有relu激活函数的Dense layer能解决广泛的问题，包括情感分类，后续会常用到的；</li>
+<li>二值分类问题（输出两个类别）中，最后的一个Dense layer带有一个sigmoid激活函数和一个单元：网络输出是0到1之间的标量，代表概率值；</li>
+<li>二分类问题中有sigmoid标量输出的，损失函数选择binary_crossentropy损失函数；</li>
+<li>rmsprop优化器对于大部分深度学习模型来说是足够好的选择；</li>
+<li>随着在训练集上表现越来越好，神经网络模型开始过拟合，在新数据上表现越来越差。关注验证集上的监控指标</li>
+</ul>
+<p>未完待续。。。</p>
+<p>Enjoy!</p>
+<blockquote>
+<p>翻译本书系列的初衷是，觉得其中把深度学习讲解的通俗易懂。不光有实例，也包含作者多年实践对深度学习概念、原理的深度理解。最后说不重要的一点，François Chollet是Keras作者。<br>声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。</p>
+</blockquote>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/03/17/deep-learning-with-python-chapter-3-3.2/" itemprop="url">
+                  《Deep Learning with Python》第三章 3.2 走进神经网络之Keras简单入门
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-03-17T12:15:17+08:00" content="2018-03-17">
+              2018-03-17
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h5 id="3-2-Keras简单入门"><a href="#3-2-Keras简单入门" class="headerlink" title="3.2 Keras简单入门"></a>3.2 Keras简单入门</h5><p>全书使用的代码示例采用Keras（<a href="https://keras.io）实现。Keras是一个Python编写的深度学习框架，提供方便的方式定义和训练几乎所有的深度学习模型。Keras原本是为研究者开发的，旨在加速试验。Keras具有以下特色：" target="_blank" rel="external">https://keras.io）实现。Keras是一个Python编写的深度学习框架，提供方便的方式定义和训练几乎所有的深度学习模型。Keras原本是为研究者开发的，旨在加速试验。Keras具有以下特色：</a></p>
+<ul>
+<li>同一段代码可以在CPU或者GPU上无缝切换</li>
+<li>用户友好的API使得创建深度学习模型的原型更简单</li>
+<li>內建支持卷积神经网络（计算机视觉）、循环神经网络（序列处理），以及两者的任意组合</li>
+<li>支持任意网络结构：多输入或者多输出模型，layer共享，模型共享，等等。这意味着Keras能构建任意深度学习模型，从对抗生成网络到图灵机。</li>
+</ul>
+<p>Keras采用MIT license分发，意味着可以在商业项目中使用。截止到2017年中旬，Keras同时兼容Python 2.7到3.6版本。</p>
+<p>Keras已有超过200,000个使用者，涵盖从学术研究到工业企业（包括创业公司和大型公司）。Google、Netflix、Uber、Yelp和成百上千的创业公司使用Keras解决各种问题。Keras也是机器学习竞赛网站Kaggle最流行的使用框架。</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/9803709-133c6b2bc31bc930..jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image"></p>
+<p>图 3.2 Google搜索中深度学习框架的关注度趋势</p>
+<h6 id="3-2-1-Keras、TensorFlow、Theano和CNTK"><a href="#3-2-1-Keras、TensorFlow、Theano和CNTK" class="headerlink" title="3.2.1 Keras、TensorFlow、Theano和CNTK"></a>3.2.1 Keras、TensorFlow、Theano和CNTK</h6><p>Keras提供high-level的开发深度学习模型的构建模块，其是model-level的库。Keras不能解决low-level的操作，比如张量操作和差分。Keras可以依赖指定的、经过优化的张量操作库作为其后端引擎（<em>backend engine</em>），而不是选择一个张量库去试图作为Keras的实现。Keras是以模块化的方式解决问题，见图3.3，不同的后端引擎能够为Keras进行无缝地扩展。当前已经存在三种后端引擎实现：TensorFlow后端引擎，Theano后端引擎，和CNTK后端引擎。将来可能会为Keras扩展更多的深度学习执行引擎。</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/9803709-93fb1cf14e0132ec..jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image"></p>
+<p>图3.3 深度学习软件和硬件栈</p>
+<p>TensorFlow、CNTK和Theano是当前主流的深度学习平台，其中Theano（<a href="http://deeplearning.net/software/theano）是蒙特利尔大学大学MILA实验室开发的，TensorFlow（www.tensorflow.org）由谷歌开发，CNTK（https://github.com/Microsoft/CNTK）由微软开发。用Keras编写的代码不用做任何改变即可在这些执行引擎上运行。在深度学习模型开发阶段，使用Keras可以在两种不同的执行引擎之间切换，比如，解决某种任务时，其中某个执行引擎执行会快。我们推荐使用TensorFlow作为深度学习模型的默认执行引擎，因为TensorFlow已经被广泛采纳、扩展，以及产品化。" target="_blank" rel="external">http://deeplearning.net/software/theano）是蒙特利尔大学大学MILA实验室开发的，TensorFlow（www.tensorflow.org）由谷歌开发，CNTK（https://github.com/Microsoft/CNTK）由微软开发。用Keras编写的代码不用做任何改变即可在这些执行引擎上运行。在深度学习模型开发阶段，使用Keras可以在两种不同的执行引擎之间切换，比如，解决某种任务时，其中某个执行引擎执行会快。我们推荐使用TensorFlow作为深度学习模型的默认执行引擎，因为TensorFlow已经被广泛采纳、扩展，以及产品化。</a></p>
+<p>通过TensorFlow（CNTK或者Theano），Keras能在CPU和GPU上无缝运行。TensorFlow封装low-level的Eigen（<a href="http://eigen.tuxfamily.org）张量操作库来运行CPU；封装经过优化的深度学习操作的库，即NVIDIA" target="_blank" rel="external">http://eigen.tuxfamily.org）张量操作库来运行CPU；封装经过优化的深度学习操作的库，即NVIDIA</a> CUDA神经网络库（cuDNN），来运行GPU。</p>
+<h6 id="3-2-2-使用Keras开发：快速预览"><a href="#3-2-2-使用Keras开发：快速预览" class="headerlink" title="3.2.2 使用Keras开发：快速预览"></a>3.2.2 使用Keras开发：快速预览</h6><p>你已经看过一个Keras模型的例子：MNIST数字识别的实例。典型的Keras工作流程就像如下的例子：</p>
+<ol>
+<li>定义训练数据集：输入张量和目标张量</li>
+<li>定义layer的网络（或者model）：将输入张量映射为目标张量</li>
+<li>配置学习过程：选定损失函数、优化器和监控的一些指标</li>
+<li>迭代训练数据：调用模型的fit()函数在训练数据集上迭代训练</li>
+</ol>
+<p>有两种方式定义神经网络模型：使用<em>Sequential</em>类（专为layer的线性逐层连接的模型，截止目前大部分都是此类模型）或者使用函数式API（为有向无环图式layer连接的模型，可以构建任意形式的模型）。</p>
+<p>对于新手来讲，下面的例子使用<em>Sequential</em>类定义两层layer的模型（注意，为第一个layer传入指定形状的输入数据）：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">from</span> keras <span class="keyword">import</span> models</div><div class="line"><span class="keyword">from</span> keras <span class="keyword">import</span> layers</div><div class="line">model = models.Sequential()</div><div class="line">model.add(layers.Dense(<span class="number">32</span>, activation=<span class="string">'relu'</span>, input_shape=(<span class="number">784</span>,)))</div><div class="line">model.add(layers.Dense(<span class="number">10</span>, activation=<span class="string">'softmax'</span>))</div></pre></td></tr></table></figure>
+<p>接着用函数式API定义上述相同的模型：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">input_tensor = layers.Input(shape=(<span class="number">784</span>,))</div><div class="line">x = layers.Dense(<span class="number">32</span>, activation=<span class="string">'relu'</span>)(input_tensor)</div><div class="line">output_tensor = layers.Dense(<span class="number">10</span>, activation=<span class="string">'softmax'</span>)(x)</div><div class="line">model = models.Model(inputs=input_tensor, outputs=output_tensor)</div></pre></td></tr></table></figure>
+<p>使用函数式API操作模型处理的数据张量，将layer应用于这些张量，就好像它们是函数一样使用。</p>
+<blockquote>
+<p>备注：函数式API的详细使用教程将在第七章介绍。在第七章之前，代码例子会使用<em>Sequential</em>类创建模型。</p>
+</blockquote>
+<p>一旦定义好了模型架构，使用<em>Sequential</em>模型还是函数式API模型都不重要。下面的步骤是相同的。</p>
+<p>在编译步骤配置学习过程，指定使用模型的优化器和损失函数，选择训练的监控指标。下面的例子使用单个损失函数：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">from</span> keras <span class="keyword">import</span> optimisers</div><div class="line">model.compile(optimizer=optimizers.RMSprop(lr=<span class="number">0.001</span>),</div><div class="line">loss=<span class="string">'use'</span>,</div><div class="line">metrics=[<span class="string">'accuracy'</span>])</div></pre></td></tr></table></figure>
+<p>最后，为模型传入输入数据和相应的目标数据的Numpy数组，通过fit()函数进行学习过程：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">model.fit(input_tensor, target_tensor, batch_size=<span class="number">128</span>, epochs=<span class="number">10</span>)</div></pre></td></tr></table></figure>
+<p>后面几个章节将会帮你建立坚实的直觉：哪类的问题适用哪种网络架构？如何选择正确的学习配置？如何调整模型直到得到想要的结果？下面将会在3.4，3.5和3.6小节介绍三个基本的例子：二分类，多分类和回归。</p>
+<p>未完待续。。。</p>
+<p>Enjoy!</p>
+<blockquote>
+<p>翻译本书系列的初衷是，觉得其中把深度学习讲解的通俗易懂。不光有实例，也包含作者多年实践对深度学习概念、原理的深度理解。最后说不重要的一点，François Chollet是Keras作者。<br>声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。</p>
+</blockquote>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2018/02/11/deep-learning-with-python-chapter-3-3.1/" itemprop="url">
                   《Deep Learning with Python》第三章 3.1 走进神经网络之神经网络剖析
                 </a>
@@ -1555,937 +1899,11 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/12/28/htop-tools/" itemprop="url">
-                  Linux性能利器Htop：完胜top、strace
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-12-28T15:07:52+08:00" content="2017-12-28">
-              2017-12-28
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p><em>写在之前：此文翻译自：<a href="https://peteris.rocks/blog/htop，做了少许改动，感谢原作者。" target="_blank" rel="external">https://peteris.rocks/blog/htop，做了少许改动，感谢原作者。</a></em></p>
-<p>长久以来，我只知Linux有个神器htop，却不知道htop的各项指标的内涵。</p>
-<p>比如，2核的服务器 CPU利用率为 50%，那为啥load average 却显示 1.0？那接下来开始捋捋。。。</p>
-<p>俗话说得好，好记性不如个烂笔头。</p>
-<h5 id="Htop-on-CentOS"><a href="#Htop-on-CentOS" class="headerlink" title="Htop on CentOS"></a>Htop on CentOS</h5><p>来个htop全身照：</p>
-<p><img src="http://img2.ph.126.net/r9cGoR7qNxoukqdaBRgBAQ==/6632126595396926285.png" alt="image"></p>
-<ul>
-<li>Uptime</li>
-</ul>
-<p>uptime：系统运行的时长。</p>
-<p>当然，你可以用<code>uptime</code>：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ uptime</div><div class="line"> 12:17:58 up 111 days, 31 min,  1 user,  load average: 0.00, 0.01, 0.05</div></pre></td></tr></table></figure>
-<p><code>uptime</code>从 <code>/proc/uptime</code>文件获取信息：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">9592411.58 9566042.33</div></pre></td></tr></table></figure>
-<p>前者数字（9592411.58）代表系统运行的秒值，后者（9566042.33）代表服务器空闲秒数。一般多核系统后者秒值会比系统的uptime值大，因为它是取和。作者是怎么知道这个原因的呢？通过跟踪 <code>uptime</code> 程序运行打开的文件，这里是用的 <code>strace</code> 工具：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">strace uptime</div></pre></td></tr></table></figure>
-<p>从strace输出中<code>grep</code>查找系统调用的<code>open</code> 函数。由于strace标准输出内容较多，可以使用<code>2&gt;&amp;1</code>重定向：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ strace uptime 2&gt;&amp;1 | grep open</div><div class="line">...</div><div class="line">open(&quot;/proc/uptime&quot;, O_RDONLY)          = 3</div><div class="line">open(&quot;/var/run/utmp&quot;, O_RDONLY|O_CLOEXEC) = 4</div><div class="line">open(&quot;/proc/loadavg&quot;, O_RDONLY)         = 4</div></pre></td></tr></table></figure>
-<p>其中，包括前面提到的 <code>/proc/uptime</code>文件。这说明我们可以使用 <code>strace -e open uptime</code>来代替<code>strace uptime 2&gt;&amp;1 | grep open</code>。Linux的<code>uptime</code>命令提供易读、宜用的方法。</p>
-<ul>
-<li>Load average</li>
-</ul>
-<p>除了uptime，有三个数字表示 load average：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ uptime</div><div class="line"> 12:59:09 up 32 min,  1 user,  load average: 0.00, 0.01, 0.03</div></pre></td></tr></table></figure>
-<p>load average值是从 <code>/proc/loadavg</code>文件获得，同时你也可以用 <code>strace</code> 验证。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ cat /proc/loadavg</div><div class="line">0.00 0.01 0.03 1/120 1500</div></pre></td></tr></table></figure>
-<p>前三个数字分别表示最近1分钟、5分钟、15分钟的CPU和IO的利用率。第四行显示当前正在运行的进程数和进程总数，最后一行显示最近使用的进程ID。</p>
-<p>下面讲下进程ID。当你启动一个新进程，它将会分到一个ID数字。进程ID通常是递增的，除非进程退出后进程ID重新复用。特殊进程ID <strong>1</strong> 是属于<code>/sbin/init</code> ，系统启动时即分配。</p>
-<p>让我们再来看下 <code>/proc/loadavg</code>文件的内容，然后后台启动 <code>sleep</code> 命令，这时会输出进程ID。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ cat /proc/loadavg</div><div class="line">0.00 0.01 0.03 1/123 1566</div><div class="line">$ sleep 10 &amp;</div><div class="line">[1] 1567</div></pre></td></tr></table></figure>
-<p>所以，<em>1/123</em> 代表一个进程正在运行，总共有123个进程运行过。</p>
-<p>当运行<code>cat /dev/urandom &gt; /dev/null</code> （重复生成随机数）时，你会发现有 2 个进程在运行：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ cat /dev/urandom &gt; /dev/null &amp;</div><div class="line">[1] 1639</div><div class="line">$ cat /proc/loadavg</div><div class="line">1.00 0.69 0.35 2/124 1679</div></pre></td></tr></table></figure>
-<p>这里的两个进程是：随机数生成、<code>cat /proc/loadavg</code>，同时load average值也在增加。</p>
-<p>System load average是runnable或uninterruptable状态的进程数的平均数。所以上面的 load average为 1（平均1个运行的进程），是因为作者演示的服务器是单核CPU，一次跑一个进程那CPU的利用率是100%。如果服务器是双核，那CPU利用率就是50%。双核CPU的利用率如果是100%，那load average 将会是2.0。CPU的核数可以从htop的左上角看到，或者运行 <code>nproc</code>。</p>
-<ul>
-<li>Processes</li>
-</ul>
-<p>在htop的右上角显示进程数和多少个进程正在运行。但是htop使用 <em>Tasks</em> 代表进程（注：<em>Tasks</em> 是进程的一个别名）。</p>
-<p>在htop中，使用键盘上的<code>Shift</code>+<code>H</code>组合键也可轻松看到线程数<em>Tasks: 23, 10 thr</em>，使用<code>Shift</code>+<code>K</code>组合键可以看到内核线程数，<em>Tasks: 23, 40 kthr</em>。</p>
-<ul>
-<li>Process ID / PID</li>
-</ul>
-<p>每个进程启动都会分配一个唯一的进程ID，称作进程ID或者PID。如果你在<em>bash</em>中使用 (<code>&amp;</code>)在后台执行，你将会看到输出的PID。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ sleep 1000 &amp;</div><div class="line">[1] 12503</div></pre></td></tr></table></figure>
-<p>如果你手滑没看到，那也可以在<em>bash</em>中使用 <code>$!</code>内建变量查看到最近一次后台运行的PID：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ echo $!</div><div class="line">12503</div></pre></td></tr></table></figure>
-<p>进程ID是非常有用的，具体为什么可以看维基百科。</p>
-<p><code>procfs</code>是伪文件系统，procfs可以让用户的程序通过读取文件的方法从Linux内核中获取信息。它经常被挂载在 <code>/proc/</code>下，伪装的看起来像个正规文件目录，你也可以使用 <code>ls</code> 和 <code>cd</code>命令。</p>
-<p>某进程相关的所有信息都放在 <code>/proc/&lt;pid&gt;/</code>下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">$ ls /proc/12503</div><div class="line">attr        coredump_filter  fdinfo     maps        ns             personality  smaps    task</div><div class="line">auxv        cpuset           gid_map    mem         numa_maps      projid_map   stack    uid_map</div><div class="line">cgroup      cwd              io         mountinfo   oom_adj        root         stat     wchan</div><div class="line">clear_refs  environ          limits     mounts      oom_score      schedstat    statm</div><div class="line">cmdline     exe              loginuid   mountstats  oom_score_adj  sessionid    status</div><div class="line">comm        fd               map_files  net         pagemap        setgroups    syscall</div></pre></td></tr></table></figure>
-<p>比如，  /proc/\<pid>/cmdline  会让你知道这个进程是如何启动的：</pid></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ cat /proc/12503/cmdline</div><div class="line">sleep1000$</div></pre></td></tr></table></figure>
-<p>正确的查看姿势是（因为命令是用<em>\0</em> 分隔）：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ od -c /proc/12503/cmdline</div><div class="line">0000000   s   l   e   e   p  \0   1   0   0   0  \0</div><div class="line">0000013</div></pre></td></tr></table></figure>
-<p>或者：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">$ tr &apos;\0&apos; &apos;\n&apos; &lt; /proc/12503/cmdline</div><div class="line">sleep</div><div class="line">1000</div><div class="line">$ strings /proc/12503/cmdline</div><div class="line">sleep</div><div class="line">1000</div></pre></td></tr></table></figure>
-<p>进程的进程目录还包含有链接（link），比如： <code>cwd</code>指向工作目录，<code>exe</code>指向可执行的二进制文件：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ ls -l /proc/12503/&#123;cwd,exe&#125;</div><div class="line">lrwxrwxrwx 1 ubuntu ubuntu 0 Jul  6 10:10 /proc/12503/cwd -&gt; /home/username</div><div class="line">lrwxrwxrwx 1 ubuntu ubuntu 0 Jul  6 10:10 /proc/12503/exe -&gt; /bin/sleep</div></pre></td></tr></table></figure>
-<p>以上就是<code>htop</code>，<code>top</code>， <code>ps</code>这些诊断工具是为啥可以获取到一个进程的详细信息的，/proc/\<pid>/\<file>。</file></pid></p>
-<ul>
-<li>Process tree</li>
-</ul>
-<p>在htop中使用<code>F5</code> 即可看到进程树，当然也可以用<code>ps f</code>：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ ps f</div><div class="line">  PID TTY      STAT   TIME COMMAND</div><div class="line">12472 pts/0    Ss     0:00 -bash</div><div class="line">12684 pts/0    R+     0:00  \_ ps f</div></pre></td></tr></table></figure>
-<p>或者 <code>pstree</code></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">$ pstree -a</div><div class="line">init</div><div class="line">  ├─atd</div><div class="line">  ├─cron</div><div class="line">  ├─sshd -D</div><div class="line">  │   └─sshd</div><div class="line">  │       └─sshd</div><div class="line">  │           └─bash</div><div class="line">  │               └─pstree -a</div><div class="line">...</div></pre></td></tr></table></figure>
-<p>从这里你就可以知道为啥 <code>bash</code> 或者 <code>sshd</code> 是其它进程的父进程。</p>
-<p> <code>/sbin/init</code> 作为系统启动进程，进程ID为1，接着是SSH的守护进程 <code>sshd</code>（当你用ssh连接到服务器），接着是 <code>bash</code> shell。</p>
-<ul>
-<li>Process user</li>
-</ul>
-<p>每个进程属于一个user，user以数值ID代表：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ sleep 1000 &amp;</div><div class="line">[1] 2045</div><div class="line">$  grep Uid /proc/2045/status</div><div class="line">Uid:    1000    1000    1000    1000</div></pre></td></tr></table></figure>
-<p>可以用<code>id</code>命令发现更多关于此user的信息：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ id 1000</div><div class="line">uid=1000(ubuntu) gid=1000(ubuntu) groups=1000(ubuntu),4(adm)</div></pre></td></tr></table></figure>
-<p>通过如下证明<code>id</code>是从<code>/etc/passwd</code> 和 <code>/etc/group</code> 文件获取信息的：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ strace -e open id 1000</div><div class="line">open(&quot;/etc/passwd&quot;, O_RDONLY|O_CLOEXEC) = 3</div><div class="line">open(&quot;/etc/group&quot;, O_RDONLY|O_CLOEXEC)  = 3</div></pre></td></tr></table></figure>
-<p>查看<code>/etc/passwd</code> 和 <code>/etc/group</code> 文件的内容：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">$ cat /etc/passwd</div><div class="line">root:x:0:0:root:/root:/bin/bash</div><div class="line">daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin</div><div class="line">xxx:x:1000:1000:Ubuntu:/home/ubuntu:/bin/bash</div><div class="line">$ cat /etc/group</div><div class="line">root:x:0:</div><div class="line">adm:x:4:syslog,ubuntu</div><div class="line">xxx:x:1000:</div></pre></td></tr></table></figure>
-<p>passwd文件内没有密码，那密码存储在哪里呢？实际存在<code>/etc/shadow</code></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ sudo cat /etc/shadow</div><div class="line">root:$6$mS9o0QBw$P1ojPSTexV2PQ.Z./rqzYex.k7TJE2nVeIVL0dql/:17126:0:99999:7:::</div><div class="line">daemon:*:17109:0:99999:7:::</div><div class="line">ubuntu:$6$GIfdqlb/$ms9ZoxfrUq455K6UbmHyOfz7DVf7TWaveyHcp.:17126:0:99999:7:::</div></pre></td></tr></table></figure>
-<p>如果你想以root用户来运行程序，得用<code>sudo</code>：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">$ id</div><div class="line">uid=1000(ubuntu) gid=1000(ubuntu) groups=1000(ubuntu),4(adm)</div><div class="line">$ sudo id</div><div class="line">uid=0(root) gid=0(root) groups=0(root)</div><div class="line">$ sudo -u ubuntu id</div><div class="line">uid=1000(ubuntu) gid=1000(ubuntu) groups=1000(ubuntu),4(adm)</div><div class="line">$ sudo -u daemon id</div><div class="line">uid=1(daemon) gid=1(daemon) groups=1(daemon)</div></pre></td></tr></table></figure>
-<p>如果你想登录到另外一个用户并启动各种命令，使用<code>sudo bash</code> 或者 <code>sudo -u user bash</code>。</p>
-<p>当你不想输入密码登录服务器，则可以增加user到 <code>/etc/sudoers</code> 文件。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ echo &quot;$USER ALL=(ALL) NOPASSWD: ALL&quot; &gt;&gt; /etc/sudoers</div><div class="line">-bash: /etc/sudoers: Permission denied</div></pre></td></tr></table></figure>
-<p>你会发现只有root用户可以操作。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ sudo echo &quot;$USER ALL=(ALL) NOPASSWD: ALL&quot; &gt;&gt; /etc/sudoers</div><div class="line">-bash: /etc/sudoers: Permission denied</div></pre></td></tr></table></figure>
-<p>咋回事呢？还是不行。。。</p>
-<p>当你以root权限执行<code>echo</code>命令追加一行到<code>/etc/sudoers</code> ，仍然使用的原user。</p>
-<p>通常有两种解决方法：</p>
-<ol>
-<li><code>echo &quot;$USER ALL=(ALL) NOPASSWD: ALL&quot; | sudo tee -a /etc/sudoers</code></li>
-<li><code>sudo bash -c &quot;echo &#39;$USER ALL=(ALL) NOPASSWD: ALL&#39; &gt;&gt; /etc/sudoers&quot;</code></li>
-</ol>
-<p>第一种，<code>tee -a</code>追加标准输入到文件，这时执行以root权限；</p>
-<p>第二种，我们以root用户执行bash，用 (<code>-c</code>) 以root执行整个命令。注意双引号/单引号，因为 <code>$USER</code>变量转义的问题。</p>
-<p>当你想更改密码时，可用 <code>passwd</code>，也可用 <code>/etc/shadow</code> 文件，这个文件必须用root权限：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ ls -l /etc/shadow</div><div class="line">-rw-r----- 1 root shadow 1122 Nov 27 18:52 /etc/shadow</div></pre></td></tr></table></figure>
-<p> <code>passwd</code> 如何才能被常规user执行往具有保护权限的文件写入？</p>
-<p>当你启动一个进程时，那这个进程属于你的用户，即使这个可执行文件的拥有者是其它user。</p>
-<p>你能改变文件的权限：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ ls -l /usr/bin/passwd</div><div class="line">-rwsr-xr-x 1 root root 54256 Mar 29  2016 /usr/bin/passwd</div></pre></td></tr></table></figure>
-<p>注意 <code>s</code> 字符，它是<code>sudo chmod u+s /usr/bin/passwd</code>实现的，意味着能以拥有者root的身份运行可执行文件。</p>
-<p>你使用 <code>find /bin -user root -perm -u+s</code>会发现一个<code>setuid</code> 可执行文件。同理，对用户组可以用 (<code>g+s</code>)。</p>
-<ul>
-<li>Process state</li>
-</ul>
-<p>接下来看下<em>htop</em>中进程状态列，其用字母 <em>S</em> 表示。</p>
-<p>下面是进程列的可能取值：</p>
-<table>
-<thead>
-<tr>
-<th>R</th>
-<th>运行状态（running）或者运行队列中的就绪状态（runnable）</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>S</td>
-<td>中断睡眠（等待事件完成）</td>
-</tr>
-<tr>
-<td>D</td>
-<td>非中断睡眠（常为IO）</td>
-</tr>
-<tr>
-<td>Z</td>
-<td>僵尸进程，无效进程但是未被父进程回收</td>
-</tr>
-<tr>
-<td>T</td>
-<td>被控制信号停止</td>
-</tr>
-<tr>
-<td>t</td>
-<td>跟踪时被调试者停止</td>
-</tr>
-<tr>
-<td>X</td>
-<td>死亡状态</td>
-</tr>
-</tbody>
-</table>
-<p> 注意，当你运行<code>ps</code>时，它将也会显示子状态，比如<em>Ss，R+，Ss+</em>，等等.</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">$ ps x</div><div class="line">  PID TTY      STAT   TIME COMMAND</div><div class="line"> 1688 ?        Ss     0:00 /lib/systemd/systemd --user</div><div class="line"> 1689 ?        S      0:00 (sd-pam)</div><div class="line"> 1724 ?        S      0:01 sshd: vagrant@pts/0</div><div class="line"> 1725 pts/0    Ss     0:00 -bash</div><div class="line"> 2628 pts/0    R+     0:00 ps x</div></pre></td></tr></table></figure>
-<p><strong>R - 运行状态或者运行队列中的就绪状态</strong></p>
-<p>在这种状态下，进程正在运行或者在运行队列中等待运行。</p>
-<p>那运行的都是啥呢？</p>
-<p>当你编译所写的源代码，生成的机器码是CPU指令集，并保存为可执行文件。当你启动程序时，该程序被加载进内存，然后CPU执行这些指令集。</p>
-<p>从根本上来说，CPU是在执行指令，换句话说，处理数字。</p>
-<p><strong>S - 中断睡眠</strong></p>
-<p>这意味着该进程的指令不能在CPU上立即执行。相反地，该进程等待某个事件或者条件发生。当事件发生，系统内核设置进程状态为运行状态。</p>
-<p>本例是GNU的coreutils软件包中的<code>sleep</code>工具。它将睡眠指定秒数。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">$ sleep 1000 &amp;</div><div class="line">[1] 10089</div><div class="line">$ ps f</div><div class="line">  PID TTY      STAT   TIME COMMAND</div><div class="line"> 3514 pts/1    Ss     0:00 -bash</div><div class="line">10089 pts/1    S      0:00  \_ sleep 1000</div><div class="line">10094 pts/1    R+     0:00  \_ ps f</div></pre></td></tr></table></figure>
-<p>所以这是一个中断睡眠。那如何中断该进程？通过发送控制信号。</p>
-<p>你能在 <em>htop</em> 中点击 <em>F9</em> ，然后在左侧菜单中选择一个信号发送。</p>
-<p>发送的信号中最有名的是<code>kill</code>。因为<code>kill</code>是一个系统调用，其能发送信号给进程。程序<code>/bin/kill</code>能从用户空间做系统调用，默认的信号是使用<code>TERM</code>，该信号要求进程中止或者杀死。</p>
-<p>信号其实只是一个数字，但是数字太难记住，所以我们常说对应的名字。信号名字用大写表示，并用<code>SIG</code>前缀。</p>
-<p>常用的信号有<code>INT</code>， <code>KILL</code>， <code>STOP</code>， <code>CONT</code>， <code>HUP</code>。</p>
-<p>让我们发送<code>INT</code>（也称作，<code>SIGINT</code>或者<code>2</code>或者 <code>Terminal interrupt</code> ）中断睡眠。</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ <span class="built_in">kill</span> -INT 10089</div><div class="line">[1]+  Interrupt               sleep 1000</div></pre></td></tr></table></figure>
-<p>当你在键盘上敲击<code>CTRL</code>+<code>C</code> 也会产生上面同样的效果。 <code>bash</code> 将发送前台进程 <code>SIGINT</code> 信号。</p>
-<p>顺便提一下，在 <code>bash</code>中，虽然大部分操作系统都有 <code>/bin/kill</code> ，但是 <code>kill</code> 是一个内建命令。这是为什么呢？如果你创建的进程达到限制条件，它允许进程被kill。</p>
-<p>实现相同功能的命令：</p>
-<ul>
-<li><code>kill -INT 10089</code></li>
-<li><code>kill -2 10089</code></li>
-<li><code>/bin/kill -2 10089</code></li>
-</ul>
-<p>另外一个有用的信号是 <code>SIGKILL</code> (也被称作 <code>9</code>)。你可以使用该信号kill掉不响应的进程，省的你发狂的按 <code>CTRL</code>+<code>C</code> 键盘。</p>
-<p>当编写程序时，你能设置信号handler函数，该函数将在进程收到信号时被调用。换句话说，你能捕获信号，然后做点什么事。例如，清理或者优雅的关闭进程。所以发送 <code>SIGINT</code> 信号（用户想中断一个进程）和<code>SIGTERM</code> （用户想中止一个进程）并不意味着进程被中止。</p>
-<p>当你运行Python脚本，你会发现一个意外：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ python -c <span class="string">'import sys; sys.stdin.read()'</span></div><div class="line">^C</div><div class="line">Traceback (most recent call last):</div><div class="line">  File <span class="string">"&lt;string&gt;"</span>, line 1, <span class="keyword">in</span> &lt;module&gt;</div><div class="line">KeyboardInterrupt</div></pre></td></tr></table></figure>
-<p>你可以告诉内核强制中止一个进程，使用发送 <code>KILL</code>信号：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ sleep 1000 &amp;</div><div class="line">[1] 2658</div><div class="line">$ <span class="built_in">kill</span> -9 2658</div><div class="line">[1]+  Killed                  sleep 1000</div></pre></td></tr></table></figure>
-<p><strong>D - 非中断睡眠</strong></p>
-<p>不像中止睡眠进程那么简单，你不能用信号唤醒该进程。这就是为什么许多人喊怕看到这个状态。你不能kill该进程，因为kill意味着通过发送<code>SIGKILL</code> 信号给该进程。</p>
-<p>如果进程必须等待不中断或者事件被期望快速发生，那这个状态被使用，比如读写磁盘。但是这仅仅发生一秒分之一。</p>
-<p>引用自StackOverflow</p>
-<blockquote>
-<p>不中断进程经常等到I/O出现页缺失（page fault）。进程/任务不能在这种状态下中断，因为它不能处理任何信号；如果中断了，另外一个页缺失将会发生，会返回到原始位置。</p>
-</blockquote>
-<p>换句话说，如果你在使用NFS（网络文件系统）时出现中断，那得好久才恢复。</p>
-<p>或者，以我的经验看，意味着进程正在交换许多小内存。</p>
-<p>让我们试着一个进程进入不中断睡眠。</p>
-<p><code>8.8.8.8</code> 是Google提供的公共DNS服务。他们没有一个开放的NFS，但是也不能阻止试验。</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ sudo mount 8.8.8.8:/tmp /tmp &amp;</div><div class="line">[1] 12646</div><div class="line">$ sudo ps x | grep mount.nfs</div><div class="line">12648 pts/1    D      0:00 /sbin/mount.nfs 8.8.8.8:/tmp /tmp -o rw</div></pre></td></tr></table></figure>
-<p>如何找出刚才发生了什么？ <code>strace</code>!</p>
-<p> <code>strace</code>上面<code>ps</code>的输出命令：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ sudo strace /sbin/mount.nfs 8.8.8.8:/tmp /tmp -o rw</div><div class="line">...</div><div class="line">mount(<span class="string">"8.8.8.8:/tmp"</span>, <span class="string">"/tmp"</span>, <span class="string">"nfs"</span>, 0, ...</div></pre></td></tr></table></figure>
-<p>所以 <code>mount</code> 系统调用正在阻塞进程。</p>
-<p>如果想看看发生了什么，你能运行带<code>intr</code> 选项的 <code>mount</code> 命令来中断： <code>sudo mount 8.8.8.8:/tmp /tmp -o intr</code>。</p>
-<p><strong>Z - 僵尸进程，无效进程但是未被父进程回收</strong></p>
-<p>当一个进程以 <code>exit</code>退出时，它还有子进程，此时子进程变成了僵尸进程。</p>
-<ul>
-<li>如果僵尸进程存在一小会，那相当正常；</li>
-<li>僵尸进程存在很长时间可能导致程序bug；</li>
-<li>僵尸进程不消耗内存，仅仅是一个进程ID；</li>
-<li>僵尸进程不能被<code>kill</code> ；</li>
-<li>发生<code>SIGCHLD</code> 信号能让父进程回收僵尸进程；</li>
-<li><code>kill</code> 僵尸进程的父进程能摆脱父进程和其僵尸进程</li>
-</ul>
-<p>下面写个C程序的例子展示下：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</div><div class="line">  <span class="built_in">printf</span>(<span class="string">"Running\n"</span>);</div><div class="line"></div><div class="line">  <span class="keyword">int</span> pid = fork();</div><div class="line"></div><div class="line">  <span class="keyword">if</span> (pid == <span class="number">0</span>) &#123;</div><div class="line">    <span class="built_in">printf</span>(<span class="string">"I am the child process\n"</span>);</div><div class="line">    <span class="built_in">printf</span>(<span class="string">"The child process is exiting now\n"</span>);</div><div class="line">    <span class="built_in">exit</span>(<span class="number">0</span>);</div><div class="line">  &#125; <span class="keyword">else</span> &#123;</div><div class="line">    <span class="built_in">printf</span>(<span class="string">"I am the parent process\n"</span>);</div><div class="line">    <span class="built_in">printf</span>(<span class="string">"The parent process is sleeping now\n"</span>);</div><div class="line">    sleep(<span class="number">20</span>);</div><div class="line">    <span class="built_in">printf</span>(<span class="string">"The parent process is finished\n"</span>);</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>安装GNU C编译器（GCC）：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt install -y gcc</div></pre></td></tr></table></figure>
-<p>编译代码并运行：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">gcc zombie.c -o zombie</div><div class="line">./zombie</div></pre></td></tr></table></figure>
-<p>查看进程树：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">$ ps f</div><div class="line">  PID TTY      STAT   TIME COMMAND</div><div class="line"> 3514 pts/1    Ss     0:00 -bash</div><div class="line"> 7911 pts/1    S+     0:00  \_ ./zombie</div><div class="line"> 7912 pts/1    Z+     0:00      \_ [zombie] &lt;defunct&gt;</div><div class="line"> 1317 pts/0    Ss     0:00 -bash</div><div class="line"> 7913 pts/0    R+     0:00  \_ ps f</div></pre></td></tr></table></figure>
-<p>我们得到了僵尸进程。当父进程退出，僵尸进程也退出。</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ ps f</div><div class="line">  PID TTY      STAT   TIME COMMAND</div><div class="line"> 3514 pts/1    Ss+    0:00 -bash</div><div class="line"> 1317 pts/0    Ss     0:00 -bash</div><div class="line"> 7914 pts/0    R+     0:00  \_ ps f</div></pre></td></tr></table></figure>
-<p>如果用<code>while (true) ;</code> 代替 <code>sleep(20)</code> ，僵尸进程将正常退出。</p>
-<p>使用<code>exit</code>时，该进程所有的内存和资源被释放，其它的进程可以继续使用。</p>
-<p>为什么要保留僵尸进程存在呢？</p>
-<p>父进程使用 <code>wait</code>系统调用找出其子进程退出码（信号 handler）。如果一个进程睡眠，它需要等待唤醒。</p>
-<p>为什么不简单的强制进程唤醒和kill掉？当你厌倦小孩时，你不会把他扔垃圾桶。这里的原因相同。坏事情总会发生的。</p>
-<p><strong>T - 被控制信号停止</strong></p>
-<p>打开两个终端窗口，使用 <code>ps u</code>能查看到用户的进程：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ ps u</div><div class="line">USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND</div><div class="line">ubuntu    1317  0.0  0.9  21420  4992 pts/0    Ss+  Jun07   0:00 -bash</div><div class="line">ubuntu    3514  1.5  1.0  21420  5196 pts/1    Ss   07:28   0:00 -bash</div><div class="line">ubuntu    3528  0.0  0.6  36084  3316 pts/1    R+   07:28   0:00 ps u</div></pre></td></tr></table></figure>
-<p>忽略 <code>-bash</code> 和<code>ps u</code>进程。</p>
-<p>现在在其中一个终端窗口运行<code>cat /dev/urandom &gt; /dev/null</code> 。其进程状态为 <code>R+</code> ，意味着正在运行。</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ ps u</div><div class="line">USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND</div><div class="line">ubuntu    3540  103  0.1   6168   688 pts/1    R+   07:29   0:04 cat /dev/urandom</div></pre></td></tr></table></figure>
-<p>按 <code>CTRL</code>+<code>Z</code> 停止该进程：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ <span class="comment"># CTRL+Z</span></div><div class="line">[1]+  Stopped                 cat /dev/urandom &gt; /dev/null</div><div class="line">$ ps aux</div><div class="line">USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND</div><div class="line">ubuntu    3540 86.8  0.1   6168   688 pts/1    T    07:29   0:15 cat /dev/urandom</div></pre></td></tr></table></figure>
-<p>该进程的状态现在为 <code>T</code>。</p>
-<p>在第一个终端运行 <code>fg</code> 可以重新恢复该进程。</p>
-<p>另外一种停止进程的方法是用 <code>kill</code> 发送 <code>STOP</code> 信号给进程。然后使用 <code>CONT</code> 信号可让进程恢复执行。</p>
-<p><strong>t - 跟踪时被调试者停止</strong></p>
-<p>首先，安装GNU调试器（gdb）：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt install -y gdb</div></pre></td></tr></table></figure>
-<p>监听网络端口1234的入网连接：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ nc <span class="_">-l</span> 1234 &amp;</div><div class="line">[1] 3905</div></pre></td></tr></table></figure>
-<p>状态显示睡眠状态，那意味着该进程在等待网络传入数据。</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ ps u</div><div class="line">USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND</div><div class="line">ubuntu    3905  0.0  0.1   9184   896 pts/0    S    07:41   0:00 nc <span class="_">-l</span> 1234</div></pre></td></tr></table></figure>
-<p>运行调试器，并与进程ID为3905的进程关联：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo gdb -p 3905</div></pre></td></tr></table></figure>
-<p>你会发现这个进程的状态变为<code>t</code>，这意味着调试器正在跟踪该进程。</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ ps u</div><div class="line">USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND</div><div class="line">ubuntu    3905  0.0  0.1   9184   896 pts/0    t    07:41   0:00 nc <span class="_">-l</span> 1234</div></pre></td></tr></table></figure>
-<ul>
-<li>Process time</li>
-</ul>
-<p>Linux是一个多任务的操作系统。这意味着，即使机器只有一个PCU，也能在同一个时间点运行多个进程。你可以通过SSH连接服务器查看 <em>htop</em> 输出，同时你的web服务也在通过网络传输博客内容给读者。</p>
-<p>那系统是如何做到在单个CPU上一个时间点只执行一个指令呢？答案是时间共享。</p>
-<p>一个进程运行“一点时间”，然后挂起；这时另外一个等待的进程运行“一点时间”。进程运行的这“一点时间”称为时间片（time slice）。</p>
-<p>时间片通常是几毫秒。所以只要服务器系统的负载不高，你是注意不到的。</p>
-<p>这也就可以解释为什么平均负载（load average）是运行进程的平均数了。如果你的服务器只有一个核，平均负载是1.0，那CPU的利用率达到100%。如果平均负载高于1.0，那意味着等待运行的进程数大于CPU能承载运行的进程数。所以会发现服务器宕机或者延迟。如果负载小雨1.0，那意味着CPU有时会处于空闲状态，不做任何工作。</p>
-<p>这也给你一个提示：为什么一个运行了10秒的进程的运行时间有时会高于或者低于准确的10秒。</p>
-<ul>
-<li>Process niceness and priority</li>
-</ul>
-<p>当运行的task数比可用的CPU核数要多时，你必须找个方法决定接下来哪个task运行哪个task保持等待。这其实是 task scheduler的职责。</p>
-<p>Linux内核的scheduler负责选择运行进程队列中哪个进程接下来运行，依赖于内核使用的scheduler算法。</p>
-<p>一般你不能影响scheduler，但是让它知道哪个进程更重要。</p>
-<p>Nice值(<code>NI</code>) 是表示用户空间进程优先级的数值，其代表静态优先级。Nice值的范围是-20~+19，拥有Nice值越大的进程的实际优先级越小（即Nice值为+19的进程优先级最小，为-20的进程优先级最大），默认的Nice值是0。Nice值增加1，降低进程10%的CPU时间。</p>
-<p>priority(优先级，<code>PRI</code>)是Linux内核级的优先级，其代表动态优先级。该优先级范围从0到139，0到99表示实时进程，100到139表示用户空间进程优先级。</p>
-<p>你可以改变Nice值让内核考虑该进程优先级，但是不能改变priority。</p>
-<p>Nice值和priority之间的关系如下：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">PR = 20 + NI</div></pre></td></tr></table></figure>
-<p>所以 <code>PR = 20 + (-20 to +19)</code> 的值是0到39，映射为100到139。</p>
-<p>在启动进程前设置该进程的Nice值：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">nice -n niceness program</div></pre></td></tr></table></figure>
-<p>当程序已经正在运行，可用 <code>renice</code>改变其Nice值：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">renice -n niceness -p PID</div></pre></td></tr></table></figure>
-<p>下面是CPU使用颜色代表的意义：</p>
-<blockquote>
-<p>蓝色：低优先级线程（nice &gt; 0）</p>
-<p>绿色：常规优先级线程</p>
-<p>红色：内核线程</p>
-</blockquote>
-<ul>
-<li>内存使用 - VIRT/RES/SHR/MEM</li>
-</ul>
-<p>进程给人的假象是只有一个进程使用内存，其实这是通过虚拟内存实现的。</p>
-<p>进程没有直接访问物理内存，而是拥有虚拟地址空间，Linux内核将虚拟内存地址转换成物理内存或者映射到磁盘。这就是为什么看起来进程能够使用的内存比电脑真实的内存要多。</p>
-<p>这里说明的是，想准确计算一个进程占用多少内存并不是那么直观。你也想计算共享内存或者磁盘映射内存吗？<code>htop</code> 显示的一些信息能帮助你估计内存使用量。</p>
-<p>内存使用颜色代表的意义：</p>
-<blockquote>
-<p>绿色：Used memory</p>
-<p>蓝色：Buffers</p>
-<p>橘黄色：Cache</p>
-</blockquote>
-<p><strong>VIRT/VSZ - 虚拟内存</strong></p>
-<blockquote>
-<p>task使用的虚拟内存总量。它包含代码、数据和共享内存（加上调出内存到磁盘的分页和已映射但未使用的分页）。</p>
-</blockquote>
-<p><code>VIRT</code> 是虚拟内存使用量。它包括所有的内存，含内存映射文件。</p>
-<p>如果应用请求1GB内存，但是内存只有1MB，那 <code>VIRT</code>显示1GB。如果 <code>mmap</code>映射的是一个1GB 文件， <code>VIRT</code>也显示1GB。</p>
-<p>大部分情况下， <code>VIRT</code>并不是一个太有用的数字。</p>
-<p><strong>RES/RSS - 常驻内存大小</strong></p>
-<blockquote>
-<p>task使用的非交换的物理内存。</p>
-</blockquote>
-<p><code>RES</code>是常驻内存使用量。</p>
-<p><code>RES</code>相比于 <code>VIRT</code>，能更好的表征进程的内存使用量：</p>
-<blockquote>
-<p>不包含交换出的内存；</p>
-<p>不包含共享内存</p>
-</blockquote>
-<p>如果一个进程使用1GB内存，并调用<code>fork()</code>函数，fork的结果是两个进程的 <code>RES</code> 都是1GB，但是实际上只使用了1GB内存。因为Linux采用的是copy-on-write机制。</p>
-<p><strong>SHR - 共享内存大</strong></p>
-<blockquote>
-<p>task使用的共享内存总量。</p>
-<p>简单的反应进程间共享的内存。</p>
-</blockquote>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</div><div class="line">  <span class="built_in">printf</span>(<span class="string">"Started\n"</span>);</div><div class="line">  sleep(<span class="number">10</span>);</div><div class="line"></div><div class="line">  <span class="keyword">size_t</span> memory = <span class="number">10</span> * <span class="number">1024</span> * <span class="number">1024</span>; <span class="comment">// 10 MB</span></div><div class="line">  <span class="keyword">char</span>* buffer = <span class="built_in">malloc</span>(memory);</div><div class="line">  <span class="built_in">printf</span>(<span class="string">"Allocated 10M\n"</span>);</div><div class="line">  sleep(<span class="number">10</span>);</div><div class="line"></div><div class="line">  <span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">0</span>; i &lt; memory/<span class="number">2</span>; i++)</div><div class="line">    buffer[i] = <span class="number">42</span>;</div><div class="line">  <span class="built_in">printf</span>(<span class="string">"Used 5M\n"</span>);</div><div class="line">  sleep(<span class="number">10</span>);</div><div class="line"></div><div class="line">  <span class="keyword">int</span> pid = fork();</div><div class="line">  <span class="built_in">printf</span>(<span class="string">"Forked\n"</span>);</div><div class="line">  sleep(<span class="number">10</span>);</div><div class="line"></div><div class="line">  <span class="keyword">if</span> (pid != <span class="number">0</span>) &#123;</div><div class="line">    <span class="keyword">for</span> (<span class="keyword">size_t</span> i = memory/<span class="number">2</span>; i &lt; memory/<span class="number">2</span> + memory/<span class="number">5</span>; i++)</div><div class="line">      buffer[i] = <span class="number">42</span>;</div><div class="line">    <span class="built_in">printf</span>(<span class="string">"Child used extra 2M\n"</span>);</div><div class="line">  &#125;</div><div class="line">  sleep(<span class="number">10</span>);</div><div class="line"></div><div class="line">  <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">fallocate <span class="_">-l</span> 10G</div><div class="line">gcc -std=c99 mem.c -o mem</div><div class="line">./mem</div></pre></td></tr></table></figure>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">Process  Message               VIRT  RES SHR</div><div class="line">main     Started               4200  680 604</div><div class="line">main     Allocated 10M        14444  680 604</div><div class="line">main     Used 5M              14444 6168 1116</div><div class="line">main     Forked               14444 6168 1116</div><div class="line">child    Forked               14444 5216 0</div><div class="line">main     Child used extra 2M        8252 1116</div><div class="line">child    Child used extra 2M        5216 0</div></pre></td></tr></table></figure>
-<p><strong>MEM% - 内存使用量占比</strong></p>
-<blockquote>
-<p>task当前使用的内存占比。</p>
-</blockquote>
-<p>该值为 <code>RES</code> 除以RAM总量。</p>
-<p>如果 <code>RES</code> 是400M，你有8GB的RAM，<code>MEM%</code> 是 <code>400/8192*100</code> = <code>4.88%</code>。</p>
-<p>“庖丁解牛”式问诊Linux启动全过程</p>
-<p>本文使用Digital Ocean droplet Ubuntu服务器启动过程为“蓝本”，详细解说Linux启动涉及的所有进程。</p>
-<p>Ubuntu系统引导启动的进程都有哪些？你都需要它们吗？</p>
-<p>下面是在全新Digital Ocean droplet 的Ubuntu（16.04.1 LTS x64）服务器上启动系统。</p>
-<p><img src="https://peteris.rocks/blog/htop/canyoukillit-before.png" alt="image"></p>
-<ul>
-<li>/sbin/init</li>
-</ul>
-<blockquote>
-<p>/sbin/init程序，也称init，调度除boot进程外所有的进程，配置用户环境。</p>
-<p>init启动后，将成为所有系统自动启动进程的父进程或者祖父进程。</p>
-</blockquote>
-<p>它是systemd吗？</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ dpkg -S /sbin/init</div><div class="line">systemd-sysv: /sbin/init</div></pre></td></tr></table></figure>
-<p>答案是，yes。</p>
-<p>如果kill掉<code>/sbin/init</code>会发生什么呢？什么也不会发生，哈哈。</p>
-<blockquote>
-<ul>
-<li><a href="https://wiki.ubuntu.com/SystemdForUpstartUsers" target="_blank" rel="external">https://wiki.ubuntu.com/SystemdForUpstartUsers</a></li>
-<li><a href="https://www.centos.org/docs/5/html/5.1/Installation_Guide/s2-boot-init-shutdown-init.html" target="_blank" rel="external">https://www.centos.org/docs/5/html/5.1/Installation_Guide/s2-boot-init-shutdown-init.html</a></li>
-</ul>
-</blockquote>
-<ul>
-<li>/lib/systemd/systemd-journald</li>
-</ul>
-<blockquote>
-<p>systemd-journald进程是一个系统服务，其收集、存储log数据。它基于接收的log信息创建和维护结构化、索引journal。</p>
-</blockquote>
-<p>换句话讲。</p>
-<blockquote>
-<p>journald主要的变化之一，是采用优化的log存储替代简单文本log文件。使得系统管理员访问相应的log信息更有效。journald引入数据库式log的集中存储能力。</p>
-</blockquote>
-<p>你可以使用 <code>journalctl</code> 命令查询log文件。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">journalctl _COMM=sshd logs by sshd</div><div class="line">journalctl _COMM=sshd -o json-pretty logs by sshd in JSON</div><div class="line">journalctl --since &quot;2015-01-10&quot; --until &quot;2015-01-11 03:00&quot;</div><div class="line">journalctl --since 09:00 --until &quot;1 hour ago&quot;</div><div class="line">journalctl --since yesterday</div><div class="line">journalctl -b logs since boot</div><div class="line">journalctl -f to follow logs</div><div class="line">journalctl --disk-usage</div><div class="line">journalctl --vacuum-size=1G</div></pre></td></tr></table></figure>
-<p>相当酷有木有！</p>
-<p>看起来不能移除或者disable该服务，但是你可以关闭logging。</p>
-<blockquote>
-<ul>
-<li><a href="https://www.freedesktop.org/software/systemd/man/systemd-journald.service.html" target="_blank" rel="external">https://www.freedesktop.org/software/systemd/man/systemd-journald.service.html</a></li>
-<li><a href="https://www.digitalocean.com/community/tutorials/how-to-use-journalctl-to-view-and-manipulate-systemd-logs" target="_blank" rel="external">https://www.digitalocean.com/community/tutorials/how-to-use-journalctl-to-view-and-manipulate-systemd-logs</a></li>
-<li><a href="https://www.loggly.com/blog/why-journald/" target="_blank" rel="external">https://www.loggly.com/blog/why-journald/</a></li>
-<li><a href="https://ask.fedoraproject.org/en/question/63985/how-to-correctly-disable-journald/" target="_blank" rel="external">https://ask.fedoraproject.org/en/question/63985/how-to-correctly-disable-journald/</a></li>
-</ul>
-</blockquote>
-<ul>
-<li>/sbin/lvmetad -f</li>
-</ul>
-<blockquote>
-<p>lvmetad守护进程缓存LVM元数据（metadata），所以LVM命令不用扫描磁盘就能读取元数据。</p>
-<p>元数据缓存的优势，在于扫描磁盘是非常耗时的，并且可能中断系统和磁盘的正常工作。</p>
-</blockquote>
-<p>那什么才是LVM（Logical Volume Management，逻辑卷管理）呢？</p>
-<blockquote>
-<p>你可以认为逻辑卷管理LVM是动态分区（dynamic partitions），意味着你能在正在运行的系统上用命令行创建/重设大小/删除（create/resize/delete）LVM分区（用LVM的话讲是逻辑卷）：无须重启操作系统来让内核感知新建或者重设大小的分区。</p>
-</blockquote>
-<p>听起来像，如果你正在使用LVM服务，那得保留该服务。</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ lvscan</div><div class="line">$ sudo apt remove lvm2 -y --purge</div></pre></td></tr></table></figure>
-<blockquote>
-<ul>
-<li><a href="http://manpages.ubuntu.com/manpages/xenial/man8/lvmetad.8.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man8/lvmetad.8.html</a></li>
-<li><a href="http://askubuntu.com/questions/3596/what-is-lvm-and-what-is-it-used-for" target="_blank" rel="external">http://askubuntu.com/questions/3596/what-is-lvm-and-what-is-it-used-for</a></li>
-</ul>
-</blockquote>
-<ul>
-<li>/lib/systemd/udevd</li>
-</ul>
-<blockquote>
-<p>systemd-udevd监听Linux内核uevent事件（uevent是内核空间和用户空间之间通信的机制，主要用于热插拔事件（hotplug））。对于每个事件，systemd-udevd都会根据udev规则执行匹配的指定设备。</p>
-<p>udev是Linux内核的设备管理器。其作为devfsd和hotplug的升级，udev主要管理/dev目录下的设备节点。</p>
-</blockquote>
-<p>所以该服务会管理 <code>/dev</code>。</p>
-<p>作者不太确定是否一定要运行在虚拟机上。</p>
-<blockquote>
-<ul>
-<li><a href="https://www.freedesktop.org/software/systemd/man/systemd-udevd.service.html" target="_blank" rel="external">https://www.freedesktop.org/software/systemd/man/systemd-udevd.service.html</a></li>
-<li><a href="https://wiki.archlinux.org/index.php/udev" target="_blank" rel="external">https://wiki.archlinux.org/index.php/udev</a></li>
-</ul>
-</blockquote>
-<ul>
-<li>/lib/systemd/timesyncd</li>
-</ul>
-<blockquote>
-<p>systemd-timesyncd是使用远程网络时间协议来同步本地系统时钟的系统服务。</p>
-</blockquote>
-<p>所以该服务是来替代<code>ntpd</code>的。</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">$ timedatectl status</div><div class="line">      Local time: Fri 2016-08-26 11:38:21 UTC</div><div class="line">  Universal time: Fri 2016-08-26 11:38:21 UTC</div><div class="line">        RTC time: Fri 2016-08-26 11:38:20</div><div class="line">       Time zone: Etc/UTC (UTC, +0000)</div><div class="line"> Network time on: yes</div><div class="line">NTP synchronized: yes</div><div class="line"> RTC <span class="keyword">in</span> <span class="built_in">local</span> TZ: no</div></pre></td></tr></table></figure>
-<p>查看一下服务器上打开的端口：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ sudo netstat -nlput</div><div class="line">Active Internet connections (only servers)</div><div class="line">Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name</div><div class="line">tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      2178/sshd</div><div class="line">tcp6       0      0 :::22                   :::*                    LISTEN      2178/sshd</div></pre></td></tr></table></figure>
-<p>以前在Ubuntu 14.04上打开的端口如下：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">$ sudo apt-get install ntp -y</div><div class="line">$ sudo netstat -nlput</div><div class="line">Active Internet connections (only servers)</div><div class="line">Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name</div><div class="line">tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      1380/sshd</div><div class="line">tcp6       0      0 :::22                   :::*                    LISTEN      1380/sshd</div><div class="line">udp        0      0 10.19.0.6:123           0.0.0.0:*                           2377/ntpd</div><div class="line">udp        0      0 139.59.256.256:123      0.0.0.0:*                           2377/ntpd</div><div class="line">udp        0      0 127.0.0.1:123           0.0.0.0:*                           2377/ntpd</div><div class="line">udp        0      0 0.0.0.0:123             0.0.0.0:*                           2377/ntpd</div><div class="line">udp6       0      0 fe80::601:6aff:fxxx:123 :::*                                2377/ntpd</div><div class="line">udp6       0      0 ::1:123                 :::*                                2377/ntpd</div><div class="line">udp6       0      0 :::123                  :::*                                2377/ntpd</div></pre></td></tr></table></figure>
-<blockquote>
-<p><a href="https://www.freedesktop.org/software/systemd/man/systemd-timesyncd.service.html" target="_blank" rel="external">https://www.freedesktop.org/software/systemd/man/systemd-timesyncd.service.html</a></p>
-<p><a href="https://wiki.archlinux.org/index.php/systemd-timesyncd" target="_blank" rel="external">https://wiki.archlinux.org/index.php/systemd-timesyncd</a></p>
-</blockquote>
-<ul>
-<li>/usr/sbin/atd -f</li>
-</ul>
-<blockquote>
-<p>atd将作业加入队列稍后执行。atd通过<code>at</code>将业务加入队列。</p>
-<p><code>at</code>和批量从标准输入输出或者指定文件读命令并稍后执行。</p>
-</blockquote>
-<p><code>cron</code>命令调度作业周期性重复运行，<code>at</code>只在指定时间运行一次。</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">$ <span class="built_in">echo</span> <span class="string">"touch /tmp/yolo.txt"</span> | at now + 1 minute</div><div class="line">job 1 at Fri Aug 26 10:44:00 2016</div><div class="line">$ atq</div><div class="line">1       Fri Aug 26 10:44:00 2016 a root</div><div class="line">$ sleep 60 &amp;&amp; ls /tmp/yolo.txt</div><div class="line">/tmp/yolo.txt</div></pre></td></tr></table></figure>
-<p>不需要使用的话可以卸载：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt remove at -y --purge</div></pre></td></tr></table></figure>
-<blockquote>
-<ul>
-<li><a href="http://manpages.ubuntu.com/manpages/xenial/man8/atd.8.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man8/atd.8.html</a></li>
-<li><a href="http://manpages.ubuntu.com/manpages/xenial/man1/at.1.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man1/at.1.html</a></li>
-<li><a href="http://askubuntu.com/questions/162439/why-does-ubuntu-server-run-both-cron-and-atd" target="_blank" rel="external">http://askubuntu.com/questions/162439/why-does-ubuntu-server-run-both-cron-and-atd</a></li>
-</ul>
-</blockquote>
-<ul>
-<li>/usr/lib/snapd/snapd</li>
-</ul>
-<blockquote>
-<p>Snappy Ubuntu Core是带有事务性更新的Ubuntu版本，其和当前的Ubuntu具有相同的library的最小服务器镜像，但是以更简单的机制来提供应用。</p>
-</blockquote>
-<p>很显然，它是一个简化版的deb包，分发的所有依赖都在单个snap中。</p>
-<p>作者从来不用snappy在服务器上发布或者分发应用，所以可以卸载：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt remove snapd -y --purge</div></pre></td></tr></table></figure>
-<blockquote>
-<ul>
-<li><a href="https://developer.ubuntu.com/en/snappy/" target="_blank" rel="external">https://developer.ubuntu.com/en/snappy/</a></li>
-<li><a href="https://insights.ubuntu.com/2016/06/14/universal-snap-packages-launch-on-multiple-linux-distros/" target="_blank" rel="external">https://insights.ubuntu.com/2016/06/14/universal-snap-packages-launch-on-multiple-linux-distros/</a></li>
-</ul>
-</blockquote>
-<ul>
-<li>/usr/bin/dbus-daemon</li>
-</ul>
-<blockquote>
-<p>在计算机中，D-Bus或者DBus是进程间通信（ inter-process communication，IPC）和远程过程调用（remote procedure call，RPC）机制，它允许在同一台机器上并发运行的多个计算机程序（进程）通信。</p>
-</blockquote>
-<p>作者觉得当你需要桌面环境时要启动该服务，当你只是在服务器上运行web应用则可以卸载：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt remove dbus -y --purge</div></pre></td></tr></table></figure>
-<p>然而，当你想看下时间是否通过NTP同步，发现了问题：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ timedatectl status</div><div class="line">Failed to create bus connection: No such file or directory</div></pre></td></tr></table></figure>
-<blockquote>
-<ul>
-<li><a href="https://en.wikipedia.org/wiki/D-Bus" target="_blank" rel="external">https://en.wikipedia.org/wiki/D-Bus</a></li>
-</ul>
-</blockquote>
-<ul>
-<li>/lib/systemd/systemd-logind</li>
-</ul>
-<blockquote>
-<p>systemd-logind是管理用户登录的系统服务。</p>
-<ul>
-<li><a href="https://www.freedesktop.org/software/systemd/man/systemd-logind.service.html" target="_blank" rel="external">https://www.freedesktop.org/software/systemd/man/systemd-logind.service.html</a></li>
-</ul>
-</blockquote>
-<ul>
-<li>/usr/sbin/cron -f</li>
-</ul>
-<blockquote>
-<p><code>cron</code>守护进程执行调度计划命令。</p>
-<p><code>-f</code> 保持运行在前台，不以守护进程运行。</p>
-</blockquote>
-<p>你可以使用<code>cron</code>周期性调度任务运行。</p>
-<p> <code>crontab -e</code> 编辑cron的配置文件，在Ubuntu上可以用 <code>/etc/cron.hourly</code>，<code>/etc/cron.daily</code>等配置。</p>
-<p>你可以使用下面的方法查看cron的log文件：</p>
-<ul>
-<li><code>grep cron /var/log/syslog</code> </li>
-<li><code>journalctl _COMM=cron</code></li>
-<li><code>journalctl _COMM=cron --since=&quot;date&quot; --until=&quot;date&quot;</code></li>
-</ul>
-<p>如果你不想使用cron时，可以停止并disable该服务：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">sudo systemctl stop cron</div><div class="line">sudo systemctl <span class="built_in">disable</span> cron</div></pre></td></tr></table></figure>
-<p>当使用 <code>apt remove cron</code> 删除cron服务时，会发现其会安装postfix：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ sudo apt remove cron</div><div class="line">The following packages will be REMOVED:</div><div class="line">  cron</div><div class="line">The following NEW packages will be installed:</div><div class="line">  anacron bcron bcron-run fgetty libbg1 libbg1-doc postfix runit ssl-cert ucspi-unix</div></pre></td></tr></table></figure>
-<p>看起来cron服务需要邮件客户端（MTA）发送邮件：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">$ apt show cron</div><div class="line">Package: cron</div><div class="line">Version: 3.0pl1-128ubuntu2</div><div class="line">...</div><div class="line">Suggests: anacron (&gt;= 2.0-1), logrotate, checksecurity, exim4 | postfix | mail-transport-agent</div><div class="line"></div><div class="line">$ apt depends cron</div><div class="line">cron</div><div class="line">  ...</div><div class="line">  Suggests: anacron (&gt;= 2.0-1)</div><div class="line">  Suggests: logrotate</div><div class="line">  Suggests: checksecurity</div><div class="line"> |Suggests: exim4</div><div class="line"> |Suggests: postfix</div><div class="line">  Suggests: &lt;mail-transport-agent&gt;</div><div class="line">    ...</div><div class="line">    exim4-daemon-heavy</div><div class="line">    postfix</div></pre></td></tr></table></figure>
-<blockquote>
-<ul>
-<li><a href="https://help.ubuntu.com/community/CronHowto" target="_blank" rel="external">https://help.ubuntu.com/community/CronHowto</a></li>
-<li><a href="https://www.digitalocean.com/community/tutorials/how-to-use-cron-to-automate-tasks-on-a-vps" target="_blank" rel="external">https://www.digitalocean.com/community/tutorials/how-to-use-cron-to-automate-tasks-on-a-vps</a></li>
-<li><a href="http://unix.stackexchange.com/questions/212355/where-is-my-logfile-of-crontab" target="_blank" rel="external">http://unix.stackexchange.com/questions/212355/where-is-my-logfile-of-crontab</a></li>
-</ul>
-</blockquote>
-<ul>
-<li>/usr/sbin/rsyslogd -n</li>
-</ul>
-<blockquote>
-<p>Rsyslogd是提供消息日志的系统组件。</p>
-</blockquote>
-<p>换句话说，rsyslogd将日志写入 <code>/var/log/</code> 目录下，比如 <code>/var/log/auth.log</code> 是SSH登陆的权限日志。</p>
-<p>rsyslogd的配置文件是<code>/etc/rsyslog.d</code>。</p>
-<p>你也可以配置rsyslogd发送log文件到远程服务器，实现日志log中心化。</p>
-<p>你也可以在后台脚本中使用 <code>logger</code> 命令将消息日志写入 <code>/var/log/syslog</code> 。</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#!/bin/bash</span></div><div class="line"></div><div class="line">logger Starting doing something</div><div class="line"><span class="comment"># NFS, get IPs, etc.</span></div><div class="line">logger Done doing something</div></pre></td></tr></table></figure>
-<p>但是，前面已经有 <code>systemd-journald</code> 服务在运行了，那还需 <code>rsyslogd</code> 吗？</p>
-<blockquote>
-<p>Rsyslog 和 Journal服务是存在于系统中的两个log日志应用，它们功能不同。大部分情况下，需要同时结合两者的功能。比如，创建结构化的消息并存储到文件数据库。通信接口需要Rsyslog提供输入和输出模块，通信socket由Journal提供。</p>
-</blockquote>
-<p>所以呢？看样子还是暂时保留吧。</p>
-<blockquote>
-<ul>
-<li><a href="http://manpages.ubuntu.com/manpages/xenial/man8/rsyslogd.8.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man8/rsyslogd.8.html</a></li>
-<li><a href="http://manpages.ubuntu.com/manpages/xenial/man1/logger.1.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man1/logger.1.html</a></li>
-<li><a href="https://wiki.archlinux.org/index.php/rsyslog" target="_blank" rel="external">https://wiki.archlinux.org/index.php/rsyslog</a></li>
-<li><a href="https://www.digitalocean.com/community/tutorials/how-to-centralize-logs-with-rsyslog-logstash-and-elasticsearch-on-ubuntu-14-04" target="_blank" rel="external">https://www.digitalocean.com/community/tutorials/how-to-centralize-logs-with-rsyslog-logstash-and-elasticsearch-on-ubuntu-14-04</a></li>
-<li><a href="https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/System_Administrators_Guide/s1-interaction_of_rsyslog_and_journal.html" target="_blank" rel="external">https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/System_Administrators_Guide/s1-interaction_of_rsyslog_and_journal.html</a></li>
-</ul>
-</blockquote>
-<ul>
-<li>/usr/sbin/acpid</li>
-</ul>
-<blockquote>
-<p>acpid，是高级配置与电源接口（Advanced Configuration and Power Interface，ACPI）事件守护进程。</p>
-<p>acpid设计用来通知ACPI事件的用户空间程序，其在系统启动时已启动，并默认以后台进程运行。</p>
-<p>计算机中的高级配置与电源接口，提供处理电源相关事件的开源标准。操作系统可以处理计算机硬件的发现和配置，可以进行电源管理。比如，将未使用的组件置为睡眠，进行状态监控。</p>
-</blockquote>
-<p>但是本例中使用的虚拟机，不需要挂起/继续。</p>
-<p>这里删除该服务，看下会发生什么。</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt remove acpid -y --purge</div></pre></td></tr></table></figure>
-<p>作者可以成功执行 <code>reboot</code>重启 droplet，但是执行 <code>halt</code> 后必须通过web接口关闭虚拟机。</p>
-<blockquote>
-<ul>
-<li><a href="http://manpages.ubuntu.com/manpages/xenial/man8/acpid.8.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man8/acpid.8.html</a></li>
-<li><a href="https://en.wikipedia.org/wiki/Advanced_Configuration_and_Power_Interface" target="_blank" rel="external">https://en.wikipedia.org/wiki/Advanced_Configuration_and_Power_Interface</a></li>
-</ul>
-</blockquote>
-<ul>
-<li>/usr/bin/lxcfs /var/lib/lxcfs/</li>
-</ul>
-<blockquote>
-<p>Lxcfs主要是以lxc容器为用户提供fuse文件系统。在Ubuntu 15.04上，默认提供两个功能：一是，一些/proc文件的视图；二是，过滤访问主机的cgroup文件系统。</p>
-<p>总之，在Ubuntu 15.04上你能用通用的方式（ lxc-create）创建容器。创建的容器使用uptime、top等能得出“正确”结果。</p>
-</blockquote>
-<p>不用LXC容器时可以移除该服务：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt remove lxcfs -y --purge</div></pre></td></tr></table></figure>
-<blockquote>
-<ul>
-<li><a href="https://insights.ubuntu.com/2015/03/02/introducing-lxcfs/" target="_blank" rel="external">https://insights.ubuntu.com/2015/03/02/introducing-lxcfs/</a></li>
-<li><a href="https://www.stgraber.org/2016/03/31/lxcfs-2-0-has-been-released/" target="_blank" rel="external">https://www.stgraber.org/2016/03/31/lxcfs-2-0-has-been-released/</a></li>
-</ul>
-</blockquote>
-<ul>
-<li>/usr/lib/accountservice/accounts-daemon</li>
-</ul>
-<blockquote>
-<p>账户管理AccountsService包提供一系列D-Bus接口查询和管理用户账户信息。其是基于usermod(8)，useradd(8) 和userdel(8) 命令实现的。</p>
-</blockquote>
-<p>作者想知道移除该服务会出现什么问题。当移除DBus时， <code>timedatectl</code>失效。</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt remove accountsservice -y --purge</div></pre></td></tr></table></figure>
-<blockquote>
-<ul>
-<li><a href="http://www.linuxfromscratch.org/blfs/view/systemd/gnome/accountsservice.html" target="_blank" rel="external">http://www.linuxfromscratch.org/blfs/view/systemd/gnome/accountsservice.html</a></li>
-</ul>
-</blockquote>
-<ul>
-<li>/sbin/mdadm</li>
-</ul>
-<blockquote>
-<p>Linux组件mdadm是管理RAID设备的管理和监控软件。</p>
-<p>其名字是源于md（multiple device，多设备）节点管理（administers），它替代之前的mdctl。原始的名字是 “Mirror Disk”，随着功能的增加名字随之改变。</p>
-<p>RAID是将多块硬盘看作是一块硬盘的方法。RAID的目的有两个：1)扩展磁盘驱动容量：RAID 0。如果你有2个500GB的HDD，则总的容量即为1TB；2)防止驱动失败时数据丢失。比如RAID 1，RAID 5， RAID 6和RAID 10。</p>
-</blockquote>
-<p>可以用如下命令移除：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt remove mdadm -y --purge</div></pre></td></tr></table></figure>
-<blockquote>
-<ul>
-<li><a href="https://en.wikipedia.org/wiki/Mdadm" target="_blank" rel="external">https://en.wikipedia.org/wiki/Mdadm</a></li>
-<li><a href="https://help.ubuntu.com/community/Installation/SoftwareRAID" target="_blank" rel="external">https://help.ubuntu.com/community/Installation/SoftwareRAID</a></li>
-<li><a href="http://manpages.ubuntu.com/manpages/xenial/man8/mdadm.8.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man8/mdadm.8.html</a></li>
-</ul>
-</blockquote>
-<ul>
-<li>/usr/lib/policykit-1/polkitd –no-debug</li>
-</ul>
-<blockquote>
-<p>polkitd：PolicyKit守护进程。</p>
-<p>polkit：授权管理。</p>
-</blockquote>
-<p>有点类似是细粒度的sudo权限控制。你能允许非权限用户做某些root用户的操作。比如，桌面计算机中的Linux重启计算机。</p>
-<p>这里是运行的服务器，可以移除该服务：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt remove policykit-1 -y --purge</div></pre></td></tr></table></figure>
-<blockquote>
-<ul>
-<li><a href="http://manpages.ubuntu.com/manpages/xenial/man8/polkitd.8.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man8/polkitd.8.html</a></li>
-<li><a href="http://manpages.ubuntu.com/manpages/xenial/man8/polkit.8.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man8/polkit.8.html</a></li>
-<li><a href="http://www.admin-magazine.com/Articles/Assigning-Privileges-with-sudo-and-PolicyKit" target="_blank" rel="external">http://www.admin-magazine.com/Articles/Assigning-Privileges-with-sudo-and-PolicyKit</a></li>
-<li><a href="https://wiki.archlinux.org/index.php/Polkit#Configuration" target="_blank" rel="external">https://wiki.archlinux.org/index.php/Polkit#Configuration</a></li>
-</ul>
-</blockquote>
-<ul>
-<li>/usr/sbin/sshd -D</li>
-</ul>
-<blockquote>
-<p>sshd（OpenSSH Daemon），ssh的守护进程。</p>
-<p>指定-D选项时，sshd不断开，也不成为守护进程。这样会更容易监控sshd。</p>
-<ul>
-<li><a href="http://manpages.ubuntu.com/manpages/xenial/man8/sshd.8.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man8/sshd.8.html</a></li>
-</ul>
-</blockquote>
-<ul>
-<li>/sbin/iscsid</li>
-</ul>
-<p>iscsid是系统守护进程，处理iSCSI配置和管理连接。从帮助页看到：</p>
-<blockquote>
-<p>iscsid实现iSCSI协议的控制路径，和一些设备管理。比如，守护进程能配置成在服务器启动时自动重启，该功能基于持久化iSCSI数据库。</p>
-</blockquote>
-<p>可以移除该服务：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt remove open-iscsi -y --purge</div></pre></td></tr></table></figure>
-<ul>
-<li>/sbin/agetty –noclear tty1 linux</li>
-</ul>
-<blockquote>
-<p>agetty是alternative Linux getty的缩写。</p>
-<p>getty，是”get tty”的简写，通常从 <code>/etc/inittab</code> 启动，允许用户从终端 (TTYs)登录。它会提示输入用户名，运行’login’ 程序授权用户登录。</p>
-<p>早期getty存在传统Unix系统，其管理一系列连接到主机上的终端（电传打字机，Teletype machine）连接。其中tty是Teletype的缩写，后来代指各种文字终端。</p>
-</blockquote>
-<p>如果在物理服务器上，你可以使用getty登录。在Digital Ocean，你可以点击droplet详情上的<em>Console</em>，通过浏览器和终端交互（可能是VNC连接）。</p>
-<p>在过去，系统启动后你会看到一大泼tty启动（一般配置在/etc/inittab）；不过现在都用systemd代替。</p>
-<p>下面移除 <code>agetty</code>启动的配置文件：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">sudo rm /etc/systemd/system/getty.target.wants/getty@tty1.service</div><div class="line">sudo rm /lib/systemd/system/getty@.service</div></pre></td></tr></table></figure>
-<p>然后重启服务器，仍然可以通过SSH连接服务器，但是不能通过Digital Ocean的web控制台登录服务器啦。</p>
-<p><img src="http://img0.ph.126.net/QQy2chIVliRMwjpAkvKNZQ==/6632514723004686312.png" alt="image"></p>
-<blockquote>
-<ul>
-<li><a href="http://manpages.ubuntu.com/manpages/xenial/man8/getty.8.html" target="_blank" rel="external">http://manpages.ubuntu.com/manpages/xenial/man8/getty.8.html</a></li>
-<li><a href="https://en.wikipedia.org/wiki/Getty_(Unix" target="_blank" rel="external">https://en.wikipedia.org/wiki/Getty_(Unix)</a>)</li>
-<li><a href="http://0pointer.de/blog/projects/serial-console.html" target="_blank" rel="external">http://0pointer.de/blog/projects/serial-console.html</a></li>
-<li><a href="http://unix.stackexchange.com/questions/56531/how-to-get-fewer-ttys-with-systemd" target="_blank" rel="external">http://unix.stackexchange.com/questions/56531/how-to-get-fewer-ttys-with-systemd</a></li>
-</ul>
-</blockquote>
-<ul>
-<li>sshd: root@pts/0 &amp; -bash &amp; htop</li>
-</ul>
-<p><code>sshd: root@pts/0</code> 意味着root用户在#<code>0</code>伪终端 (<code>pts</code>)创建啦SSH会话。</p>
-<p><code>bash</code> 是指使用的shell。</p>
-<p>但是为啥<code>bash</code> 开头有个破折号呢？Reddit上有解释：</p>
-<blockquote>
-<p><code>bash</code> 开头的破折号是因为<code>bash</code> 以login shell模式启动时（取得<code>bash</code> 时需要完整的登录流程）。启动login shell模式有两种方式：使用“-”参数启动；使用”—login”选项启动。它们都会加载配置文件。</p>
-</blockquote>
-<p><code>htop</code> 是交互式进程查看工具。</p>
-<p>接着移除下面的服务：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">sudo apt remove lvm2 -y --purge</div><div class="line">sudo apt remove at -y --purge</div><div class="line">sudo apt remove snapd -y --purge</div><div class="line">sudo apt remove lxcfs -y --purge</div><div class="line">sudo apt remove mdadm -y --purge</div><div class="line">sudo apt remove open-iscsi -y --purge</div><div class="line">sudo apt remove accountsservice -y --purge</div><div class="line">sudo apt remove policykit-1 -y --purge</div></pre></td></tr></table></figure>
-<p>用<code>htop</code>查看会出现如下图：</p>
-<p><img src="http://img0.ph.126.net/ts_inlBS6JC-agpy9WFyPw==/3081869520024393963.png" alt="image"></p>
-<p>再次挑战“极限”情况：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">sudo apt remove dbus -y --purge</div><div class="line">sudo apt remove rsyslog -y --purge</div><div class="line">sudo apt remove acpid -y --purge</div><div class="line">sudo systemctl stop cron &amp;&amp; sudo systemctl <span class="built_in">disable</span> cron</div><div class="line">sudo rm /etc/systemd/system/getty.target.wants/getty@tty1.service</div><div class="line">sudo rm /lib/systemd/system/getty@.service</div></pre></td></tr></table></figure>
-<p>再用<code>htop</code>查看：</p>
-<p><img src="http://img2.ph.126.net/6Y5YnkSZ7ci07ByX1GhT_g==/6632304716283782948.png" alt="image"></p>
-<p>未完待续。。。</p>
-<p>Enjoy!</p>
-<hr>
-<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
-<p>若发现以上文章有任何不妥，请联系我。</p>
-<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/05/19/distribute-frame-hsf-not-dubbo/" itemprop="url">
-                  分布式服务框架选型：面对Dubbo，阿里巴巴为什么选择了HSF？
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-05-19T18:05:10+08:00" content="2017-05-19">
-              2017-05-19
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>阿里巴巴集团内部使用的分布式服务框架 HSF（High Speed Framework，也有人戏称“好舒服”）已经被很多技术爱好者所熟知，目前已经支撑着近 2000 多个应用的运行。</p>
-<p>其对应早期的开源项目 Dubbo（因为某些原因，Dubbo 项目在 2012 年年底，阿里巴巴就停止了对此开源项目的更新），则更是在互联网领域有着非常高的知名度和广泛的使用。</p>
-<p>本文通过对阿里巴巴 HSF 服务框架的介绍，让大家能对这类分布式服务框架架构设计、运行原理，以及如何实现作为一个 SOA 架构需要满足的各个特性有一个清晰的认识。</p>
-<p><strong>HSF 服务框架主要组件</strong></p>
-<p><strong>1、服务提供者</strong></p>
-<p>在服务框架中真正提供服务功能实现的应用实例，为了保障服务提供的高可用性，一般均是集群部署。</p>
-<p>每一个 HSF 的应用均是以 War 包的形式存在，运行在阿里巴巴优化定制后的 Tomcat 容器中，在 Tomcat 容器层已经集成了 HSF 服务框架对服务提供者或服务调用者进行配置服务器发现、服务注册、订阅、失效转移等相关功能，所以不管是在服务提供者还是调用者开发时，只需要进行服务相关的配置操作，应用中无需引入任何 HSF 相关的 Jar 依赖包。</p>
-<p>考虑到应用故障的隔离、更方便的服务管控，<strong>目前淘宝内部大部分应用的部署方式还是一个虚拟机（对应一个操作系统）运行一个 Tomcat 容器</strong>，每个 Tomcat 运行一个服务应用，随着近几年以 Docker 容器技术的发展和流行，现在阿里巴巴内部也正在进行应用容器化部署的工作，让服务器的资源利用更加科学和高效。</p>
-<p><strong>2、服务调用者</strong></p>
-<p>作为服务的消费者，大多数也是以 WAR 应用包的方式运行在 Tomcat 容器中，在阿里巴巴集团内部也有一部分是基于 C/C++、PHP、Node.js 等语言开发的服务调用者。</p>
-<p><strong>3、地址服务器</strong></p>
-<p>在 HSF 服务框架中，地址服务器肩负着给服务提供者和服务调用者提供部署环境中所有配置服务器和 Diamond 服务器的服务器列表信息，是由 Nginx（ 是一个高性能的 HTTP 和反向代理服务器）提供该服务能力。</p>
-<p>在部署 HSF 服务环境时，会将整个环境中的配置服务器集群（服务器 IP 列表）和 Diamond 服务器集群信息设置在地址服务器上，在实际生产部署中，也会部署多台地址服务器提供负载均衡和高可用性的服务，服务提供者和调用者<strong>通过统一域名的方式访问</strong>这些地址服务器（比如“xxx.tbsite.net”），通过 DNS 轮询实现地址服务器访问的高可用性。</p>
-<p><strong>4、配置服务器</strong></p>
-<p>配置服务器在 HSF 框架中主要负责记录环境内所有服务发布（服务提供者的 IP 地址和服务端口信息）和服务订阅（服务调用者的 IP 地址和服务端口信息）信息，并将服务相关信息推送到服务节点上。为了追求服务发布和订阅的推送效率，所有的服务发布和订阅信息均是保存在内存中。</p>
-<p><strong>配置服务器与所有服务者提供者和调用者均是长连接，采用心跳的方式可监控到各服务运行节点的状况</strong>，一旦出现服务提供者服务节点出现故障时，会自动推送更新后（将出问题的服务提供者服务节点信息从列表中删除）的服务提供者列表给相关的服务调用者端。</p>
-<p>在生产环境中，会部署多台配置服务器，用于服务发布、订阅、推送的负载均衡，在多台配置服务器间会进行实时的数据同步，保证服务发布和订阅信息尽快能同步到各服务节点上。</p>
-<p>某种程度上，配置服务器在 HSF 框架中扮演了服务调用调度的指挥官，通过给服务调用者端推送不同的服务提供者列表就可以轻易的调整服务调用的路由，这一特性在淘宝平台实现单元化（即某一客户在访问淘宝时，访问请求一旦路由到某一个淘宝机房后，在淘宝上进行的所有业务的操作均可以在该机房完成，而无需访问其他机房的服务，也是实现异地多活的基础）、异地多活起到了至关重要的作用。</p>
-<p><strong>5、Diamond 服务器</strong></p>
-<p>本质上，<strong>Diamond 服务器是一个通用的统一配置管理服务</strong>，类似 ZooKeeper，给应用提供统一的配置设置和推送服务，使用场景非常广泛，在阿里巴巴内部有很多的产品在需要进行配置的保存和获取时都会使用 Diamond 服务器。</p>
-<p>在 HSF 服务框架中，则主要承担了服务调用过程中对于服务调用安全管控的规则、服务路由权重、服务 QPS 阀值等配置规则的保存，<strong>所有的信息均是持久化保存到了后端的 MySQL 服务器中</strong>，在生产环境中，会有多台 Diamond 服务器提供负载均衡的服务。</p>
-<p>使用 Diamond 服务器进行服务相关设置的典型场景如下：</p>
-<ul>
-<li>通过设置白名单（服务调用者所在服务节点 IP 地址）的方式设置某些服务或服务中的方法只能让特定 IP 地址的服务器调用；</li>
-<li>通过用户认证的方式控制服务是否能够调用；</li>
-<li>按照不同的服务器权重设置服务调用者对多个服务提供者服务节点的访问；</li>
-<li>设置某些服务的 QPS 能力上限值，一旦该服务的 QPS 达到该阀值，则拒绝服务的继续调用，这也是实现服务限流的技术实现，在平台进行大促或秒杀场景时，保障平台的稳定的重要屏障。</li>
-</ul>
-<p>通过这样规则的设置，Diamond 除了将这些规则保存在自身的数据库中外，会自动将这些规则推送到相关的服务节点上（实际实现上是服务节点会定时从 Diamond 服务器上同步相关配置信息），使这些规则能立即在服务运行环境中生效。</p>
-<p>如图 3-5 所示是阿里巴巴 HSF 服务框架的工作原理，按照服务注册发布、服务订阅、服务规则推送、最终服务提供者和服务调用者间的服务交互的顺序说明了 HSF 服务框架中每个组件在整个框架中所扮演的角色。</p>
-<p><img src="http://img2.ph.126.net/tpQ9qJtMy1GcOt3gujpvFA==/6632258536792469066.jpg" alt="img"></p>
-<p>图 3-5 HSF 服务框架工作原理示意图</p>
-<p><strong>1）服务节点对配置服务器列表的获取。</strong></p>
-<p>服务调用者和服务提供者在随着 Tomcat 容器启动后，会以域名（比如“xxx.tbsite.net”）的方式获取到可用的地址服务器，通过向地址服务器分别发送获取配置服务器和 Diamond 服务器服务 IP 列表请求的方式，在容器启动完成后，就已经在该服务节点上获取到了配置服务器和 Diamond 服务器的 IP 列表信息。整个过程如图 3-5 中的步骤①②。</p>
-<p><strong>2）服务的注册发布。</strong></p>
-<p>作为服务提供者，当获取到配置服务器的服务器列表后，则向配置服务器发送当前应用中包含的服务提供者相关信息（这些信息均是从应用的配置文件中获取到，比如服务的接口类全名、服务版本、所属服务组等信息），联同当前服务器的 IP 地址、服务端口等信息进行服务注册发布，如图 3-5 中的步骤③。这个步骤在每一个有服务提供的应用启动时都会自动执行，比如现在有 5 个提供同一服务的应用启动后，此时在配置服务器上就已经保存了提供这一服务的 5 个服务器相关信息。</p>
-<p><strong>3）服务的订阅。</strong></p>
-<p>当作为服务调用者的应用启动时，同样在完成配置服务器列表的获取后，就进行与配置服务器的交互，发送服务消费者相关信息（同样包含了服务的接口全名，服务版本、所属服务组）到配置服务器进行服务的订阅，此时在配置服务器上会通过服务接口全名+服务版本作为匹配条件在当前配置服务器的内存中进行搜索，一旦获取到对应的服务注册信息，则将对应的服务提供者的服务器组 IP 地址及端口返回给服务调用者所在的应用节点上，此时也就完成了服务调用者端对于它所需要调用的服务提供者服务器列表信息，用于在服务真正交互时使用。服务订阅过程如图 3-5 中的步骤④⑤。</p>
-<p><strong>4）服务规则的推送（如果需要）。</strong></p>
-<p>如果没有上文提到对于服务安全管控、流量控制等需求的时候，对于 Diamond 服务器的使用并不是必需的，在有这样的需求场景时，可通过 Diamond 提供的规则设置界面，可以对指定服务的服务提供者和调用者设置相关的规则，一旦保存规则后，则此规则配置将会在 5 秒内推送到与所设置服务相关的服务节点上。如图 3-5 中的步骤⑥。</p>
-<p><strong>5）服务交互。</strong></p>
-<p>在应用进行业务请求处理过程中，出现了服务调用者对服务提供者的调用时，服务调用者会从已经保存在该应用节点上的服务提供者服务器列表中选择（阿里巴巴内部使用随机模式）其中一台进行服务请求的发送，服务交互期间完全是服务调用者和服务提供者间两台服务器间的，无需通过中间服务器的中转，这就是相比于“中心化” ESB 模式，所有服务交互都需要“中心” ESB 进行服务路由，而当前这种架构称为“去中心化”的主要原因。如图 3-5 中的步骤⑦。</p>
-<p>阿里巴巴的分布式服务框架核心是以服务化的方式构建整个应用体系的同时，要保证在高并发的情况下，服务具备高效交互、高可用性和扩展能力。接下来对于 HSF 框架如何给服务提供以上能力具体加以说明。</p>
-<p><strong>1、HSF 框架采用 Netty + Hession 数据序列化协议实现服务交互</strong></p>
-<p>HSF 框架中采用如今流行的网络通信框架 Netty 加上 Hession 数据序列化协议实现 HSF 服务间的交互，主要考虑点是在大并发量时，服务交互性能达到最佳。这类 RPC 协议采用多路复用的 TCP 长连接方式，在服务提供者和调用者间有多个服务请求同时调用时会共用同一个长连接，即一个连接交替传输不同请求的字节块。它既避免了反复建立连接开销，也避免了连接的等待闲置从而减少了系统连接总数，同时还避免了 TCP 顺序传输中的线头阻塞（head-of-line blocking）问题。</p>
-<p>Hessian 是 HSF 框架中默认使用的数据序列化协议，在数据量较小时性能表现出众，Hessian 的优点是精简高效，同时可以跨语言使用，目前支持 Java, C++,  .net, Python, ruby 等语言。另外 Hessian 可以充分利用 Web 容器的成熟功能，在处理大量用户访问时很有优势，在资源分配、线程排队、异常处理等方面都可以由 Web 容器保证。</p>
-<p>HSF 框架同时也支持切换使用 Java 序列化，Hession 相比 JDK 标准的序列化方式（即基于 Serializable 接口的标准序列化），在典型场景中，其序列化时间开销可能缩短 20 倍。虽然 Hessian 不是最快的序列化协议，但它对于复杂业务对象的序列化正确率、准确性相较于最稳定的 Java 序列化并不逊色太多。</p>
-<p>业界还有一些比 Hessian 更快的序列化协议，但它们相对于 Hessian 在复杂场景下的处理能力还是会差一些，<strong>所以 Hessian 是在性能和稳定性同时考虑下最优的序列化协议。</strong></p>
-<p>阿里巴巴当时在对多种通信协议和数据序列化组件等测试中，Netty + Hession 的组合在互联网高并发量的场景下,特别是在 TPS 上达到 10w 以上时，性能和效率远比 REST 或者 Web Service 高。</p>
-<p><strong>2、HSF 框架的容错机制</strong></p>
-<p>因为要保证服务的高可用性，所以在生产环境部署中一定会有<strong>多个应用实例作为服务提供者提供某一相同服务。</strong></p>
-<p>基于之前所提到的服务框架的运行原理的说明，在进行服务调用时，服务调用者端已经保存了它所需要调用的服务提供者的服务器列表信息（如图 3-6 中为例，则保存了三台服务提供者所在服务器的列表）。</p>
-<p>当采用随机方式获取其中一台进行服务交互时（如图 3-6 步骤①），不管是第一台服务器已经某种故障造成了服务请求无法响应，还是该服务器已经接收了服务请求，在进行服务请求处理过程中出现了服务器故障（比如宕机、网络问题），造成该服务器没有在规定的时间（一般服务调用会设置到期时间）返回服务处理的结果，服务调用者端则会获取到服务调用失败的反馈（如图 3-6 步骤②）。</p>
-<p>在 HSF 服务调用的代码中会立即从剩下的服务提供者服务器列表中选择另外一个服务器再次进行服务请求（如图 3-6 步骤③），这一次这个服务提供者实例正常提供了此次服务的请求（如图 3-6 步骤④），从而保证了在个别服务提供者出现故障时，完全不会影响该服务正常提供服务。</p>
-<p><img src="http://img1.ph.126.net/vuGysK3QsRHQJKUTHPrRGw==/6632018843260281046.jpg" alt="img"></p>
-<p>图 3-6 HSF 服务框架实现服务高可用性原理示意图</p>
-<p>同时，<strong>因为配置服务器是采用长连接的方式与服务节点进行网络通讯，一旦发现有服务提供者实例出现故障，配置服务器在秒级就会感知到</strong>（如图 3-6 步骤⑤），此时会将出问题这台服务提供者的信息从该服务的服务器列表中删除，并将更新后的服务器列表采用推送的方式同步给与该服务相关的所有服务调用者端（如图 3-6 步骤⑥），这样当下次服务调用者再进行此服务的调用时，就不会因为随机的方式再次对已经停止服务提供的服务器发起服务的调用。</p>
-<p><strong>3、HSF 框架的线性扩展支持</strong></p>
-<p>作为 HSF 框架设计之初，<strong>最为重要的一个特性就是服务能力的可扩展性。</strong>也就是真正的做到某个服务的业务处理能力能随着服务器资源的增加得到线性的增长。</p>
-<p>其实在传统架构中一直也会强调平台的扩展能力，但均会程度不一的出现服务节点数量到达一定量后，出现阻碍平台服务能力扩展的问题，有的是出现网络传输的瓶颈、也有服务节点接入数量上的限制，前文所描述的 ESB 架构带来的“雪崩”效应也均是这类架构给服务能力的扩展带来影响的原因所在。</p>
-<p>如图 3-7 中所描述的场景，当服务面对较大的服务调用压力或将要面临如天猫双11大促、秒杀等活动前，已有的服务提供者各服务器水位（CPU、内存、IO等）处于比较高的情况或现有服务能力满足不了业务访问量的要求时，则需要通过增加服务节点数量的方式提升该服务的服务处理能力。</p>
-<p><img src="http://img0.ph.126.net/aXYvmt58vBlDyra69PSyfA==/6632181570981194421.jpg" alt="img"></p>
-<p>图 3-7 HSF 服务框架对服务能力线性扩展支持1</p>
-<p>此时，只需要通过增加该服务的服务提供者实例（如图 3-8 所示，增加了一个服务），基于 HSF 框架的运行机制，<strong>新增加的服务提供者实例一旦应用启动完成后，可在几秒内开始进行服务请求的处理</strong>（主要完成服务注册发布、更新后服务列表推送到服务调用者端），从而达到分担其他服务器实例压力的作用，实现服务能力整体水位恢复到正常的状态（如图 3-9）。</p>
-<p><img src="http://img0.ph.126.net/g5M-yIgyLaGutr7V-khlZA==/6632145287097477015.jpg" alt="img"></p>
-<p>图 3-8 HSF服务框架对服务能力线性扩展支持2</p>
-<p><img src="http://img0.ph.126.net/EJIZHJ1KmkqfSwrZ3NwA2g==/6632081515423068015.jpg" alt="img"></p>
-<p>图 3-9 HSF 服务框架对服务能力线性扩展支持3</p>
-<p>正是基于 HSF 框架这一特性，从而真正实现了只要增加服务实例就能实现该服务能力扩展的目标，目前在阿里巴巴共享服务事业部中多个服务中心在天猫双 11 那天各自所部署的服务实例节点数量均超过 2000，即同一个服务由超过 2000 个服务实例同时提供负载均衡的服务。</p>
-<p>本文由公众号《高可用架构》原创。</p>
-<hr>
-<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
-<p>若发现以上文章有任何不妥，请联系我。</p>
-<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -2526,7 +1944,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">30</span>
+              <span class="site-state-item-count">32</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
