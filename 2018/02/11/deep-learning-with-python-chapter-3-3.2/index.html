@@ -1,0 +1,652 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="神机喵算" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="3.2 Keras简单入门全书使用的代码示例采用Keras（https://keras.io）实现。Keras是一个Python编写的深度学习框架，提供方便的方式定义和训练几乎所有的深度学习模型。Keras原本是为研究者开发的，旨在加速试验。
+Keras具有以下特色：
+
+同一段代码可以在CPU或者GPU上无缝切换
+用户友好的API使得创建深度学习模型的原型更简单
+內建支持卷积神经网络（计算机视觉）">
+<meta property="og:type" content="article">
+<meta property="og:title" content="《Deep Learning with Python》第三章 3.2 走进神经网络之Keras简单入门">
+<meta property="og:url" content="http://yoursite.com/2018/02/11/deep-learning-with-python-chapter-3-3.2/index.html">
+<meta property="og:site_name" content="神机喵算">
+<meta property="og:description" content="3.2 Keras简单入门全书使用的代码示例采用Keras（https://keras.io）实现。Keras是一个Python编写的深度学习框架，提供方便的方式定义和训练几乎所有的深度学习模型。Keras原本是为研究者开发的，旨在加速试验。
+Keras具有以下特色：
+
+同一段代码可以在CPU或者GPU上无缝切换
+用户友好的API使得创建深度学习模型的原型更简单
+內建支持卷积神经网络（计算机视觉）">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/9803709-133c6b2bc31bc930..jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/9803709-93fb1cf14e0132ec..jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg">
+<meta property="og:updated_time" content="2018-03-17T03:57:03.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="《Deep Learning with Python》第三章 3.2 走进神经网络之Keras简单入门">
+<meta name="twitter:description" content="3.2 Keras简单入门全书使用的代码示例采用Keras（https://keras.io）实现。Keras是一个Python编写的深度学习框架，提供方便的方式定义和训练几乎所有的深度学习模型。Keras原本是为研究者开发的，旨在加速试验。
+Keras具有以下特色：
+
+同一段代码可以在CPU或者GPU上无缝切换
+用户友好的API使得创建深度学习模型的原型更简单
+內建支持卷积神经网络（计算机视觉）">
+<meta name="twitter:image" content="http://upload-images.jianshu.io/upload_images/9803709-133c6b2bc31bc930..jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/02/11/deep-learning-with-python-chapter-3-3.2/"/>
+
+  <title> 《Deep Learning with Python》第三章 3.2 走进神经网络之Keras简单入门 | 神机喵算 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">神机喵算</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                《Deep Learning with Python》第三章 3.2 走进神经网络之Keras简单入门
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-02-11T12:38:52+08:00" content="2018-02-11">
+              2018-02-11
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h5 id="3-2-Keras简单入门"><a href="#3-2-Keras简单入门" class="headerlink" title="3.2 Keras简单入门"></a>3.2 Keras简单入门</h5><p>全书使用的代码示例采用Keras（<a href="https://keras.io）实现。Keras是一个Python编写的深度学习框架，提供方便的方式定义和训练几乎所有的深度学习模型。Keras原本是为研究者开发的，旨在加速试验。" target="_blank" rel="external">https://keras.io）实现。Keras是一个Python编写的深度学习框架，提供方便的方式定义和训练几乎所有的深度学习模型。Keras原本是为研究者开发的，旨在加速试验。</a></p>
+<p>Keras具有以下特色：</p>
+<ul>
+<li>同一段代码可以在CPU或者GPU上无缝切换</li>
+<li>用户友好的API使得创建深度学习模型的原型更简单</li>
+<li>內建支持卷积神经网络（计算机视觉）、循环神经网络（序列处理），以及两者的任意组合</li>
+<li>支持任意网络结构：多输入或者多输出模型，layer共享，模型共享，等等。这意味着Keras能构建任意深度学习模型，从对抗生成网络到图灵机。</li>
+</ul>
+<p>Keras采用MIT license分发，意味着可以在商业项目中使用。截止到2017年中旬，Keras同时兼容Python 2.7到3.6版本。</p>
+<p>Keras已有超过200,000个使用者，涵盖从学术研究到工业企业（包括创业公司和大型公司）。Google、Netflix、Uber、Yelp和成百上千的创业公司使用Keras解决各种问题。Keras也是机器学习竞赛网站Kaggle最流行的使用框架。</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/9803709-133c6b2bc31bc930..jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image"></p>
+<p>图 3.2 Google搜索中深度学习框架的关注度趋势</p>
+<h6 id="3-2-1-Keras、TensorFlow、Theano和CNTK"><a href="#3-2-1-Keras、TensorFlow、Theano和CNTK" class="headerlink" title="3.2.1 Keras、TensorFlow、Theano和CNTK"></a>3.2.1 Keras、TensorFlow、Theano和CNTK</h6><p>Keras提供high-level的开发深度学习模型的构建模块，其是model-level的库。Keras不能解决low-level的操作，比如张量操作和差分。Keras可以依赖指定的、经过优化的张量操作库作为其后端引擎（<em>backend engine</em>），而不是选择一个张量库去试图作为Keras的实现。Keras是以模块化的方式解决问题，见图3.3，不同的后端引擎能够为Keras进行无缝地扩展。当前已经存在三种后端引擎实现：TensorFlow后端引擎，Theano后端引擎，和CNTK后端引擎。将来可能会为Keras扩展更多的深度学习执行引擎。</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/9803709-93fb1cf14e0132ec..jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image"></p>
+<p>图3.3 深度学习软件和硬件栈</p>
+<p>TensorFlow、CNTK和Theano是当前主流的深度学习平台，其中Theano（<a href="http://deeplearning.net/software/theano）是蒙特利尔大学大学MILA实验室开发的，TensorFlow（www.tensorflow.org）由谷歌开发，CNTK（https://github.com/Microsoft/CNTK）由微软开发。用Keras编写的代码不用做任何改变即可在这些执行引擎上运行。在深度学习模型开发阶段，使用Keras可以在两种不同的执行引擎之间切换，比如，解决某种任务时，其中某个执行引擎执行会快。我们推荐使用TensorFlow作为深度学习模型的默认执行引擎，因为TensorFlow已经被广泛采纳、扩展，以及产品化。" target="_blank" rel="external">http://deeplearning.net/software/theano）是蒙特利尔大学大学MILA实验室开发的，TensorFlow（www.tensorflow.org）由谷歌开发，CNTK（https://github.com/Microsoft/CNTK）由微软开发。用Keras编写的代码不用做任何改变即可在这些执行引擎上运行。在深度学习模型开发阶段，使用Keras可以在两种不同的执行引擎之间切换，比如，解决某种任务时，其中某个执行引擎执行会快。我们推荐使用TensorFlow作为深度学习模型的默认执行引擎，因为TensorFlow已经被广泛采纳、扩展，以及产品化。</a></p>
+<p>通过TensorFlow（CNTK或者Theano），Keras能在CPU和GPU上无缝运行。TensorFlow封装low-level的Eigen（<a href="http://eigen.tuxfamily.org）张量操作库来运行CPU；封装经过优化的深度学习操作的库，即NVIDIA" target="_blank" rel="external">http://eigen.tuxfamily.org）张量操作库来运行CPU；封装经过优化的深度学习操作的库，即NVIDIA</a> CUDA神经网络库（cuDNN），来运行GPU。</p>
+<h6 id="3-2-2-使用Keras开发：快速预览"><a href="#3-2-2-使用Keras开发：快速预览" class="headerlink" title="3.2.2 使用Keras开发：快速预览"></a>3.2.2 使用Keras开发：快速预览</h6><p>你已经看过一个Keras模型的例子：MNIST数字识别的实例。典型的Keras工作流程就像如下的例子：</p>
+<ol>
+<li>定义训练数据集：输入张量和目标张量</li>
+<li>定义layer的网络（或者model）：将输入张量映射为目标张量</li>
+<li>配置学习过程：选定损失函数、优化器和监控的一些指标</li>
+<li>迭代训练数据：调用模型的fit()函数在训练数据集上迭代训练</li>
+</ol>
+<p>有两种方式定义神经网络模型：使用<em>Sequential</em>类（专为layer的线性逐层连接的模型，截止目前大部分都是此类模型）或者使用函数式API（为有向无环图式layer连接的模型，可以构建任意形式的模型）。</p>
+<p>对于新手来讲，下面的例子使用<em>Sequential</em>类定义两层layer的模型（注意，为第一个layer传入指定形状的输入数据）：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">from</span> keras <span class="keyword">import</span> models</div><div class="line"><span class="keyword">from</span> keras <span class="keyword">import</span> layers</div><div class="line">model = models.Sequential()</div><div class="line">model.add(layers.Dense(<span class="number">32</span>, activation=<span class="string">'relu'</span>, input_shape=(<span class="number">784</span>,)))</div><div class="line">model.add(layers.Dense(<span class="number">10</span>, activation=<span class="string">'softmax'</span>))</div></pre></td></tr></table></figure>
+<p>接着用函数式API定义上述相同的模型：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">input_tensor = layers.Input(shape=(<span class="number">784</span>,))</div><div class="line">x = layers.Dense(<span class="number">32</span>, activation=<span class="string">'relu'</span>)(input_tensor)</div><div class="line">output_tensor = layers.Dense(<span class="number">10</span>, activation=<span class="string">'softmax'</span>)(x)</div><div class="line">model = models.Model(inputs=input_tensor, outputs=output_tensor)</div></pre></td></tr></table></figure>
+<p>使用函数式API操作模型处理的数据张量，将layer应用于这些张量，就好像它们是函数一样使用。</p>
+<blockquote>
+<p>备注：函数式API的详细使用教程将在第七章介绍。在第七章之前，代码例子会使用<em>Sequential</em>类创建模型。</p>
+</blockquote>
+<p>一旦定义好了模型架构，使用<em>Sequential</em>模型还是函数式API模型都不重要。下面的步骤是相同的。</p>
+<p>在编译步骤配置学习过程，指定使用模型的优化器和损失函数，选择训练的监控指标。下面的例子使用单个损失函数：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">from</span> keras <span class="keyword">import</span> optimisers</div><div class="line">model.compile(optimizer=optimizers.RMSprop(lr=<span class="number">0.001</span>),</div><div class="line">loss=<span class="string">'use'</span>,</div><div class="line">metrics=[<span class="string">'accuracy'</span>])</div></pre></td></tr></table></figure>
+<p>最后，为模型传入输入数据和相应的目标数据的Numpy数组，通过fit()函数进行学习过程：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">model.fit(input_tensor, target_tensor, batch_size=<span class="number">128</span>, epochs=<span class="number">10</span>)</div></pre></td></tr></table></figure>
+<p>后面几个章节将会帮你建立坚实的直觉：哪类的问题适用哪种网络架构？如何选择正确的学习配置？如何调整模型直到得到想要的结果？下面将会在3.4，3.5和3.6小节介绍三个基本的例子：二分类，多分类和回归。</p>
+<p>未完待续。。。</p>
+<p>Enjoy!</p>
+<blockquote>
+<p>翻译本书系列的初衷是，觉得其中把深度学习讲解的通俗易懂。不光有实例，也包含作者多年实践对深度学习概念、原理的深度理解。最后说不重要的一点，François Chollet是Keras作者。<br>声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。</p>
+</blockquote>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/02/11/deep-learning-with-python-chapter-3-3.4/" rel="next" title="《Deep Learning with Python》第三章 3.4 走进神经网络之电影影评分类">
+                <i class="fa fa-chevron-left"></i> 《Deep Learning with Python》第三章 3.4 走进神经网络之电影影评分类
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/02/11/deep-learning-with-python-chapter-3-3.1/" rel="prev" title="《Deep Learning with Python》第三章 3.1 走进神经网络之神经网络剖析">
+                《Deep Learning with Python》第三章 3.1 走进神经网络之神经网络剖析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="http://img0.ph.126.net/3vPAbMoh_6fH3-g_I0zo-w==/6631748363397501906.jpg"
+               alt="侠天" />
+          <p class="site-author-name" itemprop="name">侠天</p>
+          <p class="site-description motion-element" itemprop="description">侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">32</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/1333564335" target="_blank" title="微博">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  微博
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://www.infoq.com/cn/author/%E4%BE%A0%E5%A4%A9" target="_blank" title="InfoQ">
+                  
+                    <i class="fa fa-fw fa-infoq"></i>
+                  
+                  InfoQ
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#3-2-Keras简单入门"><span class="nav-number">1.</span> <span class="nav-text">3.2 Keras简单入门</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#3-2-1-Keras、TensorFlow、Theano和CNTK"><span class="nav-number">1.1.</span> <span class="nav-text">3.2.1 Keras、TensorFlow、Theano和CNTK</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#3-2-2-使用Keras开发：快速预览"><span class="nav-number">1.2.</span> <span class="nav-text">3.2.2 使用Keras开发：快速预览</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">侠天</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+  </script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+    });
+  </script>
+  <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+  
+
+  
+
+</body>
+</html>
