@@ -238,6 +238,188 @@
             
               
                 
+                <a class="post-title-link" href="/2018/06/09/deep-learning-with-python-chapter-3-3.5/" itemprop="url">
+                  《Deep Learning with Python》第三章 3.5 走进神经网络之新闻多分类
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-06-09T20:57:49+08:00" content="2018-06-09">
+              2018-06-09
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h5 id="3-5-新闻分类：多分类"><a href="#3-5-新闻分类：多分类" class="headerlink" title="3.5 新闻分类：多分类"></a>3.5 新闻分类：多分类</h5><p>在上一小节，学习了如何使用全联接神经网络将向量输入分为二类。但是，当需要多分类时该咋办呢？</p>
+<p>在本小节，你将学习构建神经网络，把路透社新闻分为互不相交的46类主题。很明显，这个问题是多分类问题，并且每个数据点都只归为一类，那么该问题属于单标签、多分类；如果每个数据点可以属于多个分类，那么你面对的将是多标签、多分类问题。</p>
+<h6 id="3-5-1-路透社新闻数据集"><a href="#3-5-1-路透社新闻数据集" class="headerlink" title="3.5.1 路透社新闻数据集"></a>3.5.1 路透社新闻数据集</h6><p>路透社新闻数据集是由路透社1986年发布的短新闻和对应主题的集合，它常被用作文本分类的练手数据集。该数据集有46个不同的新闻主题，在训练集中每个主题包含至少10个新闻。</p>
+<p>和IMDB和MNIST数据集一样，路透社新闻数据集也打包作为Keras的一部分，下面简单看下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.12 Loading the Reuters dataset</span></div><div class="line"><span class="keyword">from</span> keras.datasets <span class="keyword">import</span> reuters</div><div class="line">(train_data, train_labels), (test_data, test_labels) = reuters.load_data(</div><div class="line">    num_words=<span class="number">10000</span>)</div></pre></td></tr></table></figure>
+<p>设置参数num_words=10000，保留训练集中词频为top 10000的单词。</p>
+<p>你有8982条训练样本数据和2246条测试样本数据：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>len(train_data)</div><div class="line"><span class="number">8982</span></div><div class="line"><span class="meta">&gt;&gt;&gt; </span>len(test_data)</div><div class="line"><span class="number">2246</span></div></pre></td></tr></table></figure>
+<p>从上述返回的结果看，每个样本都是整数列表（词索引）：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>train_data[<span class="number">10</span>]</div><div class="line">[<span class="number">1</span>, <span class="number">245</span>, <span class="number">273</span>, <span class="number">207</span>, <span class="number">156</span>, <span class="number">53</span>, <span class="number">74</span>, <span class="number">160</span>, <span class="number">26</span>, <span class="number">14</span>, <span class="number">46</span>, <span class="number">296</span>, <span class="number">26</span>, <span class="number">39</span>, <span class="number">74</span>, <span class="number">2979</span>,</div><div class="line"><span class="number">3554</span>, <span class="number">14</span>, <span class="number">46</span>, <span class="number">4689</span>, <span class="number">4329</span>, <span class="number">86</span>, <span class="number">61</span>, <span class="number">3499</span>, <span class="number">4795</span>, <span class="number">14</span>, <span class="number">61</span>, <span class="number">451</span>, <span class="number">4329</span>, <span class="number">17</span>, <span class="number">12</span>]</div></pre></td></tr></table></figure>
+<p>下面代码可以把词索引解码成词：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.13 Decoding newswires back to text</span></div><div class="line">word_index = reuters.get_word_index()</div><div class="line">reverse_word_index = dict([(value, key) <span class="keyword">for</span> (key, value) <span class="keyword">in</span> word_index.items()])</div><div class="line"><span class="comment">#Note that the indices are offset by 3 because 0, 1, and 2 are reserved indices for “padding,” “start of sequence,” and “unknown.”</span></div><div class="line">decoded_newswire = <span class="string">' '</span>.join([reverse_word_index.get(i - <span class="number">3</span>, <span class="string">'?'</span>) <span class="keyword">for</span> i <span class="keyword">in</span> train_data[<span class="number">0</span>]])</div></pre></td></tr></table></figure>
+<p>样本的label是0到45的整数（主题索引）：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>train_labels[<span class="number">10</span>]</div><div class="line"><span class="number">3</span></div></pre></td></tr></table></figure>
+<h6 id="3-5-2-准备数据"><a href="#3-5-2-准备数据" class="headerlink" title="3.5.2 准备数据"></a>3.5.2 准备数据</h6><p>使用和上一小节同样的代码进行数据向量化。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.14 Encoding the data</span></div><div class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">vectorize_sequences</span><span class="params">(sequences, dimension=<span class="number">10000</span>)</span>:</span></div><div class="line">    results = np.zeros((len(sequences), dimension))</div><div class="line">    <span class="keyword">for</span> i, sequence <span class="keyword">in</span> enumerate(sequences):</div><div class="line">        results[i, sequence] = <span class="number">1.</span></div><div class="line">    <span class="keyword">return</span> results</div><div class="line"></div><div class="line"><span class="comment">#Vectorized training data</span></div><div class="line">x_train = vectorize_sequences(train_data)</div><div class="line"><span class="comment">#Vectorized test data</span></div><div class="line">x_test = vectorize_sequences(test_data)</div></pre></td></tr></table></figure>
+<p>向量化label有两种方法：一种是，将label列表转成整数张量，另一种是，使用one-hot编码。one-hot编码广泛适用于分类数据，也称为分类编码。它的更详细介绍在6.1小节。在本例中，label的one-hot编码是将每个label映射到label索引位置为1的值。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">to_one_hot</span><span class="params">(labels, dimension=<span class="number">46</span>)</span>:</span></div><div class="line">    results = np.zeros((len(labels), dimension))</div><div class="line">    <span class="keyword">for</span> i, label <span class="keyword">in</span> enumerate(labels):</div><div class="line">        results[i, label] = <span class="number">1.</span></div><div class="line">    <span class="keyword">return</span> results</div><div class="line"><span class="comment">#Vectorized training labels</span></div><div class="line">one_hot_train_labels = to_one_hot(train_labels)</div><div class="line"><span class="comment">#Vectorized test labels</span></div><div class="line">one_hot_test_labels = to_one_hot(test_labels)</div></pre></td></tr></table></figure>
+<p>上述label向量化的方式在Keras中有内建的函数实现，这在MNIST的例子中已经使用过。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">from</span> keras.utils.np_utils <span class="keyword">import</span> to_categorical</div><div class="line">one_hot_train_labels = to_categorical(train_labels) one_hot_test_labels = to_categorical(test_labels)</div></pre></td></tr></table></figure>
+<h6 id="3-5-3-构建神经网络"><a href="#3-5-3-构建神经网络" class="headerlink" title="3.5.3 构建神经网络"></a>3.5.3 构建神经网络</h6><p>这个主题分类问题和前一个影评分类类似：两类问题都是将短文本分类。但是这里有个新的限制：输出分类的数量由过去的2个变为46个。所以输出空间的维度更大。</p>
+<p>使用一系列的Dense layer时，每个layer只能访问上一个layer的输出信息。如果某一个layer丢失一些与分类相关的信息时，接下来的layer不可能再恢复这些信息，所以每个layer都可能成为潜在的信息瓶颈。在前面的例子中，选用的16维中间layer，但是16维空间并不能学习到46个不同的分类。</p>
+<p>考虑到上面的情况，这里使用更大的layer，隐藏单元设为64。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.15 Model definition</span></div><div class="line"><span class="keyword">from</span> keras <span class="keyword">import</span> models</div><div class="line"><span class="keyword">from</span> keras <span class="keyword">import</span> layers</div><div class="line"></div><div class="line">model = models.Sequential()</div><div class="line">model.add(layers.Dense(<span class="number">64</span>, activation=<span class="string">'relu'</span>, input_shape=(<span class="number">10000</span>,))) </div><div class="line">model.add(layers.Dense(<span class="number">64</span>, activation=<span class="string">'relu'</span>)) model.add(layers.Dense(<span class="number">46</span>, activation=<span class="string">'softmax'</span>))</div></pre></td></tr></table></figure>
+<p>上述代码中的神经网络架构需要注意两个事情：</p>
+<ul>
+<li>最后一个Dense layer大小为46。这意味着每个输入样本，神经网络模型输出一个46维向量。其中每个项代表不同的分类；</li>
+<li>最后一个layer使用softmax激活函数。这意味着神经网络模型输出一个46维的概率分布。对于每个输入样本，模型将输出一个46维的输出向量，每个output[i]是样本属于类别 i 的概率，且46个分数之和为1。</li>
+</ul>
+<p>对于本例最适合的损失函数是categorical_crossentropy。该函数度量两个概率分布的距离，意即，模型输出的概率分布与label真实分布之间的距离。为了最小化两个分布的距离，训练模型使得其输出更接近真实label。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.16 Compiling the model</span></div><div class="line">model.compile(optimizer=<span class="string">'rmsprop'</span>,</div><div class="line">              loss=<span class="string">'categorical_crossentropy'</span>,</div><div class="line">              metrics=[<span class="string">'accuracy'</span>])</div></pre></td></tr></table></figure>
+<h6 id="3-5-4-验证模型"><a href="#3-5-4-验证模型" class="headerlink" title="3.5.4 验证模型"></a>3.5.4 验证模型</h6><p>下面从训练数据中分出1000个样本作为验证集。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.17 Setting aside a validation set</span></div><div class="line">x_val = x_train[:<span class="number">1000</span>]</div><div class="line">partial_x_train = x_train[<span class="number">1000</span>:]</div><div class="line"></div><div class="line">y_val = one_hot_train_labels[:<span class="number">1000</span>]</div><div class="line">partial_y_train = one_hot_train_labels[<span class="number">1000</span>:]</div></pre></td></tr></table></figure>
+<p>接着训练神经网络模型20个epoch。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.18 Training the model</span></div><div class="line">history = model.fit(partial_x_train,</div><div class="line">                    partial_y_train,</div><div class="line">                    epochs=<span class="number">20</span>,</div><div class="line">                    batch_size=<span class="number">512</span>,</div><div class="line">                    validation_data=(x_val, y_val))</div></pre></td></tr></table></figure>
+<p>最后，显示损失函数和准确度的曲线，见图3.9和3.10。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.19 Plotting the training and validation loss</span></div><div class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</div><div class="line"></div><div class="line">loss = history.history[<span class="string">'loss'</span>]</div><div class="line">val_loss = history.history[<span class="string">'val_loss'</span>]</div><div class="line"></div><div class="line">epochs = range(<span class="number">1</span>, len(loss) + <span class="number">1</span>)</div><div class="line"></div><div class="line">plt.plot(epochs, loss, <span class="string">'bo'</span>, label=<span class="string">'Training loss'</span>)</div><div class="line">plt.plot(epochs, val_loss, <span class="string">'b'</span>, label=<span class="string">'Validation loss'</span>)</div><div class="line">plt.title(<span class="string">'Training and validation loss'</span>)</div><div class="line">plt.xlabel(<span class="string">'Epochs'</span>)</div><div class="line">plt.ylabel(<span class="string">'Loss'</span>)</div><div class="line">plt.legend()</div><div class="line"></div><div class="line">plt.show()</div></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.20 Plotting the training and validation accuracy</span></div><div class="line"><span class="comment">#Clears the figure</span></div><div class="line">plt.clf()</div><div class="line"></div><div class="line">acc = history.history[<span class="string">'acc'</span>]</div><div class="line">val_acc = history.history[<span class="string">'val_acc'</span>]</div><div class="line"></div><div class="line">plt.plot(epochs, acc, <span class="string">'bo'</span>, label=<span class="string">'Training acc'</span>)</div><div class="line">plt.plot(epochs, val_acc, <span class="string">'b'</span>, label=<span class="string">'Validation acc'</span>)</div><div class="line">plt.title(<span class="string">'Training and validation accuracy'</span>)</div><div class="line">plt.xlabel(<span class="string">'Epochs'</span>)</div><div class="line">plt.ylabel(<span class="string">'Loss'</span>)</div><div class="line">plt.legend()</div><div class="line"></div><div class="line">plt.show()</div></pre></td></tr></table></figure>
+<p><img src="http://img2.ph.126.net/zTI46Sy8qfZyY-cYO2JP4w==/2000724134559715730.png" alt="image"></p>
+<p>图3.9 训练集和验证集的损失曲线</p>
+<p><img src="http://img1.ph.126.net/er37r5VvGSW_WxqGpY9J3g==/840202805581705981.png" alt="image"></p>
+<p>图3.10 训练集和验证集的准确度曲线</p>
+<p>从上面的图可以看出，神经网络模型训练在第9个epoch开始过拟合。接着从头开始训练9个epoch，然后在测试集赏进行评估。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.21 Retraining a model from scratch</span></div><div class="line">model = models.Sequential()</div><div class="line">model.add(layers.Dense(<span class="number">64</span>, activation=<span class="string">'relu'</span>, input_shape=(<span class="number">10000</span>,)))</div><div class="line">model.add(layers.Dense(<span class="number">64</span>, activation=<span class="string">'relu'</span>)) model.add(layers.Dense(<span class="number">46</span>, activation=<span class="string">'softmax'</span>))</div><div class="line"></div><div class="line">model.compile(optimizer=<span class="string">'rmsprop'</span>,</div><div class="line">              loss=<span class="string">'categorical_crossentropy'</span>,</div><div class="line">              metrics=[<span class="string">'accuracy'</span>])</div><div class="line">model.fit(partial_x_train,</div><div class="line">          partial_y_train,</div><div class="line">          epochs=<span class="number">9</span>,</div><div class="line">          batch_size=<span class="number">512</span>,</div><div class="line">          validation_data=(x_val, y_val))</div><div class="line">results = model.evaluate(x_test, one_hot_test_labels)</div></pre></td></tr></table></figure>
+<p>下面是最终训练结果：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>results</div><div class="line">[<span class="number">0.9565213431445807</span>, <span class="number">0.79697239536954589</span>]</div></pre></td></tr></table></figure>
+<p>上面的方法达到约80%的准确度。在二分类问题中，纯随机分类的准确度是50%。而在本例中，纯随机分类的准确度将近19%，所以本例的模型结果还是不错的，至少超过随机基准线：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">import</span> copy</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>test_labels_copy = copy.copy(test_labels)</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>np.random.shuffle(test_labels_copy)</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>hits_array = np.array(test_labels) == np.array(test_labels_copy)</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>float(np.sum(hits_array)) / len(test_labels)</div><div class="line"><span class="number">0.18655387355298308</span></div></pre></td></tr></table></figure>
+<h6 id="3-5-5-模型预测"><a href="#3-5-5-模型预测" class="headerlink" title="3.5.5 模型预测"></a>3.5.5 模型预测</h6><p>你可以用模型实例的predict方法验证返回的46个主题分类的概率分布。下面对所有的测试集生成主题预测。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.22 Generating predictions for new data</span></div><div class="line">predictions = model.predict(x_test)</div></pre></td></tr></table></figure>
+<p>predictions的每项是一个长度为64的向量：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>predictions[<span class="number">0</span>].shape</div><div class="line">(<span class="number">46</span>,)</div></pre></td></tr></table></figure>
+<p>这些向量的系数之和为1：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>np.sum(predictions[<span class="number">0</span>])</div><div class="line"><span class="number">1.0</span></div></pre></td></tr></table></figure>
+<p>下面从预测分类中找出概率最大的项：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>np.argmax(predictions[<span class="number">0</span>])</div><div class="line"><span class="number">4</span></div></pre></td></tr></table></figure>
+<h6 id="3-5-6-处理label和loss的不同方法"><a href="#3-5-6-处理label和loss的不同方法" class="headerlink" title="3.5.6 处理label和loss的不同方法"></a>3.5.6 处理label和loss的不同方法</h6><p>前面提到过label编码的两外一种方法，将其转化为整数张量，比如：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">y_train = np.array(train_labels)</div><div class="line">y_test = np.array(test_labels)</div></pre></td></tr></table></figure>
+<p>上述处理label的方法唯一需要改变的是损失函数。在listing 3.21代码中使用的损失函数，categorical_crossentropy，期望label是一个分类编码。对于整数label，你应该选用sparse_categorical_crossentropy损失函数：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">model.compile(optimizer=<span class="string">'rmsprop'</span>,</div><div class="line">              loss=<span class="string">'sparse_categorical_crossentropy'</span>,</div><div class="line">              metrics=[<span class="string">'acc'</span>])</div></pre></td></tr></table></figure>
+<p>上面这个新的损失函数在数学上是和categorical_crossentropy相同的，不同之处在于接口不同。</p>
+<h6 id="3-5-7-中间layer的重要性"><a href="#3-5-7-中间layer的重要性" class="headerlink" title="3.5.7 中间layer的重要性"></a>3.5.7 中间layer的重要性</h6><p>前面提过，因为最后的输出是46维，你应该避免中间layer小于46个hidden unit。下面为你展示中间layer小于46维导致的信息瓶颈问题，以4个hidden unit为例。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.23 A model with an information bottleneck</span></div><div class="line">model = models.Sequential()</div><div class="line">model.add(layers.Dense(<span class="number">64</span>, activation=<span class="string">'relu'</span>, input_shape=(<span class="number">10000</span>,)))</div><div class="line">model.add(layers.Dense(<span class="number">4</span>, activation=<span class="string">'relu'</span>)) model.add(layers.Dense(<span class="number">46</span>, activation=<span class="string">'softmax'</span>))</div><div class="line"></div><div class="line">model.compile(optimizer=<span class="string">'rmsprop'</span>,</div><div class="line">              loss=<span class="string">'categorical_crossentropy'</span>,</div><div class="line">              metrics=[<span class="string">'accuracy'</span>])</div><div class="line">model.fit(partial_x_train,</div><div class="line">          partial_y_train,</div><div class="line">          epochs=<span class="number">20</span>,</div><div class="line">          batch_size=<span class="number">128</span>,</div><div class="line">          validation_data=(x_val, y_val))</div></pre></td></tr></table></figure>
+<p>现在新的模型达到最大约71%的验证准确度，丢失了8％。这种情况主要是压缩许多信息到一个低维度的空间，导致没有足够多的信息可以恢复。</p>
+<h6 id="3-5-8-延伸实验"><a href="#3-5-8-延伸实验" class="headerlink" title="3.5.8 延伸实验"></a>3.5.8 延伸实验</h6><ul>
+<li>尝试使用更大或者更小的layer：32个unit、128个unit等等；</li>
+<li>本例使用两个隐藏层。可以尝试一个或者三个隐藏层。</li>
+</ul>
+<h6 id="3-5-9-总结"><a href="#3-5-9-总结" class="headerlink" title="3.5.9 总结"></a>3.5.9 总结</h6><p>从本例应该学习到的知识点：</p>
+<ul>
+<li>如果你想将数据分为N类，那神经网络模型最后一个Dense layer大小为N；</li>
+<li>在单标签、多分类的问题中，模型输出应该用softmax激活函数，输出N个分类的概率分布；</li>
+<li>分类交叉熵是分类问题合适的损失函数。它最小化模型输出的概率分布和真实label的概率分布之间的距离；</li>
+<li>处理多分类中label的两种方法：<ul>
+<li>通过one-hot编码编码label，并使用categorical_crossentropy作为损失函数；</li>
+<li>通过整数张量编码label，并使用sparse_categorical_crossentropy损失函数</li>
+</ul>
+</li>
+<li>对于数据分类的类别较多的情况，应该避免创建较小的中间layer，导致信息瓶颈。</li>
+</ul>
+<p>未完待续。。。</p>
+<p>Enjoy!</p>
+<blockquote>
+<p>翻译本书系列的初衷是，觉得其中把深度学习讲解的通俗易懂。不光有实例，也包含作者多年实践对深度学习概念、原理的深度理解。最后说不重要的一点，François Chollet是Keras作者。<br>声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。</p>
+</blockquote>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2018/03/17/deep-learning-with-python-chapter-3-3.4/" itemprop="url">
                   《Deep Learning with Python》第三章 3.4 走进神经网络之电影影评分类
                 </a>
@@ -1747,158 +1929,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/12/28/kafka-cluster-producer/" itemprop="url">
-                  Kafka使用总结：Producer
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-12-28T15:24:30+08:00" content="2017-12-28">
-              2017-12-28
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>Kafka作为消息中间件是各公司平台架构绕不开的话题。</p>
-<p>不管你是把Kafka作为队列，还是消息通道，都需要在应用中通过producer写数据到Kafka，再用consumer从Kafka中消费。应用往Kafka写数据的原因有很多：用户行为分析、日志存储、异步通信等。多样化的使用场景带来了多样化的需求：消息是否能丢失？是否容忍重复？消息的吞吐量？消息的延迟？</p>
-<p>这么苛刻的要求Kafka能满足吗？</p>
-<p><img src="http://img1.ph.126.net/jOA6c9KB5qbpivkjsYGDwg==/6632071619817192826.png" alt="image"></p>
-<h5 id="Kafka-Producer"><a href="#Kafka-Producer" class="headerlink" title="Kafka Producer"></a>Kafka Producer</h5><p>首先，创建ProducerRecord必须包含Topic和Value，key和partition可选。然后，序列化key和value对象为ByteArray，并发送到网络。</p>
-<p>接下来，消息发送到partitioner。如果创建ProducerRecord时指定了partition，此时partitioner啥也不用做，简单的返回指定的partition即可。如果未指定partition，partitioner会基于ProducerRecord的key生成partition。producer选择好partition后，增加record到对应topic和partition的batch record。最后，专有线程负责发送batch record到合适的Kafka broker。</p>
-<p>当broker收到消息时，它会返回一个应答（response）。如果消息成功写入Kafka，broker将返回RecordMetadata对象（包含topic，partition和offset）；相反，broker将返回error。这时producer收到error会尝试重试发送消息几次，直到producer返回error。</p>
-<h5 id="Producer实战"><a href="#Producer实战" class="headerlink" title="Producer实战"></a>Producer实战</h5><h6 id="构造Kafka-Producer"><a href="#构造Kafka-Producer" class="headerlink" title="构造Kafka Producer"></a>构造Kafka Producer</h6><p>创建Properties对象，配置producer参数。根据Properties创建producer对象。Kafka producer必选参数有3个：</p>
-<ul>
-<li><em>bootstrap.servers</em> ：Kafka broker的列表，包含host和port。此处不必包含Kafka集群所有的broker，因为producer会通过其它broker查询到所需信息。但至少包含2个broker；</li>
-<li><em>key.serializer</em>：序列化key参数，值为类名，org.apache.kafka.common.serialization.Serializer接口的实现；</li>
-<li><em>value.serializer</em>：序列化value参数，值为类名，使用方式同<em>key.serializer</em>。</li>
-</ul>
-<p>最简代码实现如下：</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">private Properties kafkaProps = new Properties();</div><div class="line">kafkaProps.put("bootstrap.servers", "broker1:9092,broker2:9092");</div><div class="line">kafkaProps.put("key.serializer", "org.apache.kafka.common.serialization.String-</div><div class="line">Serializer");</div><div class="line">kafkaProps.put("value.serializer", "org.apache.kafka.common.serializa-</div><div class="line">tion.StringSerializer");</div><div class="line">producer = new KafkaProducer&lt;String, String&gt;(kafkaProps);</div></pre></td></tr></table></figure>
-<p>创建Properties对象，key和value为String类型，选用Kafka自带的StringSerializer。通过属性配置可以控制Producer的行为。</p>
-<p>实例化producer后，接着发送消息。这里主要有3种发送消息的方法：</p>
-<ul>
-<li>立即发送：只管发送消息到server端，不care消息是否成功发送。大部分情况下，这种发送方式会成功，因为Kafka自身具有高可用性，producer会自动重试；但有时也会丢失消息；</li>
-<li>同步发送：通过send()方法发送消息，并返回Future对象。get()方法会等待Future对象，看send()方法是否成功；</li>
-<li>异步发送：通过带有回调函数的send()方法发送消息，当producer收到Kafka broker的response会触发回调函数</li>
-</ul>
-<p>以上所有情况，一定要时刻考虑发送消息可能会失败，想清楚如何去处理异常。</p>
-<p>通常我们是一个producer起一个线程开始发送消息。为了优化producer的性能，一般会有下面几种方式：单个producer起多个线程发送消息；使用多个producer。</p>
-<p>下面开始详细展示上面所提到的三种发送消息的方法，以及各种类型错误的处理方式。</p>
-<h6 id="发送消息到Kafka"><a href="#发送消息到Kafka" class="headerlink" title="发送消息到Kafka"></a>发送消息到Kafka</h6><p>最简单的方法如下：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">ProducerRecord&lt;String, String&gt; record =</div><div class="line">            <span class="keyword">new</span> ProducerRecord&lt;&gt;(<span class="string">"CustomerCountry"</span>, <span class="string">"Precision Products"</span>,<span class="string">"France"</span>);</div><div class="line">    <span class="keyword">try</span> &#123;</div><div class="line">      producer.send(record);</div><div class="line">    &#125; <span class="keyword">catch</span> (Exception e) &#123;</div><div class="line">            e.printStackTrace();</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>创建ProducerRecord对象，Producer使用send()方法发送ProducerRecord。send()方法会返回带有RecordMetadata的Future对象，这里只简单的忽略返回值，所以我们并不会知道消息是否发送成功；</p>
-<p>但即使如此简单，Producer发送消息到Kafka也仍然得处理些异常：当序列化消息失败会抛出SerializationException；buffer溢出会抛出BufferExhaustedException；当发送线程终止会抛出InterruptException。</p>
-<h6 id="同步发消息"><a href="#同步发消息" class="headerlink" title="同步发消息"></a>同步发消息</h6><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">ProducerRecord&lt;String, String&gt; record =</div><div class="line">            <span class="keyword">new</span> ProducerRecord&lt;&gt;(<span class="string">"CustomerCountry"</span>, <span class="string">"Precision Products"</span>, <span class="string">"France"</span>);</div><div class="line">producer.send(record).get();</div></pre></td></tr></table></figure>
-<p>这里，我们使用Future.get()方法等待Kafka的状态返回。Producer可以实现自己的Future来处理Kafka broker返回的异常。如果Producer发送消息成功，它会返回RecordMetadata对象（可用来检索消息的offset）。</p>
-<p>Kafka Producer一般有两类错误。可重试错误会通过重试发送消息解决。比如，连接重连可解决连接错误；partition重新选举leader可解决“no leader”错误。Kafka Producer能配置重试次数，超过重试次数还不能解决的会抛出错误。另外一类就是不能通过重试处理的错误，比如，消息大小太大，这种情况下Kafka Producer会立即报错。</p>
-<h6 id="异步发送消息"><a href="#异步发送消息" class="headerlink" title="异步发送消息"></a>异步发送消息</h6><p>如果应用和Kafka集群间的网络质量太差，那么同步发送消息的方式发送每条消息后需要等待较长时间才收到应答。这对高并发海量消息发送简直就是灾难，因为等待应答的时间远超过消息发送时间。另外，有些app压根就不要求返回值。况且，即使发送消息失败了，只要写下对应的错误日志即可。</p>
-<p>为了异步发送消息，同时可以处理错误。Producer支持带有回调函数的发送消息方法。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">private</span> <span class="class"><span class="keyword">class</span> <span class="title">DemoProducerCallback</span> <span class="keyword">implements</span> <span class="title">Callback</span> </span>&#123;</div><div class="line">            <span class="meta">@Override</span></div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onCompletion</span><span class="params">(RecordMetadata recordMetadata, Exception e)</span> </span>&#123;</div><div class="line">         <span class="keyword">if</span> (e != <span class="keyword">null</span>) &#123;</div><div class="line">             e.printStackTrace();</div><div class="line">            &#125;</div><div class="line">&#125; &#125;</div><div class="line"></div><div class="line">ProducerRecord&lt;String, String&gt; record =</div><div class="line">            <span class="keyword">new</span> ProducerRecord&lt;&gt;(<span class="string">"CustomerCountry"</span>, <span class="string">"Biomedical Materials"</span>, <span class="string">"USA"</span>);</div><div class="line">producer.send(record, <span class="keyword">new</span> DemoProducerCallback());</div></pre></td></tr></table></figure>
-<p>使用回调函数的前提是实现org.apache.kafka.clients.producer.Callback 接口。如果Kafka返回错误，onCompletion捕获到非null异常。示例代码仅仅打印出了异常信息，实际应用开发需根据实际情况添加业务逻辑处理。</p>
-<h5 id="序列化"><a href="#序列化" class="headerlink" title="序列化"></a>序列化</h5><p>在前面的列子中，可看出Producer配置必须指定序列化方法（serializer，默认是String serializer）。</p>
-<p>这里将讲解如何构建定制化的序列化器，然后介绍Avro序列化器。</p>
-<h6 id="定制序列化器"><a href="#定制序列化器" class="headerlink" title="定制序列化器"></a>定制序列化器</h6><p>当你需要发送到Kafka的对象非String和Integer，那你要么自己实现对应的序列化器，要么使用像Avro、Thrift或者Protobuf之类的业界通用的序列化库。这里强烈推荐使用这些工业化的通用的序列化库。</p>
-<p>为了让大家理解序列化器的工作原理，这里还是先讲讲如何构建定制化的序列化器。下面先建一个简单的Customer类：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Customer</span> </span>&#123;</div><div class="line">            <span class="keyword">private</span> <span class="keyword">int</span> customerID;</div><div class="line">            <span class="keyword">private</span> String customerName;</div><div class="line">            <span class="function"><span class="keyword">public</span> <span class="title">Customer</span><span class="params">(<span class="keyword">int</span> ID, String name)</span> </span>&#123;</div><div class="line">                    <span class="keyword">this</span>.customerID = ID;</div><div class="line">                    <span class="keyword">this</span>.customerName = name;</div><div class="line">&#125;</div><div class="line">      <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getID</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> customerID;</div><div class="line">&#125;</div><div class="line">      <span class="function"><span class="keyword">public</span> String <span class="title">getName</span><span class="params">()</span> </span>&#123;</div><div class="line">       <span class="keyword">return</span> customerName;</div><div class="line">&#125; &#125;</div></pre></td></tr></table></figure>
-<p>接着创建Customer类的序列化器：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> org.apache.kafka.common.errors.SerializationException;</div><div class="line"><span class="keyword">import</span> java.nio.ByteBuffer;</div><div class="line"><span class="keyword">import</span> java.util.Map;</div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">CustomerSerializer</span> <span class="keyword">implements</span> <span class="title">Serializer</span>&lt;<span class="title">Customer</span>&gt; </span>&#123;</div><div class="line">        <span class="meta">@Override</span></div><div class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">configure</span><span class="params">(Map configs, <span class="keyword">boolean</span> isKey)</span> </span>&#123;</div><div class="line">   <span class="comment">// nothing to configure</span></div><div class="line">  &#125;</div><div class="line">  </div><div class="line">  <span class="meta">@Override</span></div><div class="line">  <span class="comment">/**</span></div><div class="line">  We are serializing Customer as:</div><div class="line">  4 byte int representing customerId</div><div class="line">  4 byte int representing length of customerName in UTF-8 bytes (0 if name is</div><div class="line">Null)</div><div class="line">  N bytes representing customerName in UTF-8</div><div class="line">  **/</div><div class="line">  <span class="keyword">public</span> <span class="keyword">byte</span>[] serialize(String topic, Customer data) &#123;</div><div class="line">    <span class="keyword">try</span> &#123;</div><div class="line">                  <span class="keyword">byte</span>[] serializedName;</div><div class="line">                  <span class="keyword">int</span> stringSize;</div><div class="line">      <span class="keyword">if</span> (data == <span class="keyword">null</span>)</div><div class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</div><div class="line">      <span class="keyword">else</span> &#123;</div><div class="line">                                <span class="keyword">if</span> (data.getName() != <span class="keyword">null</span>) &#123;</div><div class="line">         serializeName = data.getName().getBytes(<span class="string">"UTF-8"</span>);</div><div class="line">         stringSize = serializedName.length;</div><div class="line">                                &#125; <span class="keyword">else</span> &#123;</div><div class="line">                                  serializedName = <span class="keyword">new</span> <span class="keyword">byte</span>[<span class="number">0</span>];</div><div class="line">                                  stringSize = <span class="number">0</span>;</div><div class="line">                                &#125; </div><div class="line">      &#125;</div><div class="line">      </div><div class="line">      ByteBuffer buffer = ByteBuffer.allocate(<span class="number">4</span> + <span class="number">4</span> + stringSize);</div><div class="line">      buffer.putInt(data.getID());</div><div class="line">      buffer.putInt(stringSize);</div><div class="line">      buffer.put(serializedName);</div><div class="line">      <span class="keyword">return</span> buffer.array();</div><div class="line">          &#125; <span class="keyword">catch</span> (Exception e) &#123;</div><div class="line">     <span class="keyword">throw</span> <span class="keyword">new</span> SerializationException(<span class="string">"Error when serializing Customer to byte[] "</span> + e);</div><div class="line">  &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">  <span class="meta">@Override</span></div><div class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">close</span><span class="params">()</span> </span>&#123;</div><div class="line">    <span class="comment">// nothing to close</span></div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h6 id="Avro的序列化"><a href="#Avro的序列化" class="headerlink" title="Avro的序列化"></a>Avro的序列化</h6><p>Avro详细说明见官方文档，这里只列出部分要用到的特性。</p>
-<p>Avro Schema是用Json描述，如下：</p>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"> &#123;<span class="attr">"namespace"</span>: <span class="string">"customerManagement.avro"</span>,</div><div class="line">     <span class="attr">"type"</span>: <span class="string">"record"</span>,</div><div class="line">     <span class="attr">"name"</span>: <span class="string">"Customer"</span>,</div><div class="line">     <span class="attr">"fields"</span>: [</div><div class="line">         &#123;<span class="attr">"name"</span>: <span class="string">"id"</span>, <span class="attr">"type"</span>: <span class="string">"int"</span>&#125;,</div><div class="line">         &#123;<span class="attr">"name"</span>: <span class="string">"name"</span>,  <span class="attr">"type"</span>: <span class="string">"string"</span>&#125;,</div><div class="line">         &#123;<span class="attr">"name"</span>: <span class="string">"email"</span>, <span class="attr">"type"</span>: [<span class="string">"null"</span>, <span class="string">"string"</span>], <span class="attr">"default"</span>: <span class="string">"null"</span>&#125;</div><div class="line">] &#125;</div></pre></td></tr></table></figure>
-<p>Avro依赖模式(Schema)来实现数据结构定义，所以读写Avro文件都得依赖其Schema。Kafka中<a href="http://docs.confluent.io/3.0.0/schema-registry/docs/intro.html#schemaregistry-intro" target="_blank" rel="external">Schema Registry</a>提供元数据的存储和解析。那Producer的序列化和Consumer的反序列化都会去Schema Registry读取对应的Schema。</p>
-<p><img src="http://img0.ph.126.net/X0tYnyzV8cKuoxOvK1w4rw==/6632381682093836586.png" alt="image"></p>
-<p>Avro的使用有两种：一种是使用Avro Schema生成的类（官方提供生成工具，比如，avro-tools-1.7.0.jar）；一种是直接Avro Schema。Kafka Producer使用Avro序列化器的方式与其它序列化器相同。下面先说使用Avro Schema生成的类的方法：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">    Properties props = <span class="keyword">new</span> Properties();</div><div class="line">    props.put(<span class="string">"bootstrap.servers"</span>, <span class="string">"localhost:9092"</span>);</div><div class="line">    props.put(<span class="string">"key.serializer"</span>, <span class="string">"io.confluent.kafka.serializers.KafkaAvroSerializer"</span>);</div><div class="line">    props.put(<span class="string">"value.serializer"</span>, <span class="string">"io.confluent.kafka.serializers.KafkaAvroSerializer"</span>);</div><div class="line">    props.put(<span class="string">"schema.registry.url"</span>, schemaUrl);</div><div class="line">    String topic = <span class="string">"customerContacts"</span>;</div><div class="line">    <span class="keyword">int</span> wait = <span class="number">500</span>;</div><div class="line">    Producer&lt;String, Customer&gt; producer = <span class="keyword">new</span> KafkaProducer&lt;String, Customer&gt;(props);</div><div class="line">    <span class="comment">// We keep producing new events until someone ctrl-c</span></div><div class="line">    <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</div><div class="line">        Customer customer = CustomerGenerator.getNext();</div><div class="line">        System.out.println(<span class="string">"Generated customer "</span> + customer.toString());</div><div class="line">        ProducerRecord&lt;String, Customer&gt; record =</div><div class="line">                            <span class="keyword">new</span> ProducerRecord&lt;&gt;(topic, customer.getId(), customer);</div><div class="line">        producer.send(record);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>其中，schema.registry.url是schema存储的位置，<em>KafkaAvroSerializer</em> 是Avro的序列化器，<em>Customer</em> 是生成的类。</p>
-<p>如果你想直接使用Avro Schema，方法如下：</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div></pre></td><td class="code"><pre><div class="line">Properties props = new Properties();</div><div class="line">props.put("bootstrap.servers", "localhost:9092");</div><div class="line">props.put("key.serializer", "io.confluent.kafka.serializers.KafkaAvroSerializer");</div><div class="line">props.put("value.serializer", "io.confluent.kafka.serializers.KafkaAvroSerializer");</div><div class="line">props.put("schema.registry.url", url);</div><div class="line"></div><div class="line">String schemaString = "&#123;\"namespace\": \"customerManagement.avro\",</div><div class="line">  \"type\": \"record\", " +</div><div class="line">                               "\"name\": \"Customer\"," +</div><div class="line">                               "\"fields\": [" +</div><div class="line">                                "&#123;\"name\": \"id\", \"type\": \"int\"&#125;," +</div><div class="line">                                "&#123;\"name\": \"name\", \"type\": \"string\"&#125;," +</div><div class="line">                                "&#123;\"name\": \"email\", \"type\": [\"null\",\"string</div><div class="line">    \"], \"default\":\"null\" &#125;" +</div><div class="line">                               "]&#125;";</div><div class="line"></div><div class="line">Producer&lt;String, GenericRecord&gt; producer = new KafkaProducer&lt;String, GenericRecord&gt;(props);</div><div class="line"></div><div class="line">Schema.Parser parser = new Schema.Parser();</div><div class="line">Schema schema = parser.parse(schemaString);</div><div class="line"></div><div class="line">for (int nCustomers = 0; nCustomers &lt; customers; nCustomers++) &#123;</div><div class="line">  String name = "exampleCustomer" + nCustomers;</div><div class="line">  String email = "example " + nCustomers + "@example.com";</div><div class="line">  GenericRecord customer = new GenericData.Record(schema);</div><div class="line">  customer.put("id", nCustomer);</div><div class="line">  customer.put("name", name);</div><div class="line">  customer.put("email", email);</div><div class="line">  ProducerRecord&lt;String, GenericRecord&gt; data =</div><div class="line">    new ProducerRecord&lt;String, GenericRecord&gt;("customerContacts", name, customer);</div><div class="line">  producer.send(data);</div><div class="line">&#125; &#125;</div></pre></td></tr></table></figure>
-<p>未完待续。。。</p>
-<p>Enjoy!</p>
-<hr>
-<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
-<p>若发现以上文章有任何不妥，请联系我。</p>
-<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1944,7 +1974,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">32</span>
+              <span class="site-state-item-count">33</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>

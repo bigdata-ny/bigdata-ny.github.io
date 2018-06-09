@@ -1,0 +1,680 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="神机喵算" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="3.5 新闻分类：多分类在上一小节，学习了如何使用全联接神经网络将向量输入分为二类。但是，当需要多分类时该咋办呢？
+在本小节，你将学习构建神经网络，把路透社新闻分为互不相交的46类主题。很明显，这个问题是多分类问题，并且每个数据点都只归为一类，那么该问题属于单标签、多分类；如果每个数据点可以属于多个分类，那么你面对的将是多标签、多分类问题。
+3.5.1 路透社新闻数据集路透社新闻数据集是由路透社1">
+<meta property="og:type" content="article">
+<meta property="og:title" content="《Deep Learning with Python》第三章 3.5 走进神经网络之新闻多分类">
+<meta property="og:url" content="http://yoursite.com/2018/06/09/deep-learning-with-python-chapter-3-3.5/index.html">
+<meta property="og:site_name" content="神机喵算">
+<meta property="og:description" content="3.5 新闻分类：多分类在上一小节，学习了如何使用全联接神经网络将向量输入分为二类。但是，当需要多分类时该咋办呢？
+在本小节，你将学习构建神经网络，把路透社新闻分为互不相交的46类主题。很明显，这个问题是多分类问题，并且每个数据点都只归为一类，那么该问题属于单标签、多分类；如果每个数据点可以属于多个分类，那么你面对的将是多标签、多分类问题。
+3.5.1 路透社新闻数据集路透社新闻数据集是由路透社1">
+<meta property="og:image" content="http://img2.ph.126.net/zTI46Sy8qfZyY-cYO2JP4w==/2000724134559715730.png">
+<meta property="og:image" content="http://img1.ph.126.net/er37r5VvGSW_WxqGpY9J3g==/840202805581705981.png">
+<meta property="og:image" content="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg">
+<meta property="og:updated_time" content="2018-06-09T12:57:49.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="《Deep Learning with Python》第三章 3.5 走进神经网络之新闻多分类">
+<meta name="twitter:description" content="3.5 新闻分类：多分类在上一小节，学习了如何使用全联接神经网络将向量输入分为二类。但是，当需要多分类时该咋办呢？
+在本小节，你将学习构建神经网络，把路透社新闻分为互不相交的46类主题。很明显，这个问题是多分类问题，并且每个数据点都只归为一类，那么该问题属于单标签、多分类；如果每个数据点可以属于多个分类，那么你面对的将是多标签、多分类问题。
+3.5.1 路透社新闻数据集路透社新闻数据集是由路透社1">
+<meta name="twitter:image" content="http://img2.ph.126.net/zTI46Sy8qfZyY-cYO2JP4w==/2000724134559715730.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/06/09/deep-learning-with-python-chapter-3-3.5/"/>
+
+  <title> 《Deep Learning with Python》第三章 3.5 走进神经网络之新闻多分类 | 神机喵算 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">神机喵算</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                《Deep Learning with Python》第三章 3.5 走进神经网络之新闻多分类
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-06-09T20:57:49+08:00" content="2018-06-09">
+              2018-06-09
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h5 id="3-5-新闻分类：多分类"><a href="#3-5-新闻分类：多分类" class="headerlink" title="3.5 新闻分类：多分类"></a>3.5 新闻分类：多分类</h5><p>在上一小节，学习了如何使用全联接神经网络将向量输入分为二类。但是，当需要多分类时该咋办呢？</p>
+<p>在本小节，你将学习构建神经网络，把路透社新闻分为互不相交的46类主题。很明显，这个问题是多分类问题，并且每个数据点都只归为一类，那么该问题属于单标签、多分类；如果每个数据点可以属于多个分类，那么你面对的将是多标签、多分类问题。</p>
+<h6 id="3-5-1-路透社新闻数据集"><a href="#3-5-1-路透社新闻数据集" class="headerlink" title="3.5.1 路透社新闻数据集"></a>3.5.1 路透社新闻数据集</h6><p>路透社新闻数据集是由路透社1986年发布的短新闻和对应主题的集合，它常被用作文本分类的练手数据集。该数据集有46个不同的新闻主题，在训练集中每个主题包含至少10个新闻。</p>
+<p>和IMDB和MNIST数据集一样，路透社新闻数据集也打包作为Keras的一部分，下面简单看下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.12 Loading the Reuters dataset</span></div><div class="line"><span class="keyword">from</span> keras.datasets <span class="keyword">import</span> reuters</div><div class="line">(train_data, train_labels), (test_data, test_labels) = reuters.load_data(</div><div class="line">    num_words=<span class="number">10000</span>)</div></pre></td></tr></table></figure>
+<p>设置参数num_words=10000，保留训练集中词频为top 10000的单词。</p>
+<p>你有8982条训练样本数据和2246条测试样本数据：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>len(train_data)</div><div class="line"><span class="number">8982</span></div><div class="line"><span class="meta">&gt;&gt;&gt; </span>len(test_data)</div><div class="line"><span class="number">2246</span></div></pre></td></tr></table></figure>
+<p>从上述返回的结果看，每个样本都是整数列表（词索引）：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>train_data[<span class="number">10</span>]</div><div class="line">[<span class="number">1</span>, <span class="number">245</span>, <span class="number">273</span>, <span class="number">207</span>, <span class="number">156</span>, <span class="number">53</span>, <span class="number">74</span>, <span class="number">160</span>, <span class="number">26</span>, <span class="number">14</span>, <span class="number">46</span>, <span class="number">296</span>, <span class="number">26</span>, <span class="number">39</span>, <span class="number">74</span>, <span class="number">2979</span>,</div><div class="line"><span class="number">3554</span>, <span class="number">14</span>, <span class="number">46</span>, <span class="number">4689</span>, <span class="number">4329</span>, <span class="number">86</span>, <span class="number">61</span>, <span class="number">3499</span>, <span class="number">4795</span>, <span class="number">14</span>, <span class="number">61</span>, <span class="number">451</span>, <span class="number">4329</span>, <span class="number">17</span>, <span class="number">12</span>]</div></pre></td></tr></table></figure>
+<p>下面代码可以把词索引解码成词：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.13 Decoding newswires back to text</span></div><div class="line">word_index = reuters.get_word_index()</div><div class="line">reverse_word_index = dict([(value, key) <span class="keyword">for</span> (key, value) <span class="keyword">in</span> word_index.items()])</div><div class="line"><span class="comment">#Note that the indices are offset by 3 because 0, 1, and 2 are reserved indices for “padding,” “start of sequence,” and “unknown.”</span></div><div class="line">decoded_newswire = <span class="string">' '</span>.join([reverse_word_index.get(i - <span class="number">3</span>, <span class="string">'?'</span>) <span class="keyword">for</span> i <span class="keyword">in</span> train_data[<span class="number">0</span>]])</div></pre></td></tr></table></figure>
+<p>样本的label是0到45的整数（主题索引）：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>train_labels[<span class="number">10</span>]</div><div class="line"><span class="number">3</span></div></pre></td></tr></table></figure>
+<h6 id="3-5-2-准备数据"><a href="#3-5-2-准备数据" class="headerlink" title="3.5.2 准备数据"></a>3.5.2 准备数据</h6><p>使用和上一小节同样的代码进行数据向量化。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.14 Encoding the data</span></div><div class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">vectorize_sequences</span><span class="params">(sequences, dimension=<span class="number">10000</span>)</span>:</span></div><div class="line">    results = np.zeros((len(sequences), dimension))</div><div class="line">    <span class="keyword">for</span> i, sequence <span class="keyword">in</span> enumerate(sequences):</div><div class="line">        results[i, sequence] = <span class="number">1.</span></div><div class="line">    <span class="keyword">return</span> results</div><div class="line"></div><div class="line"><span class="comment">#Vectorized training data</span></div><div class="line">x_train = vectorize_sequences(train_data)</div><div class="line"><span class="comment">#Vectorized test data</span></div><div class="line">x_test = vectorize_sequences(test_data)</div></pre></td></tr></table></figure>
+<p>向量化label有两种方法：一种是，将label列表转成整数张量，另一种是，使用one-hot编码。one-hot编码广泛适用于分类数据，也称为分类编码。它的更详细介绍在6.1小节。在本例中，label的one-hot编码是将每个label映射到label索引位置为1的值。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">to_one_hot</span><span class="params">(labels, dimension=<span class="number">46</span>)</span>:</span></div><div class="line">    results = np.zeros((len(labels), dimension))</div><div class="line">    <span class="keyword">for</span> i, label <span class="keyword">in</span> enumerate(labels):</div><div class="line">        results[i, label] = <span class="number">1.</span></div><div class="line">    <span class="keyword">return</span> results</div><div class="line"><span class="comment">#Vectorized training labels</span></div><div class="line">one_hot_train_labels = to_one_hot(train_labels)</div><div class="line"><span class="comment">#Vectorized test labels</span></div><div class="line">one_hot_test_labels = to_one_hot(test_labels)</div></pre></td></tr></table></figure>
+<p>上述label向量化的方式在Keras中有内建的函数实现，这在MNIST的例子中已经使用过。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">from</span> keras.utils.np_utils <span class="keyword">import</span> to_categorical</div><div class="line">one_hot_train_labels = to_categorical(train_labels) one_hot_test_labels = to_categorical(test_labels)</div></pre></td></tr></table></figure>
+<h6 id="3-5-3-构建神经网络"><a href="#3-5-3-构建神经网络" class="headerlink" title="3.5.3 构建神经网络"></a>3.5.3 构建神经网络</h6><p>这个主题分类问题和前一个影评分类类似：两类问题都是将短文本分类。但是这里有个新的限制：输出分类的数量由过去的2个变为46个。所以输出空间的维度更大。</p>
+<p>使用一系列的Dense layer时，每个layer只能访问上一个layer的输出信息。如果某一个layer丢失一些与分类相关的信息时，接下来的layer不可能再恢复这些信息，所以每个layer都可能成为潜在的信息瓶颈。在前面的例子中，选用的16维中间layer，但是16维空间并不能学习到46个不同的分类。</p>
+<p>考虑到上面的情况，这里使用更大的layer，隐藏单元设为64。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.15 Model definition</span></div><div class="line"><span class="keyword">from</span> keras <span class="keyword">import</span> models</div><div class="line"><span class="keyword">from</span> keras <span class="keyword">import</span> layers</div><div class="line"></div><div class="line">model = models.Sequential()</div><div class="line">model.add(layers.Dense(<span class="number">64</span>, activation=<span class="string">'relu'</span>, input_shape=(<span class="number">10000</span>,))) </div><div class="line">model.add(layers.Dense(<span class="number">64</span>, activation=<span class="string">'relu'</span>)) model.add(layers.Dense(<span class="number">46</span>, activation=<span class="string">'softmax'</span>))</div></pre></td></tr></table></figure>
+<p>上述代码中的神经网络架构需要注意两个事情：</p>
+<ul>
+<li>最后一个Dense layer大小为46。这意味着每个输入样本，神经网络模型输出一个46维向量。其中每个项代表不同的分类；</li>
+<li>最后一个layer使用softmax激活函数。这意味着神经网络模型输出一个46维的概率分布。对于每个输入样本，模型将输出一个46维的输出向量，每个output[i]是样本属于类别 i 的概率，且46个分数之和为1。</li>
+</ul>
+<p>对于本例最适合的损失函数是categorical_crossentropy。该函数度量两个概率分布的距离，意即，模型输出的概率分布与label真实分布之间的距离。为了最小化两个分布的距离，训练模型使得其输出更接近真实label。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.16 Compiling the model</span></div><div class="line">model.compile(optimizer=<span class="string">'rmsprop'</span>,</div><div class="line">              loss=<span class="string">'categorical_crossentropy'</span>,</div><div class="line">              metrics=[<span class="string">'accuracy'</span>])</div></pre></td></tr></table></figure>
+<h6 id="3-5-4-验证模型"><a href="#3-5-4-验证模型" class="headerlink" title="3.5.4 验证模型"></a>3.5.4 验证模型</h6><p>下面从训练数据中分出1000个样本作为验证集。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.17 Setting aside a validation set</span></div><div class="line">x_val = x_train[:<span class="number">1000</span>]</div><div class="line">partial_x_train = x_train[<span class="number">1000</span>:]</div><div class="line"></div><div class="line">y_val = one_hot_train_labels[:<span class="number">1000</span>]</div><div class="line">partial_y_train = one_hot_train_labels[<span class="number">1000</span>:]</div></pre></td></tr></table></figure>
+<p>接着训练神经网络模型20个epoch。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.18 Training the model</span></div><div class="line">history = model.fit(partial_x_train,</div><div class="line">                    partial_y_train,</div><div class="line">                    epochs=<span class="number">20</span>,</div><div class="line">                    batch_size=<span class="number">512</span>,</div><div class="line">                    validation_data=(x_val, y_val))</div></pre></td></tr></table></figure>
+<p>最后，显示损失函数和准确度的曲线，见图3.9和3.10。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.19 Plotting the training and validation loss</span></div><div class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</div><div class="line"></div><div class="line">loss = history.history[<span class="string">'loss'</span>]</div><div class="line">val_loss = history.history[<span class="string">'val_loss'</span>]</div><div class="line"></div><div class="line">epochs = range(<span class="number">1</span>, len(loss) + <span class="number">1</span>)</div><div class="line"></div><div class="line">plt.plot(epochs, loss, <span class="string">'bo'</span>, label=<span class="string">'Training loss'</span>)</div><div class="line">plt.plot(epochs, val_loss, <span class="string">'b'</span>, label=<span class="string">'Validation loss'</span>)</div><div class="line">plt.title(<span class="string">'Training and validation loss'</span>)</div><div class="line">plt.xlabel(<span class="string">'Epochs'</span>)</div><div class="line">plt.ylabel(<span class="string">'Loss'</span>)</div><div class="line">plt.legend()</div><div class="line"></div><div class="line">plt.show()</div></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.20 Plotting the training and validation accuracy</span></div><div class="line"><span class="comment">#Clears the figure</span></div><div class="line">plt.clf()</div><div class="line"></div><div class="line">acc = history.history[<span class="string">'acc'</span>]</div><div class="line">val_acc = history.history[<span class="string">'val_acc'</span>]</div><div class="line"></div><div class="line">plt.plot(epochs, acc, <span class="string">'bo'</span>, label=<span class="string">'Training acc'</span>)</div><div class="line">plt.plot(epochs, val_acc, <span class="string">'b'</span>, label=<span class="string">'Validation acc'</span>)</div><div class="line">plt.title(<span class="string">'Training and validation accuracy'</span>)</div><div class="line">plt.xlabel(<span class="string">'Epochs'</span>)</div><div class="line">plt.ylabel(<span class="string">'Loss'</span>)</div><div class="line">plt.legend()</div><div class="line"></div><div class="line">plt.show()</div></pre></td></tr></table></figure>
+<p><img src="http://img2.ph.126.net/zTI46Sy8qfZyY-cYO2JP4w==/2000724134559715730.png" alt="image"></p>
+<p>图3.9 训练集和验证集的损失曲线</p>
+<p><img src="http://img1.ph.126.net/er37r5VvGSW_WxqGpY9J3g==/840202805581705981.png" alt="image"></p>
+<p>图3.10 训练集和验证集的准确度曲线</p>
+<p>从上面的图可以看出，神经网络模型训练在第9个epoch开始过拟合。接着从头开始训练9个epoch，然后在测试集赏进行评估。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.21 Retraining a model from scratch</span></div><div class="line">model = models.Sequential()</div><div class="line">model.add(layers.Dense(<span class="number">64</span>, activation=<span class="string">'relu'</span>, input_shape=(<span class="number">10000</span>,)))</div><div class="line">model.add(layers.Dense(<span class="number">64</span>, activation=<span class="string">'relu'</span>)) model.add(layers.Dense(<span class="number">46</span>, activation=<span class="string">'softmax'</span>))</div><div class="line"></div><div class="line">model.compile(optimizer=<span class="string">'rmsprop'</span>,</div><div class="line">              loss=<span class="string">'categorical_crossentropy'</span>,</div><div class="line">              metrics=[<span class="string">'accuracy'</span>])</div><div class="line">model.fit(partial_x_train,</div><div class="line">          partial_y_train,</div><div class="line">          epochs=<span class="number">9</span>,</div><div class="line">          batch_size=<span class="number">512</span>,</div><div class="line">          validation_data=(x_val, y_val))</div><div class="line">results = model.evaluate(x_test, one_hot_test_labels)</div></pre></td></tr></table></figure>
+<p>下面是最终训练结果：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>results</div><div class="line">[<span class="number">0.9565213431445807</span>, <span class="number">0.79697239536954589</span>]</div></pre></td></tr></table></figure>
+<p>上面的方法达到约80%的准确度。在二分类问题中，纯随机分类的准确度是50%。而在本例中，纯随机分类的准确度将近19%，所以本例的模型结果还是不错的，至少超过随机基准线：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">import</span> copy</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>test_labels_copy = copy.copy(test_labels)</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>np.random.shuffle(test_labels_copy)</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>hits_array = np.array(test_labels) == np.array(test_labels_copy)</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>float(np.sum(hits_array)) / len(test_labels)</div><div class="line"><span class="number">0.18655387355298308</span></div></pre></td></tr></table></figure>
+<h6 id="3-5-5-模型预测"><a href="#3-5-5-模型预测" class="headerlink" title="3.5.5 模型预测"></a>3.5.5 模型预测</h6><p>你可以用模型实例的predict方法验证返回的46个主题分类的概率分布。下面对所有的测试集生成主题预测。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.22 Generating predictions for new data</span></div><div class="line">predictions = model.predict(x_test)</div></pre></td></tr></table></figure>
+<p>predictions的每项是一个长度为64的向量：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>predictions[<span class="number">0</span>].shape</div><div class="line">(<span class="number">46</span>,)</div></pre></td></tr></table></figure>
+<p>这些向量的系数之和为1：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>np.sum(predictions[<span class="number">0</span>])</div><div class="line"><span class="number">1.0</span></div></pre></td></tr></table></figure>
+<p>下面从预测分类中找出概率最大的项：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>np.argmax(predictions[<span class="number">0</span>])</div><div class="line"><span class="number">4</span></div></pre></td></tr></table></figure>
+<h6 id="3-5-6-处理label和loss的不同方法"><a href="#3-5-6-处理label和loss的不同方法" class="headerlink" title="3.5.6 处理label和loss的不同方法"></a>3.5.6 处理label和loss的不同方法</h6><p>前面提到过label编码的两外一种方法，将其转化为整数张量，比如：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">y_train = np.array(train_labels)</div><div class="line">y_test = np.array(test_labels)</div></pre></td></tr></table></figure>
+<p>上述处理label的方法唯一需要改变的是损失函数。在listing 3.21代码中使用的损失函数，categorical_crossentropy，期望label是一个分类编码。对于整数label，你应该选用sparse_categorical_crossentropy损失函数：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">model.compile(optimizer=<span class="string">'rmsprop'</span>,</div><div class="line">              loss=<span class="string">'sparse_categorical_crossentropy'</span>,</div><div class="line">              metrics=[<span class="string">'acc'</span>])</div></pre></td></tr></table></figure>
+<p>上面这个新的损失函数在数学上是和categorical_crossentropy相同的，不同之处在于接口不同。</p>
+<h6 id="3-5-7-中间layer的重要性"><a href="#3-5-7-中间layer的重要性" class="headerlink" title="3.5.7 中间layer的重要性"></a>3.5.7 中间layer的重要性</h6><p>前面提过，因为最后的输出是46维，你应该避免中间layer小于46个hidden unit。下面为你展示中间layer小于46维导致的信息瓶颈问题，以4个hidden unit为例。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.23 A model with an information bottleneck</span></div><div class="line">model = models.Sequential()</div><div class="line">model.add(layers.Dense(<span class="number">64</span>, activation=<span class="string">'relu'</span>, input_shape=(<span class="number">10000</span>,)))</div><div class="line">model.add(layers.Dense(<span class="number">4</span>, activation=<span class="string">'relu'</span>)) model.add(layers.Dense(<span class="number">46</span>, activation=<span class="string">'softmax'</span>))</div><div class="line"></div><div class="line">model.compile(optimizer=<span class="string">'rmsprop'</span>,</div><div class="line">              loss=<span class="string">'categorical_crossentropy'</span>,</div><div class="line">              metrics=[<span class="string">'accuracy'</span>])</div><div class="line">model.fit(partial_x_train,</div><div class="line">          partial_y_train,</div><div class="line">          epochs=<span class="number">20</span>,</div><div class="line">          batch_size=<span class="number">128</span>,</div><div class="line">          validation_data=(x_val, y_val))</div></pre></td></tr></table></figure>
+<p>现在新的模型达到最大约71%的验证准确度，丢失了8％。这种情况主要是压缩许多信息到一个低维度的空间，导致没有足够多的信息可以恢复。</p>
+<h6 id="3-5-8-延伸实验"><a href="#3-5-8-延伸实验" class="headerlink" title="3.5.8 延伸实验"></a>3.5.8 延伸实验</h6><ul>
+<li>尝试使用更大或者更小的layer：32个unit、128个unit等等；</li>
+<li>本例使用两个隐藏层。可以尝试一个或者三个隐藏层。</li>
+</ul>
+<h6 id="3-5-9-总结"><a href="#3-5-9-总结" class="headerlink" title="3.5.9 总结"></a>3.5.9 总结</h6><p>从本例应该学习到的知识点：</p>
+<ul>
+<li>如果你想将数据分为N类，那神经网络模型最后一个Dense layer大小为N；</li>
+<li>在单标签、多分类的问题中，模型输出应该用softmax激活函数，输出N个分类的概率分布；</li>
+<li>分类交叉熵是分类问题合适的损失函数。它最小化模型输出的概率分布和真实label的概率分布之间的距离；</li>
+<li>处理多分类中label的两种方法：<ul>
+<li>通过one-hot编码编码label，并使用categorical_crossentropy作为损失函数；</li>
+<li>通过整数张量编码label，并使用sparse_categorical_crossentropy损失函数</li>
+</ul>
+</li>
+<li>对于数据分类的类别较多的情况，应该避免创建较小的中间layer，导致信息瓶颈。</li>
+</ul>
+<p>未完待续。。。</p>
+<p>Enjoy!</p>
+<blockquote>
+<p>翻译本书系列的初衷是，觉得其中把深度学习讲解的通俗易懂。不光有实例，也包含作者多年实践对深度学习概念、原理的深度理解。最后说不重要的一点，François Chollet是Keras作者。<br>声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。</p>
+</blockquote>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/03/17/deep-learning-with-python-chapter-3-3.4/" rel="next" title="《Deep Learning with Python》第三章 3.4 走进神经网络之电影影评分类">
+                <i class="fa fa-chevron-left"></i> 《Deep Learning with Python》第三章 3.4 走进神经网络之电影影评分类
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="http://img0.ph.126.net/3vPAbMoh_6fH3-g_I0zo-w==/6631748363397501906.jpg"
+               alt="侠天" />
+          <p class="site-author-name" itemprop="name">侠天</p>
+          <p class="site-description motion-element" itemprop="description">侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">33</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/1333564335" target="_blank" title="微博">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  微博
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://www.infoq.com/cn/author/%E4%BE%A0%E5%A4%A9" target="_blank" title="InfoQ">
+                  
+                    <i class="fa fa-fw fa-infoq"></i>
+                  
+                  InfoQ
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#3-5-新闻分类：多分类"><span class="nav-number">1.</span> <span class="nav-text">3.5 新闻分类：多分类</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#3-5-1-路透社新闻数据集"><span class="nav-number">1.1.</span> <span class="nav-text">3.5.1 路透社新闻数据集</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#3-5-2-准备数据"><span class="nav-number">1.2.</span> <span class="nav-text">3.5.2 准备数据</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#3-5-3-构建神经网络"><span class="nav-number">1.3.</span> <span class="nav-text">3.5.3 构建神经网络</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#3-5-4-验证模型"><span class="nav-number">1.4.</span> <span class="nav-text">3.5.4 验证模型</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#3-5-5-模型预测"><span class="nav-number">1.5.</span> <span class="nav-text">3.5.5 模型预测</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#3-5-6-处理label和loss的不同方法"><span class="nav-number">1.6.</span> <span class="nav-text">3.5.6 处理label和loss的不同方法</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#3-5-7-中间layer的重要性"><span class="nav-number">1.7.</span> <span class="nav-text">3.5.7 中间layer的重要性</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#3-5-8-延伸实验"><span class="nav-number">1.8.</span> <span class="nav-text">3.5.8 延伸实验</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#3-5-9-总结"><span class="nav-number">1.9.</span> <span class="nav-text">3.5.9 总结</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">侠天</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+  </script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+    });
+  </script>
+  <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+  
+
+  
+
+</body>
+</html>
