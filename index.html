@@ -238,6 +238,167 @@
             
               
                 
+                <a class="post-title-link" href="/2018/07/04/deep-learning-with-python-chapter-3-3.6/" itemprop="url">
+                  《Deep Learning with Python》第三章 3.6 走进神经网络之房价预测
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-07-04T23:24:42+08:00" content="2018-07-04">
+              2018-07-04
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h5 id="3-6-房价预测：线性回归"><a href="#3-6-房价预测：线性回归" class="headerlink" title="3.6 房价预测：线性回归"></a>3.6 房价预测：线性回归</h5><p>前面两个例子都可以看成是分类问题，它的目标是预测某个输入数据点的单个离散label。常见的另外一类机器学习问题是线性回归，其预测的是一个连续值，而不是离散label。比如，根据气象信息预测明天的气温；根据软件项目计划书预测实现时间。</p>
+<blockquote>
+<p>注意：不要混淆线性回归和逻辑回归算法。逻辑回归不是回归算法，而是分类算法。</p>
+</blockquote>
+<h6 id="3-6-1-波士顿房价数据集"><a href="#3-6-1-波士顿房价数据集" class="headerlink" title="3.6.1 波士顿房价数据集"></a>3.6.1 波士顿房价数据集</h6><p>波士顿房价数据集是1970年代中期波士顿郊区的数据样本，包含犯罪率、不动产税税率等。你将用该数据集预测当地房价的中间价。波士顿房价数据集与前面两个例子都不太一样，数据样本点相当少：只有506个，其中404个作为训练样本和102个测试样本。输入数据的每个特征都有不同的scale。例如，一些比例值，取值范围在0和1之间；另一些取值在1到12之间；还有些取值在0到100之间，等等。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.24 Loading the Boston housing dataset</span></div><div class="line"><span class="keyword">from</span> keras.datasets <span class="keyword">import</span> boston_housing</div><div class="line">(train_data, train_targets), (test_data, test_targets) = boston_housing.load_data()</div></pre></td></tr></table></figure>
+<p>查看数据样本：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>train_data.shape</div><div class="line">(<span class="number">404</span>, <span class="number">13</span>)</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>test_data.shape</div><div class="line">(<span class="number">102</span>, <span class="number">13</span>)</div></pre></td></tr></table></figure>
+<p>从上面返回的结果可以看出，有404个训练样本和102个测试样本，每个样本有13个数值型特征，比如犯罪率，每个住处的房屋平均数量，高速可达性，等等。</p>
+<p>target是自住房屋的中间价，单位为千美元：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>train_targets</div><div class="line">[ <span class="number">15.2</span>, <span class="number">42.3</span>, <span class="number">50.</span> ... <span class="number">19.4</span>, <span class="number">19.4</span>, <span class="number">29.1</span>]</div></pre></td></tr></table></figure>
+<p>房价普遍在\$10000和\$50000之间。价格看起来便宜，但是要记住这是1970年代中期。</p>
+<h6 id="3-6-2-准备数据"><a href="#3-6-2-准备数据" class="headerlink" title="3.6.2 准备数据"></a>3.6.2 准备数据</h6><p>把不同取值范围的变量值赋给神经网络会出现问题。虽然神经网络会自适应各种各样的数据，但是这会造成模型学习的过程变得困难。一个广泛使用的最佳实践是对此类数据集特征进行归一化：对输入数据的每个特征（输入矩阵的一个列），减去该特征的均值并除以标准方差，这样每个特征的均值为0、均方差为1。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.25 Normalizing the data</span></div><div class="line">mean = train_data.mean(axis=<span class="number">0</span>)</div><div class="line">train_data -= mean</div><div class="line">std = train_data.std(axis=<span class="number">0</span>)</div><div class="line">train_data /= std</div><div class="line">test_data -= mean</div><div class="line">test_data /= std</div></pre></td></tr></table></figure>
+<p>注意，测试集的归一化使用的是训练集的均值和均方差。一般来说，你不用对测试集数据进行数量计算，即使是简单的数据归一化。</p>
+<h6 id="3-6-3-构建神经网络"><a href="#3-6-3-构建神经网络" class="headerlink" title="3.6.3  构建神经网络"></a>3.6.3  构建神经网络</h6><p>由于这个例子中的样本量比较少，所以选用两个隐藏单元为64的hidden layer的神经网络。一般来说，训练数据集越小，过拟合的情况越糟糕。这里使用小规模神经网络以减轻过拟合。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.26 Model definition</span></div><div class="line"><span class="keyword">from</span> keras <span class="keyword">import</span> models</div><div class="line"><span class="keyword">from</span> keras <span class="keyword">import</span> layers</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">build_model</span><span class="params">()</span>:</span></div><div class="line"><span class="string">'''</span></div><div class="line">Because you’ll need to instantiate</div><div class="line">the same model multiple times, you</div><div class="line">use a function to construct it.</div><div class="line">'''</div><div class="line">model = models.Sequential()</div><div class="line">model.add(layers.Dense(<span class="number">64</span>, activation=<span class="string">'relu'</span>, input_shape=(train_data.shape[<span class="number">1</span>],)))</div><div class="line">model.add(layers.Dense(<span class="number">64</span>, activation=<span class="string">'relu'</span>))</div><div class="line">model.add(layers.Dense(<span class="number">1</span>))</div><div class="line">model.compile(optimizer=<span class="string">'rmsprop'</span>, loss=<span class="string">'mse'</span>, metrics=[<span class="string">'mae'</span>])</div><div class="line"><span class="keyword">return</span> model</div></pre></td></tr></table></figure>
+<p>上面的神经网络以单元大小为1且不带激活函数的Dense layer为结束，意味着这是标量回归（线性回归）。应用激活函数可以限制输出结果的取值范围，比如，如果你在最后一个layer应用sigmoid激活函数，神经网络只会学习0到1之间的预测值。本例中最后一个layer是纯线性的，神经网络学习任意取值范围的预测值。</p>
+<p>神经网络模型编译使用的mse损失函数：均方误差（mean squared error）。其损失函数广泛应用在回归问题当中。</p>
+<p>你也可以在模型训练中使用平均绝对误差MAE（mean absolute error）。它监测的是预测值和目标值差值的绝对值，比如，MAE为0.5意味着你的预测值偏离均值$500。</p>
+<h6 id="3-6-4-使用K-fold验证模型"><a href="#3-6-4-使用K-fold验证模型" class="headerlink" title="3.6.4 使用K-fold验证模型"></a>3.6.4 使用K-fold验证模型</h6><p>为了评估神经网络模型的同时调整网络模型超参（比如模型训练的epoch数量），你可以将数据集分割成训练集和验证集。但是由于数据样本点太少，所以验证集数量也非常少（比如，大约100个样本）。这会导致验证集上的分数更多的依赖于你选择哪部分数据作为验证集哪部分数据作为训练集：可能因为分割到验证集的数据点不同而产生较高的variance。这会影响模型评估的真实性。</p>
+<p>解决上面问题的最佳方法是使用K-fold交叉验证，见图3.11。它将数据样本点分割为K个partition（一般K=4或者5），实例化K个相同的模型，分别在K-1个partition数据集训练每个模型并在余下的partition数据集上进行评估。然后将得到的K个模型的验证集上的分数求平均。下面的代码看起来更直白。</p>
+<p><img src="http://img0.ph.126.net/8E1GyD-Zd69GehB0f2htcQ==/6632754416537852190.png" alt="image"></p>
+<p>图3.11 3-fold交叉验证</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.27 K-fold validation</span></div><div class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</div><div class="line"></div><div class="line">k = <span class="number">4</span></div><div class="line">num_val_samples = len(train_data) // k</div><div class="line">num_epochs = <span class="number">100</span></div><div class="line">all_scores = []</div><div class="line"></div><div class="line"><span class="keyword">for</span> i <span class="keyword">in</span> range(k):</div><div class="line">    print(<span class="string">'processing fold #'</span>, i)</div><div class="line">    <span class="string">'''</span></div><div class="line">    Prepares the validation data: data from partition #k</div><div class="line">    '''</div><div class="line">    val_data = train_data[i * num_val_samples: (i + <span class="number">1</span>) * num_val_samples]</div><div class="line">    val_targets = train_targets[i * num_val_samples: (i + <span class="number">1</span>) * num_val_samples]</div><div class="line">    </div><div class="line">    <span class="string">'''</span></div><div class="line">    Prepares the training data: data from all other partitions</div><div class="line">    '''</div><div class="line">    partial_train_data = np.concatenate(</div><div class="line">        [train_data[:i * num_val_samples],</div><div class="line">         train_data[(i + <span class="number">1</span>) * num_val_samples:]], axis=<span class="number">0</span>)</div><div class="line">    partial_train_targets = np.concatenate(</div><div class="line">        [train_targets[:i * num_val_samples],</div><div class="line">         train_targets[(i + <span class="number">1</span>) * num_val_samples:]], axis=<span class="number">0</span>)</div><div class="line">    </div><div class="line">    <span class="string">'''</span></div><div class="line">    Builds the Keras model (already compiled)</div><div class="line">    '''</div><div class="line">    model = build_model()</div><div class="line">    <span class="string">'''</span></div><div class="line">    Trains the model (in silent mode, verbose = 0)</div><div class="line">    '''</div><div class="line">    model.fit(partial_train_data, partial_train_targets, epochs=num_epochs,</div><div class="line">              batch_size=<span class="number">1</span>, verbose=<span class="number">0</span>)</div><div class="line">    <span class="string">'''</span></div><div class="line">    Evaluates the model on the validation data</div><div class="line">    '''</div><div class="line">    val_mse, val_mae = model.evaluate(val_data, val_targets, verbose=<span class="number">0</span>)</div><div class="line">    all_scores.append(val_mae)</div></pre></td></tr></table></figure>
+<p>设置num_epochs = 100，运行得到如下的结果：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>all_scores</div><div class="line">[<span class="number">2.588258957792037</span>, <span class="number">3.1289568449719116</span>, <span class="number">3.1856116051248984</span>, <span class="number">3.0763342615401386</span>]</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>np.mean(all_scores)</div><div class="line"><span class="number">2.9947904173572462</span></div></pre></td></tr></table></figure>
+<p>每次运行的确得到不同的验证分数，从2.6到3.2。平均值为3.0，这比任意单个分数都要稳定，这也是K-fold交叉验证的价值所在。在本例中，偏离平均的大小为\$3000，这明显对于\$10000到\$50000范围的价格还是可以的。</p>
+<p>下面将神经网络模型训练epoch设为500。修改迭代训练的代码保存每个epoch的验证分数：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.28 Saving the validation logs at each fold</span></div><div class="line">num_epochs = <span class="number">500</span></div><div class="line">all_mae_histories = []</div><div class="line"></div><div class="line"><span class="keyword">for</span> i <span class="keyword">in</span> range(k):</div><div class="line">    print(<span class="string">'processing fold #'</span>, i)</div><div class="line">    <span class="string">'''</span></div><div class="line">    Prepares the validation data: data from partition #k</div><div class="line">    '''</div><div class="line">    val_data = train_data[i * num_val_samples: (i + <span class="number">1</span>) * num_val_samples]</div><div class="line">    val_targets = train_targets[i * num_val_samples: (i + <span class="number">1</span>) * num_val_samples]</div><div class="line">    </div><div class="line">    <span class="string">'''</span></div><div class="line">    Prepares the training data: data from all other partitions</div><div class="line">    '''</div><div class="line">    partial_train_data = np.concatenate(</div><div class="line">        [train_data[:i * num_val_samples],</div><div class="line">         train_data[(i + <span class="number">1</span>) * num_val_samples:]], axis=<span class="number">0</span>)</div><div class="line">    partial_train_targets = np.concatenate(</div><div class="line">        [train_targets[:i * num_val_samples],</div><div class="line">         train_targets[(i + <span class="number">1</span>) * num_val_samples:]], axis=<span class="number">0</span>)</div><div class="line">    </div><div class="line">    <span class="string">'''</span></div><div class="line">    Builds the Keras model (already compiled)</div><div class="line">    '''</div><div class="line">    model = build_model()</div><div class="line">    <span class="string">'''</span></div><div class="line">    Trains the model (in silent mode, verbose = 0)</div><div class="line">    '''</div><div class="line">    history = model.fit(partial_train_data, partial_train_targets,</div><div class="line">                        epochs=num_epochs,</div><div class="line">                        validation_data=(val_data, val_targets),</div><div class="line">                        batch_size=<span class="number">1</span>, verbose=<span class="number">0</span>)</div><div class="line">    mae_history = history.history[<span class="string">'val_mean_absolute_error'</span>]</div><div class="line">    all_mae_histories.append(mae_history)</div></pre></td></tr></table></figure>
+<p>接下来计算每个epoch的K个fold所对应的MAE的平均值：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.29 Building the history of successive mean K-fold validation scores</span></div><div class="line">average_mae_history = [</div><div class="line">    np.mean([x[i] <span class="keyword">for</span> x <span class="keyword">in</span> all_mae_histories]) <span class="keyword">for</span> i <span class="keyword">in</span> range(num_epochs)]</div></pre></td></tr></table></figure>
+<p>下面绘制验证分数图表，见3.12。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.30 Plotting validation scores</span></div><div class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</div><div class="line"></div><div class="line">plt.plot(range(<span class="number">1</span>, len(average_mae_history) + <span class="number">1</span>), average_mae_history)</div><div class="line">plt.xlabel(<span class="string">'Epochs'</span>)</div><div class="line">plt.ylabel(<span class="string">'Validation MAE'</span>)</div><div class="line">plt.show()</div></pre></td></tr></table></figure>
+<p><img src="http://img2.ph.126.net/2Q8qdNsu0Lu7Vt8fsAhC2w==/6608206719936695012.png" alt="image"></p>
+<p>图3.12 每个epoch验证集MAE的趋势图</p>
+<p>看上面的图表可能有点困难，因为数量级的问题和相当高的variance。下面对其进行处理：</p>
+<ul>
+<li>忽略前十个数据点，因为它们与曲线上剩余的值不在同一个量级上；</li>
+<li>用每个数据点的指数滑动平均值代替原数据点，来平滑曲线</li>
+</ul>
+<p>对应的结果见图3.13。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.31 Plotting validation scores, excluding the first 10 data points</span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">smooth_curve</span><span class="params">(points, factor=<span class="number">0.9</span>)</span>:</span></div><div class="line">    smoothed_points = []</div><div class="line">    <span class="keyword">for</span> point <span class="keyword">in</span> points:</div><div class="line">        <span class="keyword">if</span> smoothed_points:</div><div class="line">            previous = smoothed_points[<span class="number">-1</span>]</div><div class="line">            smoothed_points.append(previous * factor + point * (<span class="number">1</span> - factor))</div><div class="line">            <span class="keyword">else</span>:</div><div class="line">                smoothed_points.append(point)</div><div class="line">            <span class="keyword">return</span> smoothed_points</div><div class="line">        </div><div class="line">smooth_mae_history = smooth_curve(average_mae_history[<span class="number">10</span>:])</div><div class="line"></div><div class="line">plt.plot(range(<span class="number">1</span>, len(smooth_mae_history) + <span class="number">1</span>), smooth_mae_history)</div><div class="line">plt.xlabel(<span class="string">'Epochs'</span>)</div><div class="line">plt.ylabel(<span class="string">'Validation MAE'</span>)</div><div class="line">plt.show()</div></pre></td></tr></table></figure>
+<p><img src="http://img1.ph.126.net/KyFxHA1vFDsH-E2rAEsJYA==/1965539762470909177.png" alt="image"></p>
+<p>图3.13 每个epoch验证集MAE的趋势图（排除前十个数据点）</p>
+<p>根据上面的图表可以看出，验证集的MAE在80个epoch之后没有什么显著的提升。意味着该点之后模型开始过拟合。</p>
+<p>一旦你完成模型其它参数的调优（除了epoch数量，你可以调整hidden layer的隐藏单元数量），你可以用最佳的参数在所有训练集上训练最终的生产上使用的模型，然后看下该模型在测试集上的效果。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.32 Training the final model</span></div><div class="line"></div><div class="line"><span class="comment">#Gets a fresh, compiled model</span></div><div class="line">model = build_model()</div><div class="line"></div><div class="line"><span class="comment">#Trains it on the entirety of the data</span></div><div class="line">model.fit(train_data, train_targets,</div><div class="line">          epochs=<span class="number">80</span>, batch_size=<span class="number">16</span>, verbose=<span class="number">0</span>)</div><div class="line">test_mse_score, test_mae_score = model.evaluate(test_data, test_targets)</div></pre></td></tr></table></figure>
+<p>最终结果如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>test_mae_score</div><div class="line"><span class="number">2.5532484335057877</span></div></pre></td></tr></table></figure>
+<p>最后得到的结果偏离平均为$2550。</p>
+<h6 id="3-6-5-小结"><a href="#3-6-5-小结" class="headerlink" title="3.6.5 小结"></a>3.6.5 小结</h6><p>从本例你应该学到以下知识点：</p>
+<ul>
+<li>回归模型的损失函数与分类问题的不同，常用均方差损失函数（MSE）</li>
+<li>相应的，常用的回归模型指标是平均绝对误差（MAE），确切地说，回归模型没有准确度的概念</li>
+<li>输入数据的取值范围不同时，应该在数据预处理阶段将每个特征进行归一化</li>
+<li>当数据样本太少时，可以使用K-fold交叉验证稳定的评估一个模型</li>
+<li>当训练集数据比较少时，倾向于使用小规模神经网络（一般是一到两个隐藏层），避免过拟合</li>
+</ul>
+<p>未完待续。。。</p>
+<p>Enjoy!</p>
+<blockquote>
+<p>翻译本书系列的初衷是，觉得其中把深度学习讲解的通俗易懂。不光有实例，也包含作者多年实践对深度学习概念、原理的深度理解。最后说不重要的一点，François Chollet是Keras作者。<br>声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。</p>
+</blockquote>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2018/06/09/deep-learning-with-python-chapter-3-3.5/" itemprop="url">
                   《Deep Learning with Python》第三章 3.5 走进神经网络之新闻多分类
                 </a>
@@ -1775,160 +1936,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/12/28/how-apache-flink-enables-new-streaming-applications/" itemprop="url">
-                  Flink开启流处理技术新潮流：解决流处理event time和消息乱序
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-12-28T15:24:57+08:00" content="2017-12-28">
-              2017-12-28
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p><em>写在之前：此文翻译自：<a href="http://data-artisans.com/how-apache-flink-enables-new-streaming-applications-part-1" target="_blank" rel="external">how-apache-flink-enables-new-streaming-applications</a>，做了少许改动，感谢原作者。</em></p>
-<p>速度是成功的一重要要素，流处理技术的速度使得其越来越受青睐。在现实世界中，数据产品总是以持续不断的处理面目示人，比如，web服务日志，移动应用用户行为，或者传感器数据。</p>
-<p>到目前为止，大部分数据处理架构技术栈都建立在有限的、静态的数据假设之上。现代流处理技术在不断地努力，通过模拟和处理现实世界的event，而最理想的模拟情况是把数据看作“streams”。Flink不但实现“streams”流，而且具有开创性的技术点。本篇先来讲述Flink解决消息乱序和event time窗口。</p>
-<h5 id="消息乱序和event-time窗口"><a href="#消息乱序和event-time窗口" class="headerlink" title="消息乱序和event time窗口"></a>消息乱序和event time窗口</h5><p>在讨论解决消息乱序问题之前，需先定义时间和顺序。在流处理中，时间的概念有两个：</p>
-<ul>
-<li><strong>Event time </strong>：Event time是事件发生的时间，经常以时间戳表示，并和数据一起发送。带时间戳的数据流有，Web服务日志、监控agent的日志、移动端日志等；</li>
-<li><strong>Processing time </strong> ：Processing time是处理事件数据的服务器时间，一般是运行流处理应用的服务器时钟。</li>
-</ul>
-<p>许多流处理场景中，事件发生的时间和事件到达待处理的消息队列时间有各种延迟：</p>
-<ol>
-<li>各种网络延迟；</li>
-<li>数据流消费者导致的队列阻塞和反压影响；</li>
-<li>数据流毛刺，即，数据波动；</li>
-<li>事件生产者（移动设备、传感器等）离线；</li>
-</ol>
-<p>上述诸多原因会导致队列中的消息频繁乱序。事件发生的时间和事件到达待处理的消息队列时间的不同随着时间在不断变化，这常被称为时间偏移（<em>event time skew</em>），表示成：<em>“processing time – event time”</em>。</p>
-<p>对大部分应用来讲，基于事件的创建时间分析数据比基于事件的处理时间分析数据要更有意义。Flink允许用户定义基于事件时间（event time）的窗口，而不是处理时间。</p>
-<p>Flink使用<em>事件时间 clock</em> 来跟踪事件时间，其是以<em>watermarks</em>来实现的。<em>watermarks</em>是Flink 源流基于事件时间点生成的特殊事件。 <em>T</em> 时间点的<em>watermarks</em>意味着，小于 T 的时间戳的事件不会再到达。Flink的所有操作都基于<em>watermarks</em>来跟踪事件时间。</p>
-<p>下图描述Flink是如何计算事件时间窗口。当<em>watermarks</em>到达时窗口计算会被触发，并更新事件时间clock：</p>
-<p>很明显，左上角<em>watermarks</em> W(4)快要到达，出现计算窗口T1-T4；右上角因为消息有乱序（事件时间为3的事件排在事件时间为7的后面），同时出现两个计算窗口T1-T4和T4-T8；左下角<em>watermarks</em> W(4)触发计算窗口演化，小于事件时间4的事件不再到达；右下角参考前面解读。</p>
-<p>基于事件时间的Pipeline会产生更精确的结果，因为一旦有相应事件时间的事件到达会尽快计算；而相对于周期性的批量处理来讲，基于事件时间的数据流pipeline会更早的计算出结果，并且更精确（批量处理不能很好的处理跨batch的消息乱序）。</p>
-<h5 id="结合事件时间和实时pipeline"><a href="#结合事件时间和实时pipeline" class="headerlink" title="结合事件时间和实时pipeline"></a>结合事件时间和实时pipeline</h5><p>事件时间pipeline会因为必要的事件时间过程而导致一定的延迟。有时延迟太大导致无法获得实时结果，这时就得增加延迟短的结果。</p>
-<p>Flink是一个流处理框架，能毫秒级处理事件，它能在同一个应用中综合低延迟的实时pipeline和事件时间pipeline，列子如下：</p>
-<ol>
-<li>基于单个事件的低延迟报警。如果某类事件被识别，需要发出报警信息；</li>
-<li>基于处理时间窗口的实时dashboard，能够聚合秒级的事件数；</li>
-<li>基于事件时间的精确统计</li>
-</ol>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line">    * Main entry point.</div><div class="line">    */</div><div class="line">   <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</div><div class="line">       </div><div class="line">       <span class="comment">// create environment and configure it</span></div><div class="line">       <span class="keyword">final</span> StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();</div><div class="line">       env.registerType(Statistic.class);</div><div class="line">       env.registerType(SensorReading.class);</div><div class="line">       </div><div class="line">       env.setParallelism(<span class="number">4</span>);</div><div class="line">       env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);</div><div class="line">       </div><div class="line">       </div><div class="line">       <span class="comment">// create a stream of sensor readings, assign timestamps, and create watermarks</span></div><div class="line">       DataStream&lt;SensorReading&gt; readings = env</div><div class="line">               .addSource(<span class="keyword">new</span> SampleDataGenerator())</div><div class="line">               .assignTimestamps(<span class="keyword">new</span> ReadingsTimestampAssigner());</div><div class="line">       </div><div class="line">       <span class="comment">// path (1) - low latency event-at a time filter</span></div><div class="line">       readings</div><div class="line">               .filter(reading -&gt; reading.reading() &gt; <span class="number">100.0</span>)</div><div class="line">               .map( reading -&gt; <span class="string">"-- ALERT -- Reading above threshold: "</span> + reading )</div><div class="line">               .print();</div><div class="line">       </div><div class="line">       <span class="comment">// path (2) - processing time windows: Compute max readings per sensor group</span></div><div class="line">       </div><div class="line">       <span class="comment">// because the default stream time is set to Event Time, we override the trigger with a</span></div><div class="line">       <span class="comment">// processing time trigger</span></div><div class="line">       </div><div class="line">       readings</div><div class="line">               .keyBy( reading -&gt; reading.sensorGroup() )</div><div class="line">               .window(TumblingTimeWindows.of(Time.seconds(<span class="number">5</span>)))</div><div class="line">               .trigger(ProcessingTimeTrigger.create())</div><div class="line">               .fold(<span class="keyword">new</span> Statistic(), (curr, next) -&gt;</div><div class="line">                       <span class="keyword">new</span> Statistic(next.sensorGroup(), next.timestamp(), Math.max(curr.value(), next.reading())))</div><div class="line">               </div><div class="line">               .map(stat -&gt; <span class="string">"PROC TIME - max for "</span> + stat)</div><div class="line">               .print();</div><div class="line">       </div><div class="line">       <span class="comment">// path (3) - event time windows: Compute average reading over sensors per minute</span></div><div class="line">       </div><div class="line">       <span class="comment">// we use a WindowFunction here, to illustrate how to get access to the window object</span></div><div class="line">       <span class="comment">// that contains bounds, etc.</span></div><div class="line">       <span class="comment">// Pre-aggregation is possible by adding a pre-aggregator ReduceFunction</span></div><div class="line">       </div><div class="line">       readings</div><div class="line">               <span class="comment">// group by, window and aggregate </span></div><div class="line">               .keyBy(reading -&gt; reading.sensorId() )</div><div class="line">               .timeWindow(Time.minutes(<span class="number">1</span>), Time.seconds(<span class="number">10</span>))</div><div class="line">               .apply(<span class="keyword">new</span> WindowFunction&lt;SensorReading, Statistic, String, TimeWindow&gt;() &#123;</div><div class="line"></div><div class="line">                   <span class="meta">@Override</span></div><div class="line">                   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">apply</span><span class="params">(String id, TimeWindow window, Iterable&lt;SensorReading&gt; values, Collector&lt;Statistic&gt; out)</span> </span>&#123;</div><div class="line">                       <span class="keyword">int</span> count = <span class="number">0</span>;</div><div class="line">                       <span class="keyword">double</span> agg = <span class="number">0.0</span>;</div><div class="line">                       <span class="keyword">for</span> (SensorReading r : values) &#123;</div><div class="line">                           agg += r.reading();</div><div class="line">                           count++;</div><div class="line">                       &#125;</div><div class="line">                       out.collect(<span class="keyword">new</span> Statistic(id, window.getStart(), agg / count));</div><div class="line">                   &#125;</div><div class="line">               &#125;)</div><div class="line">               </div><div class="line">               .map(stat -&gt; <span class="string">"EVENT TIME - avg for "</span> + stat)</div><div class="line">               .print();</div><div class="line">       </div><div class="line">       env.execute(<span class="string">"Event time example"</span>);</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
-<p>Flink提供的窗口触发条件包括处理时间clock，事件时间clock，以及数据流内容。</p>
-<h5 id="Flink是如何度量时间？"><a href="#Flink是如何度量时间？" class="headerlink" title="Flink是如何度量时间？"></a>Flink是如何度量时间？</h5><p>下面看下Flink是如何处理时间的，在这点上与其它老的流处理系统有啥不同。</p>
-<p>一般意义上讲，时间是用clock度量的。最简单的clock称为<em>wall clock</em>，它是集群中服务器执行流处理作业的间隔clock。<em>wall clock</em>是用来跟踪处理时间的。</p>
-<p>为了跟踪事件时间，我们需要集群机器间相同的clock。Flink是通过<em>watermarks</em>机制实现的。一个<em>watermarks</em>是指在真实事件流时间点发生的事件（比如，上午10点），那么到现在为止上午10点前的事件不会再到达。事件时间clock（<em>event time clock</em>）跟踪时间比wall clock要粗粒度，但是更准确。</p>
-<p>还有第三种clock，叫做<em>system clock</em>。它是用来保证流处理系统的“exactly-once“语义的。Flink跟踪作业的处理是通过<em>barriers</em>（栏栅），并进行snapshot。<em>barriers</em>与<em>watermarks</em>类似，不同之处在于，<em>barriers</em>是由Flink的master机器的<em>wall clock</em> 生成， 而<em>watermarks</em>是由真实世界的时间生成。同样，Spark Streaming的micro-batche schedule是基于Spark receiver的<em>wall clock</em> 。</p>
-<p>下图完美展现刚才讲的各种时间：</p>
-<p>Worker 1和Worker 2机器上并行执行对数据源和窗口的操作作业。事件上的数字代表时间戳，方块的颜色代表不同的key（灰色流向窗口1，紫色流向窗口2）。数据源从队列中读取事件（有分区，通过key分区），把他们分发到正确的窗口。窗口定义为基于事件时间的时间窗口（Flink包含时间窗口和count窗口）。我能看到Worker 1、Worker 2和Master机器的<em>wall clock</em>不同（缺乏时间同步，具体看ntp），分别为10，8，7。数据源发出<em>watermarks</em>，当前的<em>watermarks</em>时间戳为4。这意味着，event time clock是4，这时进行并行计算。Master（JobManager）对数据源做<em>barriers</em>，并对计算做snapshot。系统时间此时为7，checkpoint为第七个。</p>
-<p>下面对流处理框架中的三种clock进行总结：</p>
-<ul>
-<li><strong>event time clock</strong>：度量事件流的时间，粗粒度；</li>
-<li><strong>system clock</strong>：度量计算的过程。实际上是协调者机器的<em>wall clock</em>；</li>
-<li><strong>wall clock </strong>：度量处理时间。</li>
-</ul>
-<p>下面也给出老的流处理系统的弊端：</p>
-<ol>
-<li>计算不准确：因为真实世界的事件发生顺序与处理的顺序经常不一致；</li>
-<li>计算结果强依赖当前时间；</li>
-<li>系统参数配置会影响程序的语义：比如，增加checkpoin的间隔。</li>
-</ol>
-<p>老的流处理系统的这些缺点让它们没法获得准确的结果（至少是可控的准确度）。</p>
-<p>而Flink完全分离这三种clock：</p>
-<ol>
-<li>基于<em>event time clock</em>的<em>watermarks</em>跟踪事件流时间，允许用户定义基于事件时间的窗口；</li>
-<li><em>system clock</em>与<em>event time clock</em>完全解藕，跟踪计算过程和全局snapshot，不对外暴露api，仅仅用来分布式系统的协调；</li>
-<li>处理时间是用的机器的<em>wall clock</em>，暴露给用户支持处理时间窗口。</li>
-</ol>
-<p>相关文章：</p>
-<p>Enjoy!</p>
-<hr>
-<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
-<p>若发现以上文章有任何不妥，请联系我。</p>
-<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1974,7 +1981,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">33</span>
+              <span class="site-state-item-count">34</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>

@@ -238,6 +238,160 @@
             
               
                 
+                <a class="post-title-link" href="/2017/12/28/how-apache-flink-enables-new-streaming-applications/" itemprop="url">
+                  Flink开启流处理技术新潮流：解决流处理event time和消息乱序
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-12-28T15:24:57+08:00" content="2017-12-28">
+              2017-12-28
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p><em>写在之前：此文翻译自：<a href="http://data-artisans.com/how-apache-flink-enables-new-streaming-applications-part-1" target="_blank" rel="external">how-apache-flink-enables-new-streaming-applications</a>，做了少许改动，感谢原作者。</em></p>
+<p>速度是成功的一重要要素，流处理技术的速度使得其越来越受青睐。在现实世界中，数据产品总是以持续不断的处理面目示人，比如，web服务日志，移动应用用户行为，或者传感器数据。</p>
+<p>到目前为止，大部分数据处理架构技术栈都建立在有限的、静态的数据假设之上。现代流处理技术在不断地努力，通过模拟和处理现实世界的event，而最理想的模拟情况是把数据看作“streams”。Flink不但实现“streams”流，而且具有开创性的技术点。本篇先来讲述Flink解决消息乱序和event time窗口。</p>
+<h5 id="消息乱序和event-time窗口"><a href="#消息乱序和event-time窗口" class="headerlink" title="消息乱序和event time窗口"></a>消息乱序和event time窗口</h5><p>在讨论解决消息乱序问题之前，需先定义时间和顺序。在流处理中，时间的概念有两个：</p>
+<ul>
+<li><strong>Event time </strong>：Event time是事件发生的时间，经常以时间戳表示，并和数据一起发送。带时间戳的数据流有，Web服务日志、监控agent的日志、移动端日志等；</li>
+<li><strong>Processing time </strong> ：Processing time是处理事件数据的服务器时间，一般是运行流处理应用的服务器时钟。</li>
+</ul>
+<p>许多流处理场景中，事件发生的时间和事件到达待处理的消息队列时间有各种延迟：</p>
+<ol>
+<li>各种网络延迟；</li>
+<li>数据流消费者导致的队列阻塞和反压影响；</li>
+<li>数据流毛刺，即，数据波动；</li>
+<li>事件生产者（移动设备、传感器等）离线；</li>
+</ol>
+<p>上述诸多原因会导致队列中的消息频繁乱序。事件发生的时间和事件到达待处理的消息队列时间的不同随着时间在不断变化，这常被称为时间偏移（<em>event time skew</em>），表示成：<em>“processing time – event time”</em>。</p>
+<p>对大部分应用来讲，基于事件的创建时间分析数据比基于事件的处理时间分析数据要更有意义。Flink允许用户定义基于事件时间（event time）的窗口，而不是处理时间。</p>
+<p>Flink使用<em>事件时间 clock</em> 来跟踪事件时间，其是以<em>watermarks</em>来实现的。<em>watermarks</em>是Flink 源流基于事件时间点生成的特殊事件。 <em>T</em> 时间点的<em>watermarks</em>意味着，小于 T 的时间戳的事件不会再到达。Flink的所有操作都基于<em>watermarks</em>来跟踪事件时间。</p>
+<p>下图描述Flink是如何计算事件时间窗口。当<em>watermarks</em>到达时窗口计算会被触发，并更新事件时间clock：</p>
+<p>很明显，左上角<em>watermarks</em> W(4)快要到达，出现计算窗口T1-T4；右上角因为消息有乱序（事件时间为3的事件排在事件时间为7的后面），同时出现两个计算窗口T1-T4和T4-T8；左下角<em>watermarks</em> W(4)触发计算窗口演化，小于事件时间4的事件不再到达；右下角参考前面解读。</p>
+<p>基于事件时间的Pipeline会产生更精确的结果，因为一旦有相应事件时间的事件到达会尽快计算；而相对于周期性的批量处理来讲，基于事件时间的数据流pipeline会更早的计算出结果，并且更精确（批量处理不能很好的处理跨batch的消息乱序）。</p>
+<h5 id="结合事件时间和实时pipeline"><a href="#结合事件时间和实时pipeline" class="headerlink" title="结合事件时间和实时pipeline"></a>结合事件时间和实时pipeline</h5><p>事件时间pipeline会因为必要的事件时间过程而导致一定的延迟。有时延迟太大导致无法获得实时结果，这时就得增加延迟短的结果。</p>
+<p>Flink是一个流处理框架，能毫秒级处理事件，它能在同一个应用中综合低延迟的实时pipeline和事件时间pipeline，列子如下：</p>
+<ol>
+<li>基于单个事件的低延迟报警。如果某类事件被识别，需要发出报警信息；</li>
+<li>基于处理时间窗口的实时dashboard，能够聚合秒级的事件数；</li>
+<li>基于事件时间的精确统计</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line">    * Main entry point.</div><div class="line">    */</div><div class="line">   <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</div><div class="line">       </div><div class="line">       <span class="comment">// create environment and configure it</span></div><div class="line">       <span class="keyword">final</span> StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();</div><div class="line">       env.registerType(Statistic.class);</div><div class="line">       env.registerType(SensorReading.class);</div><div class="line">       </div><div class="line">       env.setParallelism(<span class="number">4</span>);</div><div class="line">       env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);</div><div class="line">       </div><div class="line">       </div><div class="line">       <span class="comment">// create a stream of sensor readings, assign timestamps, and create watermarks</span></div><div class="line">       DataStream&lt;SensorReading&gt; readings = env</div><div class="line">               .addSource(<span class="keyword">new</span> SampleDataGenerator())</div><div class="line">               .assignTimestamps(<span class="keyword">new</span> ReadingsTimestampAssigner());</div><div class="line">       </div><div class="line">       <span class="comment">// path (1) - low latency event-at a time filter</span></div><div class="line">       readings</div><div class="line">               .filter(reading -&gt; reading.reading() &gt; <span class="number">100.0</span>)</div><div class="line">               .map( reading -&gt; <span class="string">"-- ALERT -- Reading above threshold: "</span> + reading )</div><div class="line">               .print();</div><div class="line">       </div><div class="line">       <span class="comment">// path (2) - processing time windows: Compute max readings per sensor group</span></div><div class="line">       </div><div class="line">       <span class="comment">// because the default stream time is set to Event Time, we override the trigger with a</span></div><div class="line">       <span class="comment">// processing time trigger</span></div><div class="line">       </div><div class="line">       readings</div><div class="line">               .keyBy( reading -&gt; reading.sensorGroup() )</div><div class="line">               .window(TumblingTimeWindows.of(Time.seconds(<span class="number">5</span>)))</div><div class="line">               .trigger(ProcessingTimeTrigger.create())</div><div class="line">               .fold(<span class="keyword">new</span> Statistic(), (curr, next) -&gt;</div><div class="line">                       <span class="keyword">new</span> Statistic(next.sensorGroup(), next.timestamp(), Math.max(curr.value(), next.reading())))</div><div class="line">               </div><div class="line">               .map(stat -&gt; <span class="string">"PROC TIME - max for "</span> + stat)</div><div class="line">               .print();</div><div class="line">       </div><div class="line">       <span class="comment">// path (3) - event time windows: Compute average reading over sensors per minute</span></div><div class="line">       </div><div class="line">       <span class="comment">// we use a WindowFunction here, to illustrate how to get access to the window object</span></div><div class="line">       <span class="comment">// that contains bounds, etc.</span></div><div class="line">       <span class="comment">// Pre-aggregation is possible by adding a pre-aggregator ReduceFunction</span></div><div class="line">       </div><div class="line">       readings</div><div class="line">               <span class="comment">// group by, window and aggregate </span></div><div class="line">               .keyBy(reading -&gt; reading.sensorId() )</div><div class="line">               .timeWindow(Time.minutes(<span class="number">1</span>), Time.seconds(<span class="number">10</span>))</div><div class="line">               .apply(<span class="keyword">new</span> WindowFunction&lt;SensorReading, Statistic, String, TimeWindow&gt;() &#123;</div><div class="line"></div><div class="line">                   <span class="meta">@Override</span></div><div class="line">                   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">apply</span><span class="params">(String id, TimeWindow window, Iterable&lt;SensorReading&gt; values, Collector&lt;Statistic&gt; out)</span> </span>&#123;</div><div class="line">                       <span class="keyword">int</span> count = <span class="number">0</span>;</div><div class="line">                       <span class="keyword">double</span> agg = <span class="number">0.0</span>;</div><div class="line">                       <span class="keyword">for</span> (SensorReading r : values) &#123;</div><div class="line">                           agg += r.reading();</div><div class="line">                           count++;</div><div class="line">                       &#125;</div><div class="line">                       out.collect(<span class="keyword">new</span> Statistic(id, window.getStart(), agg / count));</div><div class="line">                   &#125;</div><div class="line">               &#125;)</div><div class="line">               </div><div class="line">               .map(stat -&gt; <span class="string">"EVENT TIME - avg for "</span> + stat)</div><div class="line">               .print();</div><div class="line">       </div><div class="line">       env.execute(<span class="string">"Event time example"</span>);</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
+<p>Flink提供的窗口触发条件包括处理时间clock，事件时间clock，以及数据流内容。</p>
+<h5 id="Flink是如何度量时间？"><a href="#Flink是如何度量时间？" class="headerlink" title="Flink是如何度量时间？"></a>Flink是如何度量时间？</h5><p>下面看下Flink是如何处理时间的，在这点上与其它老的流处理系统有啥不同。</p>
+<p>一般意义上讲，时间是用clock度量的。最简单的clock称为<em>wall clock</em>，它是集群中服务器执行流处理作业的间隔clock。<em>wall clock</em>是用来跟踪处理时间的。</p>
+<p>为了跟踪事件时间，我们需要集群机器间相同的clock。Flink是通过<em>watermarks</em>机制实现的。一个<em>watermarks</em>是指在真实事件流时间点发生的事件（比如，上午10点），那么到现在为止上午10点前的事件不会再到达。事件时间clock（<em>event time clock</em>）跟踪时间比wall clock要粗粒度，但是更准确。</p>
+<p>还有第三种clock，叫做<em>system clock</em>。它是用来保证流处理系统的“exactly-once“语义的。Flink跟踪作业的处理是通过<em>barriers</em>（栏栅），并进行snapshot。<em>barriers</em>与<em>watermarks</em>类似，不同之处在于，<em>barriers</em>是由Flink的master机器的<em>wall clock</em> 生成， 而<em>watermarks</em>是由真实世界的时间生成。同样，Spark Streaming的micro-batche schedule是基于Spark receiver的<em>wall clock</em> 。</p>
+<p>下图完美展现刚才讲的各种时间：</p>
+<p>Worker 1和Worker 2机器上并行执行对数据源和窗口的操作作业。事件上的数字代表时间戳，方块的颜色代表不同的key（灰色流向窗口1，紫色流向窗口2）。数据源从队列中读取事件（有分区，通过key分区），把他们分发到正确的窗口。窗口定义为基于事件时间的时间窗口（Flink包含时间窗口和count窗口）。我能看到Worker 1、Worker 2和Master机器的<em>wall clock</em>不同（缺乏时间同步，具体看ntp），分别为10，8，7。数据源发出<em>watermarks</em>，当前的<em>watermarks</em>时间戳为4。这意味着，event time clock是4，这时进行并行计算。Master（JobManager）对数据源做<em>barriers</em>，并对计算做snapshot。系统时间此时为7，checkpoint为第七个。</p>
+<p>下面对流处理框架中的三种clock进行总结：</p>
+<ul>
+<li><strong>event time clock</strong>：度量事件流的时间，粗粒度；</li>
+<li><strong>system clock</strong>：度量计算的过程。实际上是协调者机器的<em>wall clock</em>；</li>
+<li><strong>wall clock </strong>：度量处理时间。</li>
+</ul>
+<p>下面也给出老的流处理系统的弊端：</p>
+<ol>
+<li>计算不准确：因为真实世界的事件发生顺序与处理的顺序经常不一致；</li>
+<li>计算结果强依赖当前时间；</li>
+<li>系统参数配置会影响程序的语义：比如，增加checkpoin的间隔。</li>
+</ol>
+<p>老的流处理系统的这些缺点让它们没法获得准确的结果（至少是可控的准确度）。</p>
+<p>而Flink完全分离这三种clock：</p>
+<ol>
+<li>基于<em>event time clock</em>的<em>watermarks</em>跟踪事件流时间，允许用户定义基于事件时间的窗口；</li>
+<li><em>system clock</em>与<em>event time clock</em>完全解藕，跟踪计算过程和全局snapshot，不对外暴露api，仅仅用来分布式系统的协调；</li>
+<li>处理时间是用的机器的<em>wall clock</em>，暴露给用户支持处理时间窗口。</li>
+</ol>
+<p>相关文章：</p>
+<p>Enjoy!</p>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2017/12/28/kafka-cluster-producer/" itemprop="url">
                   Kafka使用总结：Producer
                 </a>
@@ -2272,124 +2426,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/08/21/spark_and_redis_connector/" itemprop="url">
-                  Spark借助Redis提升45倍处理效率！
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-08-21T19:57:36+08:00" content="2016-08-21">
-              2016-08-21
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p><em>摘要</em>:时常采用内存数据结构会使得程序更加高效，比如，Spark借助Redis可以提速45倍。</p>
-<p>Spark代表着下一代大数据处理技术，并且，借着开源算法和计算节点集群分布式处理，Spark和Hadoop在执行的方式和速度已经远远的超过传统单节点的技术架构。但Spark利用内存进行数据处理，这让Spark的处理速度超过基于磁盘的Hadoop 100x 倍。</p>
-<p>但Spark和内存数据库<a href="http://www.redislabs.com" target="_blank" rel="external">Redis</a>结合后可显著的提高Spark运行任务的性能，这源于Redis优秀的数据结构和执行过程，从而减小数据处理的复杂性和开销。Spark通过一个Redis连接器可以访问Redis的数据和API，加速Spark处理数据。</p>
-<p>Spark和Redis结合使用到底有多大的性能提升呢？结合这两者来处理时序数据时可以提高46倍以上——而不是提高百分之四十五。</p>
-<p>为什么这些数据处理速度的提升是很重要的呢？现在，越来越多的公司期望在交易完成的同时完成对应的数据分析。公司的决策也需要自动化，而这些需要数据分析能够实时的进行。Spark是一个用的较多的数据处理框架，但它不能做到百分之百实时，要想做到实时处理Spark还有很大一步工作需要做。<br><img src="http://img2.ph.126.net/QalVm_AuA5Vx7x2lxXEWbw==/6598067023763790131.png" alt="此处输入图片的描述"><br>图1</p>
-<h3 id="Spark-RDD"><a href="#Spark-RDD" class="headerlink" title="Spark RDD"></a>Spark RDD</h3><p>Spark采用弹性分布式数据集（RDD），可将数据存在易变的内存中或持久化到磁盘上。 RDD具有不可变化性，分布式存储在Spark集群的各节点，RDD经过tansform操作后创建出一个新的RDD。RDD是Spark中数据集的一种重要抽象，具有良好的容错性、高效的迭代处理。</p>
-<h3 id="Redis"><a href="#Redis" class="headerlink" title="Redis"></a>Redis</h3><p>Redis天生为高性能设计，通过良好的数据存储结构能达到亚毫秒级的延迟。Redis的数据存储结构不仅仅提高内存的利用和减小应用的复杂性，也降低了网络负载、带宽消耗和处理时间。Redis数据结构包括字符串（strings）， 散列（hashes）， 列表（lists）， 集合（sets）， 有序集合（sorted sets）， bitmaps， hyperloglogs 和 地理空间（geospatial）索引半径查询。</p>
-<p>下面来展示Redis的数据结构如何来简化应用的处理时间和复杂度。这里用有序集合来举例，一个以评分（score）大小排序的元素集合。<br><img src="http://img2.ph.126.net/MatkU-NaQLLkh2i_OdRhtw==/6598097810089184567.png" alt="此处输入图片的描述"><br>图2</p>
-<p>Redis能存储多种数据类型，并自动的以评分（score）排序。常见的例子有，按价格排序的商品，以阅读数排序的文章名，股票价格时序数据，带时间戳的传感器读数。<br>有序集合依赖Redis优秀的内建操作可以实现范围查询、求交集，可以非常快地（O(log(N))）完成添加，删除和更新元素的操作。Redis内建函数不仅减少代码开发，在内存中执行也减小了网络延时和带宽消耗，可达到亚毫秒级的吞吐延迟。特别地，对时序数据集合来讲，有序集合数据结构比使用内存键值对或使用磁盘的数据库，能给数据分析带来数量级上的性能提升。</p>
-<h3 id="Spark-Redis-connector"><a href="#Spark-Redis-connector" class="headerlink" title="Spark-Redis connector"></a>Spark-Redis connector</h3><p>为了提高Spark数据分析的能力，Redis团队开发了一个<a href="https://github.com/RedisLabs/spark-redis" target="_blank" rel="external">Spark-Redis connector</a>，它使得Spark可以直接使用Redis作为数据源，顺理成章的Spark也能使用Redis的各数据结构，进而显著的提升Spark分析数据的速度。<br><img src="http://img2.ph.126.net/EjDbOsyQrDo6nRi2gkM66w==/6598082416926397895.png" alt="此处输入图片的描述"><br>图3</p>
-<p>为了展示Spark结合Redis所产生的效果，Redis团队拿时序数据集合做基准测试，测试了Spark在不同情况下执行时间范围查询：Spark使用堆外内存；Spark使用Tachyon作为堆外缓存；Spark使用HDFS存储；Spark结合Redis使用。</p>
-<p>Redis团队改进了Cloudera的Spark分析时序数据的包，采用<a href="https://github.com/RedisLabs/spark-timeseries/blob/redis/src/main/scala/com/redislabs/provider/redis/rdd/RedisRDD.scala#L26" target="_blank" rel="external">Redis有序集合数据结构加速时序数据分析</a>，并且实现Spark访问Redis各类数据结构的接口。此Spark-Redis时序开发包主要做了两件事：</p>
-<ol>
-<li>它让Redis节点与Spark集群的节点自动匹配，确保每个Spark节点都使用本地Redis节点，这样可以明显的优化延迟时间；</li>
-<li>集成Spark DataFrame和Spark读取数据源，使得Spark SQL查询可自动转化，并能借助Redis能有效的恢复数据。</li>
-</ol>
-<p>换句话说，使用Spark-Redis时序开发包意味着用户无需担心Spark和Redis两者如何使用。用户使用Spark SQL进行数据分析可以获得极大的查询性能提升。</p>
-<h3 id="基准测试"><a href="#基准测试" class="headerlink" title="基准测试"></a>基准测试</h3><p>基准测试的时序数据集是跨度32年的1024个股票交易市场按天随机生成的数据。每个股票交易所都有有序数据集，以日期和元素属性（开盘价、最高价、最低价、收盘价等）排序，在Redis中以有序数据结构存储，采用Spark进行数据分析，描述如图4<br><img src="http://img2.ph.126.net/heSh9IpGiauqBoZqf9egyg==/6598076919368260259.png" alt="此处输入图片的描述"><br>图4</p>
-<p>在上述列子中，就有序集合AAPL来看，有序数据集合以天为评分（score，以蓝色表示），每天相关的值为一行（Member，以灰色表示）。在Redis中，只要执行一个ZRANGEBYSCORE操作就可以获取一个指定时间范围内的所有股票数据，并且Redis执行此查询要比其他Key/Value数据库快100倍。<br>从图x可以看到，横向比较各种情况的基准测试，Spark结合Redis执行时间片的查询速度比Spark使用HDFS快135倍、比Spark使用堆内内存或Spark使用Tachyon作为堆外内存要快45倍。<br><img src="http://img1.ph.126.net/UieEUHKoGh9ex9aJiMHPZQ==/6598192368089172532.png" alt="此处输入图片的描述"><br>图5</p>
-<h3 id="Spark-Redis其它应用"><a href="#Spark-Redis其它应用" class="headerlink" title="Spark-Redis其它应用"></a>Spark-Redis其它应用</h3><p>按照“<a href="https://redislabs.com/solutions/spark-and-redis" target="_blank" rel="external">Getting Started with Spark and Redis</a>”指南，你可以一步步安装Spark集群和使用Spark-Redis包。它提供一个简单的wordcount的例子展示如何使用Spark结合Redis。待你熟练使用后可以自己进一步挖掘、优化其他的Redis数据结构。<br>Redis的有序集合数据结构很适合时序数据集合，而Redis其他数据结构（比如，列表（lists）， 集合（sets）和 地理空间（geospatial）索引半径查询）也能进一步丰富Spark的数据分析。当使用Spark抽取地理空间信息来获取新产品的人群偏好和邻近中心的位置，可结合Redis的地理空间（geospatial）索引半径查询来优化。</p>
-<p>Spark支持一系列的数据分析，包括SQL、机器学习、图计算和流式数据。Spark本身的内存数据处理能力有一定的限制，而借着Redis可以让Spark更快的做数据分析。其实Spark的DataFrame和Datasets已经在做类似的优化，先把数据进行结构化放在内存里进行计算，并且Datasets可以省掉序列化和反序列化的消耗。结合Spark和Redis，借助Redis的共享分布式内存数据存储机制，可以处理数百万个记录乃至上亿的记录<br>时序数据的分析仅仅是一个开始，更多的性能优化可以参见：<a href="https://github.com/RedisLabs/spark-timeseries" target="_blank" rel="external">Spark-Redis</a>。</p>
-<h4 id="参考"><a href="#参考" class="headerlink" title="参考;"></a><em>参考</em>;</h4><hr>
-<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
-<p>若发现以上文章有任何不妥，请联系我。</p>
-<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"><br>~</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -2435,7 +2471,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">33</span>
+              <span class="site-state-item-count">34</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>

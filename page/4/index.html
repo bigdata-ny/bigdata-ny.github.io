@@ -238,6 +238,189 @@
             
               
                 
+                <a class="post-title-link" href="/2016/07/31/how-to-write-your-own-recommendation-system-part-1/" itemprop="url">
+                  如何编写自己的推荐系统
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-07-31T01:55:12+08:00" content="2016-07-31">
+              2016-07-31
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p><em>摘要</em>：推荐系统过去都是用在物品推荐上，Netflix是最典型的例子。当你浏览几个物品之后，它会给你推荐新的物品。你是否思考过这是如何工作的？或者应用到你自己的网站或者应用中？</p>
+<p>作者将使用Python完成一个完整的、简单的推荐系统，并给出相应的代码。这里将使用电影点击率数据（1 － 5 星）作为源数据集。</p>
+<h4 id="小规模实例"><a href="#小规模实例" class="headerlink" title="小规模实例"></a>小规模实例</h4><p>在进行成千上万大规模点击率实验之前，先使用小规模的数据集来展示推荐系统是如何工作的，这样会很快看到一些有意义的结果。</p>
+<p>作者使用的样列数据见<a href="http://infolab.stanford.edu/~ullman/mmds/ch9.pdf" target="_blank" rel="external">链接</a>。<strong>HP</strong>代表&lt;哈利波特&gt;（Harry Potter）三部曲，<strong>TW</strong>代&lt;表暮光之城&gt;（Twilight），<strong>SW</strong>代表&lt;星球大战&gt;（Star Wars）前三部。</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+<th>HP1</th>
+<th>HP2</th>
+<th>HP3</th>
+<th>TW</th>
+<th>SW1</th>
+<th>SW2</th>
+<th>SW3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>4</td>
+<td></td>
+<td></td>
+<td>5</td>
+<td>1        </td>
+</tr>
+<tr>
+<td>B</td>
+<td>5</td>
+<td>5</td>
+<td>4</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>C</td>
+<td></td>
+<td></td>
+<td></td>
+<td>2</td>
+<td>4</td>
+<td>5</td>
+<td></td>
+</tr>
+<tr>
+<td>D</td>
+<td></td>
+<td>3</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<p><strong>A</strong>到<strong>D</strong>是四个评分用户。比较意外的是：用户<strong>D</strong>未观看第一部&lt;哈利波特&gt;就跑去看第二部&lt;哈利波特&gt;。让我们试着用已有的用户评分数据去评估用户<strong>D</strong>有多大可能去观看&lt;哈利波特&gt;第一部。这个过程也可以用来处理推荐系统中遇到的缺失数据问题，这部分会在稍后讲解。</p>
+<p>找出缺失评分数据<strong>(D, HP1)</strong>最简单的方法是：看过第一部&lt;哈利波特&gt;的用户具有相似的品味，根据他们的观影评分来评估。本例的数据太少，只有4个用户，可能最终的推荐结果不太精确。但使用更多的用户数据会使得推荐结果更精确。</p>
+<p>那我们如何找出与用户D 品味最相似的用户呢？余弦相似度（或称为余弦距离）可以解决这个问题。余弦相似度通过输入两个用户的评分，输出0 到1 之间的值（此值即为余弦相似度）。1 代表电影评分完全相同。下面我们就来找出用户最大的余弦相似度。</p>
+<h4 id="Cosine-Distance-Similarity"><a href="#Cosine-Distance-Similarity" class="headerlink" title="Cosine Distance/Similarity"></a>Cosine Distance/Similarity</h4><p>一般公式为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">\frac&#123;(a_1 \times b_1) + (a_2 \times b_2) + \ldots&#125;&#123;\sqrt&#123;(a_1)^2 + (a_2)^2 + \ldots&#125;\sqrt&#123;(b_1)^2 + (b_2)^2 + \ldots&#125;&#125;</div></pre></td></tr></table></figure></p>
+<p>其中， a 和 b 代表用户。</p>
+<p>下面让我们来计算用户 A (红色)和用户 B（蓝色）余弦相似度（cosine similarity）：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">\frac&#123;(\color&#123;red&#125;4 \times \color&#123;blue&#125;5) + (\color&#123;red&#125;0 \times \color&#123;blue&#125;5) + (\color&#123;red&#125;0 \times \color&#123;blue&#125;4) + (\color&#123;red&#125;5 \times \color&#123;blue&#125;0) + (\color&#123;red&#125;1 \times \color&#123;blue&#125;0) + (\color&#123;red&#125;0 \times \color&#123;blue&#125;0) + (\color&#123;red&#125;0 \times \color&#123;blue&#125;0)&#125;&#123;\sqrt&#123;\color&#123;red&#125;4^2 + \color&#123;red&#125;0^2 + \color&#123;red&#125;0^2 + \color&#123;red&#125;5^2 + \color&#123;red&#125;1^2 + \color&#123;red&#125;0^2 + \color&#123;red&#125;0^2&#125;\sqrt&#123;\color&#123;blue&#125;5^2 + \color&#123;blue&#125;5^2 + \color&#123;blue&#125;4^2 + \color&#123;blue&#125;0^2 + \color&#123;blue&#125;0^2 + \color&#123;blue&#125;0^2 + \color&#123;blue&#125;0^2 &#125;&#125;</div></pre></td></tr></table></figure>
+<p>上述中的零值对最终的结果没有影响，简化得到：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">\frac&#123;(\color&#123;red&#125;4 \times \color&#123;blue&#125;5)&#125;&#123;\sqrt&#123;\color&#123;red&#125;4^2 + \color&#123;red&#125;5^2 + \color&#123;red&#125;1^2&#125;\sqrt&#123;\color&#123;blue&#125;5^2 + \color&#123;blue&#125;5^2 + \color&#123;blue&#125;4^2&#125;&#125;</div></pre></td></tr></table></figure>
+<p>这里只能比较用户A 和B ，因为用户C 并没有对HP1电影评分，所以对推荐用户D 观看HP1电影的工作没有啥帮助。我们可以计算出对应的余弦相似度：</p>
+<ul>
+<li>[ ] 用户A 和 用户D 的余弦相似度= 0.0</li>
+<li>[ ] 用户B 和 用户D 的余弦相似度= 0.435</li>
+</ul>
+<p>所以，可以看出用户B 很明显有最大的余弦相似度。下面是相应的代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line">_ = <span class="number">0</span> <span class="comment"># A missing value.</span></div><div class="line">users = &#123;</div><div class="line">    <span class="string">'A'</span>: [<span class="number">4</span>, _, _, <span class="number">5</span>, <span class="number">1</span>, _, _],</div><div class="line">    <span class="string">'B'</span>: [<span class="number">5</span>, <span class="number">5</span>, <span class="number">4</span>, _, _, _, _],</div><div class="line">    <span class="string">'C'</span>: [_, _, _, <span class="number">2</span>, <span class="number">4</span>, <span class="number">5</span>, _],</div><div class="line">    <span class="string">'D'</span>: [_, <span class="number">3</span>, _, _, _, _, <span class="number">3</span>],</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">cosine_distance</span><span class="params">(user1, user2)</span>:</span></div><div class="line">    top = <span class="number">0</span></div><div class="line">    user1bottom = <span class="number">0</span></div><div class="line">    user2bottom = <span class="number">0</span></div><div class="line"></div><div class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> range(<span class="number">0</span>, len(user1)):</div><div class="line">        top += user1[i] * user2[i]</div><div class="line">        user1bottom += user1[i] * user1[i]</div><div class="line">        user2bottom += user2[i] * user2[i]</div><div class="line"></div><div class="line">    <span class="keyword">return</span> top / (sqrt(user1bottom) * sqrt(user2bottom))</div><div class="line"></div><div class="line"><span class="keyword">print</span> cosine_distance(users[<span class="string">'A'</span>], users[<span class="string">'D'</span>])</div><div class="line"><span class="keyword">print</span> cosine_distance(users[<span class="string">'B'</span>], users[<span class="string">'D'</span>])</div></pre></td></tr></table></figure>
+<p>需要注意的是：前面我们是把缺失值置为0。但这意味着我们把没有评分的电影都认为是用户不喜欢的电影（因为评分若为0代表用户不喜欢这部电影，而缺失评分值实际上只是未知，并不代表喜欢，也不代表不喜欢）。一般更好的做法是计算出一个平衡值（balanced value）来替代缺失数据。在本例中选择2.5更好，在改变<strong>_</strong>的值后我们得到： </p>
+<ul>
+<li>[ ] 用户A 和 用户D 的余弦相似度= 0.915</li>
+<li>[ ] 用户B 和 用户D 的余弦相似度= 0.952</li>
+</ul>
+<p>我们找出用户<strong>B</strong>给出的电影评分，5 星好评。那说明用户<strong>D</strong> 也应该会喜欢&lt;哈利波特&gt;第一部，并给出5 星好评。</p>
+<p>代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">estimate_rating</span><span class="params">(users, userName, movie)</span>:</span></div><div class="line">    user_best_match = <span class="keyword">None</span></div><div class="line">    user_best_match_dist = <span class="number">0</span></div><div class="line"></div><div class="line">    <span class="keyword">for</span> user <span class="keyword">in</span> users:</div><div class="line">        <span class="comment"># We don't want to calculate ourself.</span></div><div class="line">        <span class="keyword">if</span> user == userName:</div><div class="line">            <span class="keyword">continue</span></div><div class="line"></div><div class="line">        <span class="comment"># Ignore users that haven't rated the movie.</span></div><div class="line">        <span class="keyword">if</span> users[user][movie] == <span class="number">0</span>:</div><div class="line">            <span class="keyword">continue</span></div><div class="line"></div><div class="line">        dist = cosine_distance(users[userName], users[user])</div><div class="line">        <span class="keyword">print</span> <span class="string">'%s -&gt; %s = %.3f'</span> % (userName, user, dist)</div><div class="line"></div><div class="line">        <span class="keyword">if</span> dist &gt;= user_best_match_dist:</div><div class="line">            user_best_match_dist = dist</div><div class="line">            user_best_match = user</div><div class="line"></div><div class="line">    <span class="comment"># Return the rating of the best matched user.</span></div><div class="line">    <span class="keyword">return</span> users[user_best_match][movie]</div><div class="line"></div><div class="line">HP1, HP2, HP3, TW, SW1, SW2, SW3 = range(<span class="number">0</span>, <span class="number">7</span>)</div><div class="line"><span class="keyword">print</span> estimate_rating(users, <span class="string">'D'</span>, HP1)</div></pre></td></tr></table></figure>
+<p>如果有更多的用户评分数据，我们将会得到更精确的结果。而且我们会给出固定数量的相似用户的平均相似值，而不是最大的相似值。</p>
+<h4 id="下期内容"><a href="#下期内容" class="headerlink" title="下期内容"></a>下期内容</h4><p>在下篇文章中，作者使用真实场景的数据集进行实战。主要关注三部分：推荐算法的性能、推荐结果质量和推荐算法精度的计算。</p>
+<p><a href="http://elliot.land/how-to-write-your-own-recommendation-system-part-1" target="_blank" rel="external">http://elliot.land/how-to-write-your-own-recommendation-system-part-1</a></p>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2016/07/31/building-machine-learning-estimator-in-tensorflow/" itemprop="url">
                   【机器学习】在TensorFlow中构建自定义Estimator：深度解析TensorFlow组件Estimator
                 </a>
@@ -588,7 +771,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">33</span>
+              <span class="site-state-item-count">34</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>

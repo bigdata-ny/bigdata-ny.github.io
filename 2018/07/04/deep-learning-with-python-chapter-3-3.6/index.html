@@ -1,0 +1,666 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="神机喵算" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="3.6 房价预测：线性回归前面两个例子都可以看成是分类问题，它的目标是预测某个输入数据点的单个离散label。常见的另外一类机器学习问题是线性回归，其预测的是一个连续值，而不是离散label。比如，根据气象信息预测明天的气温；根据软件项目计划书预测实现时间。
+
+注意：不要混淆线性回归和逻辑回归算法。逻辑回归不是回归算法，而是分类算法。
+
+3.6.1 波士顿房价数据集波士顿房价数据集是1970年代中">
+<meta property="og:type" content="article">
+<meta property="og:title" content="《Deep Learning with Python》第三章 3.6 走进神经网络之房价预测">
+<meta property="og:url" content="http://yoursite.com/2018/07/04/deep-learning-with-python-chapter-3-3.6/index.html">
+<meta property="og:site_name" content="神机喵算">
+<meta property="og:description" content="3.6 房价预测：线性回归前面两个例子都可以看成是分类问题，它的目标是预测某个输入数据点的单个离散label。常见的另外一类机器学习问题是线性回归，其预测的是一个连续值，而不是离散label。比如，根据气象信息预测明天的气温；根据软件项目计划书预测实现时间。
+
+注意：不要混淆线性回归和逻辑回归算法。逻辑回归不是回归算法，而是分类算法。
+
+3.6.1 波士顿房价数据集波士顿房价数据集是1970年代中">
+<meta property="og:image" content="http://img0.ph.126.net/8E1GyD-Zd69GehB0f2htcQ==/6632754416537852190.png">
+<meta property="og:image" content="http://img2.ph.126.net/2Q8qdNsu0Lu7Vt8fsAhC2w==/6608206719936695012.png">
+<meta property="og:image" content="http://img1.ph.126.net/KyFxHA1vFDsH-E2rAEsJYA==/1965539762470909177.png">
+<meta property="og:image" content="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg">
+<meta property="og:updated_time" content="2018-07-04T15:24:42.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="《Deep Learning with Python》第三章 3.6 走进神经网络之房价预测">
+<meta name="twitter:description" content="3.6 房价预测：线性回归前面两个例子都可以看成是分类问题，它的目标是预测某个输入数据点的单个离散label。常见的另外一类机器学习问题是线性回归，其预测的是一个连续值，而不是离散label。比如，根据气象信息预测明天的气温；根据软件项目计划书预测实现时间。
+
+注意：不要混淆线性回归和逻辑回归算法。逻辑回归不是回归算法，而是分类算法。
+
+3.6.1 波士顿房价数据集波士顿房价数据集是1970年代中">
+<meta name="twitter:image" content="http://img0.ph.126.net/8E1GyD-Zd69GehB0f2htcQ==/6632754416537852190.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/07/04/deep-learning-with-python-chapter-3-3.6/"/>
+
+  <title> 《Deep Learning with Python》第三章 3.6 走进神经网络之房价预测 | 神机喵算 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">神机喵算</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                《Deep Learning with Python》第三章 3.6 走进神经网络之房价预测
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-07-04T23:24:42+08:00" content="2018-07-04">
+              2018-07-04
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h5 id="3-6-房价预测：线性回归"><a href="#3-6-房价预测：线性回归" class="headerlink" title="3.6 房价预测：线性回归"></a>3.6 房价预测：线性回归</h5><p>前面两个例子都可以看成是分类问题，它的目标是预测某个输入数据点的单个离散label。常见的另外一类机器学习问题是线性回归，其预测的是一个连续值，而不是离散label。比如，根据气象信息预测明天的气温；根据软件项目计划书预测实现时间。</p>
+<blockquote>
+<p>注意：不要混淆线性回归和逻辑回归算法。逻辑回归不是回归算法，而是分类算法。</p>
+</blockquote>
+<h6 id="3-6-1-波士顿房价数据集"><a href="#3-6-1-波士顿房价数据集" class="headerlink" title="3.6.1 波士顿房价数据集"></a>3.6.1 波士顿房价数据集</h6><p>波士顿房价数据集是1970年代中期波士顿郊区的数据样本，包含犯罪率、不动产税税率等。你将用该数据集预测当地房价的中间价。波士顿房价数据集与前面两个例子都不太一样，数据样本点相当少：只有506个，其中404个作为训练样本和102个测试样本。输入数据的每个特征都有不同的scale。例如，一些比例值，取值范围在0和1之间；另一些取值在1到12之间；还有些取值在0到100之间，等等。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.24 Loading the Boston housing dataset</span></div><div class="line"><span class="keyword">from</span> keras.datasets <span class="keyword">import</span> boston_housing</div><div class="line">(train_data, train_targets), (test_data, test_targets) = boston_housing.load_data()</div></pre></td></tr></table></figure>
+<p>查看数据样本：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>train_data.shape</div><div class="line">(<span class="number">404</span>, <span class="number">13</span>)</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>test_data.shape</div><div class="line">(<span class="number">102</span>, <span class="number">13</span>)</div></pre></td></tr></table></figure>
+<p>从上面返回的结果可以看出，有404个训练样本和102个测试样本，每个样本有13个数值型特征，比如犯罪率，每个住处的房屋平均数量，高速可达性，等等。</p>
+<p>target是自住房屋的中间价，单位为千美元：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>train_targets</div><div class="line">[ <span class="number">15.2</span>, <span class="number">42.3</span>, <span class="number">50.</span> ... <span class="number">19.4</span>, <span class="number">19.4</span>, <span class="number">29.1</span>]</div></pre></td></tr></table></figure>
+<p>房价普遍在\$10000和\$50000之间。价格看起来便宜，但是要记住这是1970年代中期。</p>
+<h6 id="3-6-2-准备数据"><a href="#3-6-2-准备数据" class="headerlink" title="3.6.2 准备数据"></a>3.6.2 准备数据</h6><p>把不同取值范围的变量值赋给神经网络会出现问题。虽然神经网络会自适应各种各样的数据，但是这会造成模型学习的过程变得困难。一个广泛使用的最佳实践是对此类数据集特征进行归一化：对输入数据的每个特征（输入矩阵的一个列），减去该特征的均值并除以标准方差，这样每个特征的均值为0、均方差为1。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.25 Normalizing the data</span></div><div class="line">mean = train_data.mean(axis=<span class="number">0</span>)</div><div class="line">train_data -= mean</div><div class="line">std = train_data.std(axis=<span class="number">0</span>)</div><div class="line">train_data /= std</div><div class="line">test_data -= mean</div><div class="line">test_data /= std</div></pre></td></tr></table></figure>
+<p>注意，测试集的归一化使用的是训练集的均值和均方差。一般来说，你不用对测试集数据进行数量计算，即使是简单的数据归一化。</p>
+<h6 id="3-6-3-构建神经网络"><a href="#3-6-3-构建神经网络" class="headerlink" title="3.6.3  构建神经网络"></a>3.6.3  构建神经网络</h6><p>由于这个例子中的样本量比较少，所以选用两个隐藏单元为64的hidden layer的神经网络。一般来说，训练数据集越小，过拟合的情况越糟糕。这里使用小规模神经网络以减轻过拟合。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.26 Model definition</span></div><div class="line"><span class="keyword">from</span> keras <span class="keyword">import</span> models</div><div class="line"><span class="keyword">from</span> keras <span class="keyword">import</span> layers</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">build_model</span><span class="params">()</span>:</span></div><div class="line"><span class="string">'''</span></div><div class="line">Because you’ll need to instantiate</div><div class="line">the same model multiple times, you</div><div class="line">use a function to construct it.</div><div class="line">'''</div><div class="line">model = models.Sequential()</div><div class="line">model.add(layers.Dense(<span class="number">64</span>, activation=<span class="string">'relu'</span>, input_shape=(train_data.shape[<span class="number">1</span>],)))</div><div class="line">model.add(layers.Dense(<span class="number">64</span>, activation=<span class="string">'relu'</span>))</div><div class="line">model.add(layers.Dense(<span class="number">1</span>))</div><div class="line">model.compile(optimizer=<span class="string">'rmsprop'</span>, loss=<span class="string">'mse'</span>, metrics=[<span class="string">'mae'</span>])</div><div class="line"><span class="keyword">return</span> model</div></pre></td></tr></table></figure>
+<p>上面的神经网络以单元大小为1且不带激活函数的Dense layer为结束，意味着这是标量回归（线性回归）。应用激活函数可以限制输出结果的取值范围，比如，如果你在最后一个layer应用sigmoid激活函数，神经网络只会学习0到1之间的预测值。本例中最后一个layer是纯线性的，神经网络学习任意取值范围的预测值。</p>
+<p>神经网络模型编译使用的mse损失函数：均方误差（mean squared error）。其损失函数广泛应用在回归问题当中。</p>
+<p>你也可以在模型训练中使用平均绝对误差MAE（mean absolute error）。它监测的是预测值和目标值差值的绝对值，比如，MAE为0.5意味着你的预测值偏离均值$500。</p>
+<h6 id="3-6-4-使用K-fold验证模型"><a href="#3-6-4-使用K-fold验证模型" class="headerlink" title="3.6.4 使用K-fold验证模型"></a>3.6.4 使用K-fold验证模型</h6><p>为了评估神经网络模型的同时调整网络模型超参（比如模型训练的epoch数量），你可以将数据集分割成训练集和验证集。但是由于数据样本点太少，所以验证集数量也非常少（比如，大约100个样本）。这会导致验证集上的分数更多的依赖于你选择哪部分数据作为验证集哪部分数据作为训练集：可能因为分割到验证集的数据点不同而产生较高的variance。这会影响模型评估的真实性。</p>
+<p>解决上面问题的最佳方法是使用K-fold交叉验证，见图3.11。它将数据样本点分割为K个partition（一般K=4或者5），实例化K个相同的模型，分别在K-1个partition数据集训练每个模型并在余下的partition数据集上进行评估。然后将得到的K个模型的验证集上的分数求平均。下面的代码看起来更直白。</p>
+<p><img src="http://img0.ph.126.net/8E1GyD-Zd69GehB0f2htcQ==/6632754416537852190.png" alt="image"></p>
+<p>图3.11 3-fold交叉验证</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.27 K-fold validation</span></div><div class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</div><div class="line"></div><div class="line">k = <span class="number">4</span></div><div class="line">num_val_samples = len(train_data) // k</div><div class="line">num_epochs = <span class="number">100</span></div><div class="line">all_scores = []</div><div class="line"></div><div class="line"><span class="keyword">for</span> i <span class="keyword">in</span> range(k):</div><div class="line">    print(<span class="string">'processing fold #'</span>, i)</div><div class="line">    <span class="string">'''</span></div><div class="line">    Prepares the validation data: data from partition #k</div><div class="line">    '''</div><div class="line">    val_data = train_data[i * num_val_samples: (i + <span class="number">1</span>) * num_val_samples]</div><div class="line">    val_targets = train_targets[i * num_val_samples: (i + <span class="number">1</span>) * num_val_samples]</div><div class="line">    </div><div class="line">    <span class="string">'''</span></div><div class="line">    Prepares the training data: data from all other partitions</div><div class="line">    '''</div><div class="line">    partial_train_data = np.concatenate(</div><div class="line">        [train_data[:i * num_val_samples],</div><div class="line">         train_data[(i + <span class="number">1</span>) * num_val_samples:]], axis=<span class="number">0</span>)</div><div class="line">    partial_train_targets = np.concatenate(</div><div class="line">        [train_targets[:i * num_val_samples],</div><div class="line">         train_targets[(i + <span class="number">1</span>) * num_val_samples:]], axis=<span class="number">0</span>)</div><div class="line">    </div><div class="line">    <span class="string">'''</span></div><div class="line">    Builds the Keras model (already compiled)</div><div class="line">    '''</div><div class="line">    model = build_model()</div><div class="line">    <span class="string">'''</span></div><div class="line">    Trains the model (in silent mode, verbose = 0)</div><div class="line">    '''</div><div class="line">    model.fit(partial_train_data, partial_train_targets, epochs=num_epochs,</div><div class="line">              batch_size=<span class="number">1</span>, verbose=<span class="number">0</span>)</div><div class="line">    <span class="string">'''</span></div><div class="line">    Evaluates the model on the validation data</div><div class="line">    '''</div><div class="line">    val_mse, val_mae = model.evaluate(val_data, val_targets, verbose=<span class="number">0</span>)</div><div class="line">    all_scores.append(val_mae)</div></pre></td></tr></table></figure>
+<p>设置num_epochs = 100，运行得到如下的结果：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>all_scores</div><div class="line">[<span class="number">2.588258957792037</span>, <span class="number">3.1289568449719116</span>, <span class="number">3.1856116051248984</span>, <span class="number">3.0763342615401386</span>]</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>np.mean(all_scores)</div><div class="line"><span class="number">2.9947904173572462</span></div></pre></td></tr></table></figure>
+<p>每次运行的确得到不同的验证分数，从2.6到3.2。平均值为3.0，这比任意单个分数都要稳定，这也是K-fold交叉验证的价值所在。在本例中，偏离平均的大小为\$3000，这明显对于\$10000到\$50000范围的价格还是可以的。</p>
+<p>下面将神经网络模型训练epoch设为500。修改迭代训练的代码保存每个epoch的验证分数：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.28 Saving the validation logs at each fold</span></div><div class="line">num_epochs = <span class="number">500</span></div><div class="line">all_mae_histories = []</div><div class="line"></div><div class="line"><span class="keyword">for</span> i <span class="keyword">in</span> range(k):</div><div class="line">    print(<span class="string">'processing fold #'</span>, i)</div><div class="line">    <span class="string">'''</span></div><div class="line">    Prepares the validation data: data from partition #k</div><div class="line">    '''</div><div class="line">    val_data = train_data[i * num_val_samples: (i + <span class="number">1</span>) * num_val_samples]</div><div class="line">    val_targets = train_targets[i * num_val_samples: (i + <span class="number">1</span>) * num_val_samples]</div><div class="line">    </div><div class="line">    <span class="string">'''</span></div><div class="line">    Prepares the training data: data from all other partitions</div><div class="line">    '''</div><div class="line">    partial_train_data = np.concatenate(</div><div class="line">        [train_data[:i * num_val_samples],</div><div class="line">         train_data[(i + <span class="number">1</span>) * num_val_samples:]], axis=<span class="number">0</span>)</div><div class="line">    partial_train_targets = np.concatenate(</div><div class="line">        [train_targets[:i * num_val_samples],</div><div class="line">         train_targets[(i + <span class="number">1</span>) * num_val_samples:]], axis=<span class="number">0</span>)</div><div class="line">    </div><div class="line">    <span class="string">'''</span></div><div class="line">    Builds the Keras model (already compiled)</div><div class="line">    '''</div><div class="line">    model = build_model()</div><div class="line">    <span class="string">'''</span></div><div class="line">    Trains the model (in silent mode, verbose = 0)</div><div class="line">    '''</div><div class="line">    history = model.fit(partial_train_data, partial_train_targets,</div><div class="line">                        epochs=num_epochs,</div><div class="line">                        validation_data=(val_data, val_targets),</div><div class="line">                        batch_size=<span class="number">1</span>, verbose=<span class="number">0</span>)</div><div class="line">    mae_history = history.history[<span class="string">'val_mean_absolute_error'</span>]</div><div class="line">    all_mae_histories.append(mae_history)</div></pre></td></tr></table></figure>
+<p>接下来计算每个epoch的K个fold所对应的MAE的平均值：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.29 Building the history of successive mean K-fold validation scores</span></div><div class="line">average_mae_history = [</div><div class="line">    np.mean([x[i] <span class="keyword">for</span> x <span class="keyword">in</span> all_mae_histories]) <span class="keyword">for</span> i <span class="keyword">in</span> range(num_epochs)]</div></pre></td></tr></table></figure>
+<p>下面绘制验证分数图表，见3.12。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.30 Plotting validation scores</span></div><div class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</div><div class="line"></div><div class="line">plt.plot(range(<span class="number">1</span>, len(average_mae_history) + <span class="number">1</span>), average_mae_history)</div><div class="line">plt.xlabel(<span class="string">'Epochs'</span>)</div><div class="line">plt.ylabel(<span class="string">'Validation MAE'</span>)</div><div class="line">plt.show()</div></pre></td></tr></table></figure>
+<p><img src="http://img2.ph.126.net/2Q8qdNsu0Lu7Vt8fsAhC2w==/6608206719936695012.png" alt="image"></p>
+<p>图3.12 每个epoch验证集MAE的趋势图</p>
+<p>看上面的图表可能有点困难，因为数量级的问题和相当高的variance。下面对其进行处理：</p>
+<ul>
+<li>忽略前十个数据点，因为它们与曲线上剩余的值不在同一个量级上；</li>
+<li>用每个数据点的指数滑动平均值代替原数据点，来平滑曲线</li>
+</ul>
+<p>对应的结果见图3.13。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.31 Plotting validation scores, excluding the first 10 data points</span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">smooth_curve</span><span class="params">(points, factor=<span class="number">0.9</span>)</span>:</span></div><div class="line">    smoothed_points = []</div><div class="line">    <span class="keyword">for</span> point <span class="keyword">in</span> points:</div><div class="line">        <span class="keyword">if</span> smoothed_points:</div><div class="line">            previous = smoothed_points[<span class="number">-1</span>]</div><div class="line">            smoothed_points.append(previous * factor + point * (<span class="number">1</span> - factor))</div><div class="line">            <span class="keyword">else</span>:</div><div class="line">                smoothed_points.append(point)</div><div class="line">            <span class="keyword">return</span> smoothed_points</div><div class="line">        </div><div class="line">smooth_mae_history = smooth_curve(average_mae_history[<span class="number">10</span>:])</div><div class="line"></div><div class="line">plt.plot(range(<span class="number">1</span>, len(smooth_mae_history) + <span class="number">1</span>), smooth_mae_history)</div><div class="line">plt.xlabel(<span class="string">'Epochs'</span>)</div><div class="line">plt.ylabel(<span class="string">'Validation MAE'</span>)</div><div class="line">plt.show()</div></pre></td></tr></table></figure>
+<p><img src="http://img1.ph.126.net/KyFxHA1vFDsH-E2rAEsJYA==/1965539762470909177.png" alt="image"></p>
+<p>图3.13 每个epoch验证集MAE的趋势图（排除前十个数据点）</p>
+<p>根据上面的图表可以看出，验证集的MAE在80个epoch之后没有什么显著的提升。意味着该点之后模型开始过拟合。</p>
+<p>一旦你完成模型其它参数的调优（除了epoch数量，你可以调整hidden layer的隐藏单元数量），你可以用最佳的参数在所有训练集上训练最终的生产上使用的模型，然后看下该模型在测试集上的效果。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 3.32 Training the final model</span></div><div class="line"></div><div class="line"><span class="comment">#Gets a fresh, compiled model</span></div><div class="line">model = build_model()</div><div class="line"></div><div class="line"><span class="comment">#Trains it on the entirety of the data</span></div><div class="line">model.fit(train_data, train_targets,</div><div class="line">          epochs=<span class="number">80</span>, batch_size=<span class="number">16</span>, verbose=<span class="number">0</span>)</div><div class="line">test_mse_score, test_mae_score = model.evaluate(test_data, test_targets)</div></pre></td></tr></table></figure>
+<p>最终结果如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>test_mae_score</div><div class="line"><span class="number">2.5532484335057877</span></div></pre></td></tr></table></figure>
+<p>最后得到的结果偏离平均为$2550。</p>
+<h6 id="3-6-5-小结"><a href="#3-6-5-小结" class="headerlink" title="3.6.5 小结"></a>3.6.5 小结</h6><p>从本例你应该学到以下知识点：</p>
+<ul>
+<li>回归模型的损失函数与分类问题的不同，常用均方差损失函数（MSE）</li>
+<li>相应的，常用的回归模型指标是平均绝对误差（MAE），确切地说，回归模型没有准确度的概念</li>
+<li>输入数据的取值范围不同时，应该在数据预处理阶段将每个特征进行归一化</li>
+<li>当数据样本太少时，可以使用K-fold交叉验证稳定的评估一个模型</li>
+<li>当训练集数据比较少时，倾向于使用小规模神经网络（一般是一到两个隐藏层），避免过拟合</li>
+</ul>
+<p>未完待续。。。</p>
+<p>Enjoy!</p>
+<blockquote>
+<p>翻译本书系列的初衷是，觉得其中把深度学习讲解的通俗易懂。不光有实例，也包含作者多年实践对深度学习概念、原理的深度理解。最后说不重要的一点，François Chollet是Keras作者。<br>声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。</p>
+</blockquote>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/06/09/deep-learning-with-python-chapter-3-3.5/" rel="next" title="《Deep Learning with Python》第三章 3.5 走进神经网络之新闻多分类">
+                <i class="fa fa-chevron-left"></i> 《Deep Learning with Python》第三章 3.5 走进神经网络之新闻多分类
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="http://img0.ph.126.net/3vPAbMoh_6fH3-g_I0zo-w==/6631748363397501906.jpg"
+               alt="侠天" />
+          <p class="site-author-name" itemprop="name">侠天</p>
+          <p class="site-description motion-element" itemprop="description">侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">34</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/1333564335" target="_blank" title="微博">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  微博
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://www.infoq.com/cn/author/%E4%BE%A0%E5%A4%A9" target="_blank" title="InfoQ">
+                  
+                    <i class="fa fa-fw fa-infoq"></i>
+                  
+                  InfoQ
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#3-6-房价预测：线性回归"><span class="nav-number">1.</span> <span class="nav-text">3.6 房价预测：线性回归</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#3-6-1-波士顿房价数据集"><span class="nav-number">1.1.</span> <span class="nav-text">3.6.1 波士顿房价数据集</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#3-6-2-准备数据"><span class="nav-number">1.2.</span> <span class="nav-text">3.6.2 准备数据</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#3-6-3-构建神经网络"><span class="nav-number">1.3.</span> <span class="nav-text">3.6.3  构建神经网络</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#3-6-4-使用K-fold验证模型"><span class="nav-number">1.4.</span> <span class="nav-text">3.6.4 使用K-fold验证模型</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#3-6-5-小结"><span class="nav-number">1.5.</span> <span class="nav-text">3.6.5 小结</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">侠天</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+  </script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+    });
+  </script>
+  <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+  
+
+  
+
+</body>
+</html>

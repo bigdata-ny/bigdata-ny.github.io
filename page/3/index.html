@@ -238,6 +238,124 @@
             
               
                 
+                <a class="post-title-link" href="/2016/08/21/spark_and_redis_connector/" itemprop="url">
+                  Spark借助Redis提升45倍处理效率！
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-08-21T19:57:36+08:00" content="2016-08-21">
+              2016-08-21
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p><em>摘要</em>:时常采用内存数据结构会使得程序更加高效，比如，Spark借助Redis可以提速45倍。</p>
+<p>Spark代表着下一代大数据处理技术，并且，借着开源算法和计算节点集群分布式处理，Spark和Hadoop在执行的方式和速度已经远远的超过传统单节点的技术架构。但Spark利用内存进行数据处理，这让Spark的处理速度超过基于磁盘的Hadoop 100x 倍。</p>
+<p>但Spark和内存数据库<a href="http://www.redislabs.com" target="_blank" rel="external">Redis</a>结合后可显著的提高Spark运行任务的性能，这源于Redis优秀的数据结构和执行过程，从而减小数据处理的复杂性和开销。Spark通过一个Redis连接器可以访问Redis的数据和API，加速Spark处理数据。</p>
+<p>Spark和Redis结合使用到底有多大的性能提升呢？结合这两者来处理时序数据时可以提高46倍以上——而不是提高百分之四十五。</p>
+<p>为什么这些数据处理速度的提升是很重要的呢？现在，越来越多的公司期望在交易完成的同时完成对应的数据分析。公司的决策也需要自动化，而这些需要数据分析能够实时的进行。Spark是一个用的较多的数据处理框架，但它不能做到百分之百实时，要想做到实时处理Spark还有很大一步工作需要做。<br><img src="http://img2.ph.126.net/QalVm_AuA5Vx7x2lxXEWbw==/6598067023763790131.png" alt="此处输入图片的描述"><br>图1</p>
+<h3 id="Spark-RDD"><a href="#Spark-RDD" class="headerlink" title="Spark RDD"></a>Spark RDD</h3><p>Spark采用弹性分布式数据集（RDD），可将数据存在易变的内存中或持久化到磁盘上。 RDD具有不可变化性，分布式存储在Spark集群的各节点，RDD经过tansform操作后创建出一个新的RDD。RDD是Spark中数据集的一种重要抽象，具有良好的容错性、高效的迭代处理。</p>
+<h3 id="Redis"><a href="#Redis" class="headerlink" title="Redis"></a>Redis</h3><p>Redis天生为高性能设计，通过良好的数据存储结构能达到亚毫秒级的延迟。Redis的数据存储结构不仅仅提高内存的利用和减小应用的复杂性，也降低了网络负载、带宽消耗和处理时间。Redis数据结构包括字符串（strings）， 散列（hashes）， 列表（lists）， 集合（sets）， 有序集合（sorted sets）， bitmaps， hyperloglogs 和 地理空间（geospatial）索引半径查询。</p>
+<p>下面来展示Redis的数据结构如何来简化应用的处理时间和复杂度。这里用有序集合来举例，一个以评分（score）大小排序的元素集合。<br><img src="http://img2.ph.126.net/MatkU-NaQLLkh2i_OdRhtw==/6598097810089184567.png" alt="此处输入图片的描述"><br>图2</p>
+<p>Redis能存储多种数据类型，并自动的以评分（score）排序。常见的例子有，按价格排序的商品，以阅读数排序的文章名，股票价格时序数据，带时间戳的传感器读数。<br>有序集合依赖Redis优秀的内建操作可以实现范围查询、求交集，可以非常快地（O(log(N))）完成添加，删除和更新元素的操作。Redis内建函数不仅减少代码开发，在内存中执行也减小了网络延时和带宽消耗，可达到亚毫秒级的吞吐延迟。特别地，对时序数据集合来讲，有序集合数据结构比使用内存键值对或使用磁盘的数据库，能给数据分析带来数量级上的性能提升。</p>
+<h3 id="Spark-Redis-connector"><a href="#Spark-Redis-connector" class="headerlink" title="Spark-Redis connector"></a>Spark-Redis connector</h3><p>为了提高Spark数据分析的能力，Redis团队开发了一个<a href="https://github.com/RedisLabs/spark-redis" target="_blank" rel="external">Spark-Redis connector</a>，它使得Spark可以直接使用Redis作为数据源，顺理成章的Spark也能使用Redis的各数据结构，进而显著的提升Spark分析数据的速度。<br><img src="http://img2.ph.126.net/EjDbOsyQrDo6nRi2gkM66w==/6598082416926397895.png" alt="此处输入图片的描述"><br>图3</p>
+<p>为了展示Spark结合Redis所产生的效果，Redis团队拿时序数据集合做基准测试，测试了Spark在不同情况下执行时间范围查询：Spark使用堆外内存；Spark使用Tachyon作为堆外缓存；Spark使用HDFS存储；Spark结合Redis使用。</p>
+<p>Redis团队改进了Cloudera的Spark分析时序数据的包，采用<a href="https://github.com/RedisLabs/spark-timeseries/blob/redis/src/main/scala/com/redislabs/provider/redis/rdd/RedisRDD.scala#L26" target="_blank" rel="external">Redis有序集合数据结构加速时序数据分析</a>，并且实现Spark访问Redis各类数据结构的接口。此Spark-Redis时序开发包主要做了两件事：</p>
+<ol>
+<li>它让Redis节点与Spark集群的节点自动匹配，确保每个Spark节点都使用本地Redis节点，这样可以明显的优化延迟时间；</li>
+<li>集成Spark DataFrame和Spark读取数据源，使得Spark SQL查询可自动转化，并能借助Redis能有效的恢复数据。</li>
+</ol>
+<p>换句话说，使用Spark-Redis时序开发包意味着用户无需担心Spark和Redis两者如何使用。用户使用Spark SQL进行数据分析可以获得极大的查询性能提升。</p>
+<h3 id="基准测试"><a href="#基准测试" class="headerlink" title="基准测试"></a>基准测试</h3><p>基准测试的时序数据集是跨度32年的1024个股票交易市场按天随机生成的数据。每个股票交易所都有有序数据集，以日期和元素属性（开盘价、最高价、最低价、收盘价等）排序，在Redis中以有序数据结构存储，采用Spark进行数据分析，描述如图4<br><img src="http://img2.ph.126.net/heSh9IpGiauqBoZqf9egyg==/6598076919368260259.png" alt="此处输入图片的描述"><br>图4</p>
+<p>在上述列子中，就有序集合AAPL来看，有序数据集合以天为评分（score，以蓝色表示），每天相关的值为一行（Member，以灰色表示）。在Redis中，只要执行一个ZRANGEBYSCORE操作就可以获取一个指定时间范围内的所有股票数据，并且Redis执行此查询要比其他Key/Value数据库快100倍。<br>从图x可以看到，横向比较各种情况的基准测试，Spark结合Redis执行时间片的查询速度比Spark使用HDFS快135倍、比Spark使用堆内内存或Spark使用Tachyon作为堆外内存要快45倍。<br><img src="http://img1.ph.126.net/UieEUHKoGh9ex9aJiMHPZQ==/6598192368089172532.png" alt="此处输入图片的描述"><br>图5</p>
+<h3 id="Spark-Redis其它应用"><a href="#Spark-Redis其它应用" class="headerlink" title="Spark-Redis其它应用"></a>Spark-Redis其它应用</h3><p>按照“<a href="https://redislabs.com/solutions/spark-and-redis" target="_blank" rel="external">Getting Started with Spark and Redis</a>”指南，你可以一步步安装Spark集群和使用Spark-Redis包。它提供一个简单的wordcount的例子展示如何使用Spark结合Redis。待你熟练使用后可以自己进一步挖掘、优化其他的Redis数据结构。<br>Redis的有序集合数据结构很适合时序数据集合，而Redis其他数据结构（比如，列表（lists）， 集合（sets）和 地理空间（geospatial）索引半径查询）也能进一步丰富Spark的数据分析。当使用Spark抽取地理空间信息来获取新产品的人群偏好和邻近中心的位置，可结合Redis的地理空间（geospatial）索引半径查询来优化。</p>
+<p>Spark支持一系列的数据分析，包括SQL、机器学习、图计算和流式数据。Spark本身的内存数据处理能力有一定的限制，而借着Redis可以让Spark更快的做数据分析。其实Spark的DataFrame和Datasets已经在做类似的优化，先把数据进行结构化放在内存里进行计算，并且Datasets可以省掉序列化和反序列化的消耗。结合Spark和Redis，借助Redis的共享分布式内存数据存储机制，可以处理数百万个记录乃至上亿的记录<br>时序数据的分析仅仅是一个开始，更多的性能优化可以参见：<a href="https://github.com/RedisLabs/spark-timeseries" target="_blank" rel="external">Spark-Redis</a>。</p>
+<h4 id="参考"><a href="#参考" class="headerlink" title="参考;"></a><em>参考</em>;</h4><hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"><br>~</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2016/08/21/use_spark_sql_or_dataframe_for_query_graphgrame/" itemprop="url">
                   基于Spark DataFrame的图数据库GraphFrame：用Spark SQL查询Graph
                 </a>
@@ -1570,189 +1688,6 @@ Aerys,Jaime,18
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/07/31/how-to-write-your-own-recommendation-system-part-1/" itemprop="url">
-                  如何编写自己的推荐系统
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-07-31T01:55:12+08:00" content="2016-07-31">
-              2016-07-31
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p><em>摘要</em>：推荐系统过去都是用在物品推荐上，Netflix是最典型的例子。当你浏览几个物品之后，它会给你推荐新的物品。你是否思考过这是如何工作的？或者应用到你自己的网站或者应用中？</p>
-<p>作者将使用Python完成一个完整的、简单的推荐系统，并给出相应的代码。这里将使用电影点击率数据（1 － 5 星）作为源数据集。</p>
-<h4 id="小规模实例"><a href="#小规模实例" class="headerlink" title="小规模实例"></a>小规模实例</h4><p>在进行成千上万大规模点击率实验之前，先使用小规模的数据集来展示推荐系统是如何工作的，这样会很快看到一些有意义的结果。</p>
-<p>作者使用的样列数据见<a href="http://infolab.stanford.edu/~ullman/mmds/ch9.pdf" target="_blank" rel="external">链接</a>。<strong>HP</strong>代表&lt;哈利波特&gt;（Harry Potter）三部曲，<strong>TW</strong>代&lt;表暮光之城&gt;（Twilight），<strong>SW</strong>代表&lt;星球大战&gt;（Star Wars）前三部。</p>
-<table>
-<thead>
-<tr>
-<th></th>
-<th></th>
-<th>HP1</th>
-<th>HP2</th>
-<th>HP3</th>
-<th>TW</th>
-<th>SW1</th>
-<th>SW2</th>
-<th>SW3</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>A</td>
-<td>4</td>
-<td></td>
-<td></td>
-<td>5</td>
-<td>1        </td>
-</tr>
-<tr>
-<td>B</td>
-<td>5</td>
-<td>5</td>
-<td>4</td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>C</td>
-<td></td>
-<td></td>
-<td></td>
-<td>2</td>
-<td>4</td>
-<td>5</td>
-<td></td>
-</tr>
-<tr>
-<td>D</td>
-<td></td>
-<td>3</td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td>3</td>
-</tr>
-</tbody>
-</table>
-<p><strong>A</strong>到<strong>D</strong>是四个评分用户。比较意外的是：用户<strong>D</strong>未观看第一部&lt;哈利波特&gt;就跑去看第二部&lt;哈利波特&gt;。让我们试着用已有的用户评分数据去评估用户<strong>D</strong>有多大可能去观看&lt;哈利波特&gt;第一部。这个过程也可以用来处理推荐系统中遇到的缺失数据问题，这部分会在稍后讲解。</p>
-<p>找出缺失评分数据<strong>(D, HP1)</strong>最简单的方法是：看过第一部&lt;哈利波特&gt;的用户具有相似的品味，根据他们的观影评分来评估。本例的数据太少，只有4个用户，可能最终的推荐结果不太精确。但使用更多的用户数据会使得推荐结果更精确。</p>
-<p>那我们如何找出与用户D 品味最相似的用户呢？余弦相似度（或称为余弦距离）可以解决这个问题。余弦相似度通过输入两个用户的评分，输出0 到1 之间的值（此值即为余弦相似度）。1 代表电影评分完全相同。下面我们就来找出用户最大的余弦相似度。</p>
-<h4 id="Cosine-Distance-Similarity"><a href="#Cosine-Distance-Similarity" class="headerlink" title="Cosine Distance/Similarity"></a>Cosine Distance/Similarity</h4><p>一般公式为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">\frac&#123;(a_1 \times b_1) + (a_2 \times b_2) + \ldots&#125;&#123;\sqrt&#123;(a_1)^2 + (a_2)^2 + \ldots&#125;\sqrt&#123;(b_1)^2 + (b_2)^2 + \ldots&#125;&#125;</div></pre></td></tr></table></figure></p>
-<p>其中， a 和 b 代表用户。</p>
-<p>下面让我们来计算用户 A (红色)和用户 B（蓝色）余弦相似度（cosine similarity）：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">\frac&#123;(\color&#123;red&#125;4 \times \color&#123;blue&#125;5) + (\color&#123;red&#125;0 \times \color&#123;blue&#125;5) + (\color&#123;red&#125;0 \times \color&#123;blue&#125;4) + (\color&#123;red&#125;5 \times \color&#123;blue&#125;0) + (\color&#123;red&#125;1 \times \color&#123;blue&#125;0) + (\color&#123;red&#125;0 \times \color&#123;blue&#125;0) + (\color&#123;red&#125;0 \times \color&#123;blue&#125;0)&#125;&#123;\sqrt&#123;\color&#123;red&#125;4^2 + \color&#123;red&#125;0^2 + \color&#123;red&#125;0^2 + \color&#123;red&#125;5^2 + \color&#123;red&#125;1^2 + \color&#123;red&#125;0^2 + \color&#123;red&#125;0^2&#125;\sqrt&#123;\color&#123;blue&#125;5^2 + \color&#123;blue&#125;5^2 + \color&#123;blue&#125;4^2 + \color&#123;blue&#125;0^2 + \color&#123;blue&#125;0^2 + \color&#123;blue&#125;0^2 + \color&#123;blue&#125;0^2 &#125;&#125;</div></pre></td></tr></table></figure>
-<p>上述中的零值对最终的结果没有影响，简化得到：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">\frac&#123;(\color&#123;red&#125;4 \times \color&#123;blue&#125;5)&#125;&#123;\sqrt&#123;\color&#123;red&#125;4^2 + \color&#123;red&#125;5^2 + \color&#123;red&#125;1^2&#125;\sqrt&#123;\color&#123;blue&#125;5^2 + \color&#123;blue&#125;5^2 + \color&#123;blue&#125;4^2&#125;&#125;</div></pre></td></tr></table></figure>
-<p>这里只能比较用户A 和B ，因为用户C 并没有对HP1电影评分，所以对推荐用户D 观看HP1电影的工作没有啥帮助。我们可以计算出对应的余弦相似度：</p>
-<ul>
-<li>[ ] 用户A 和 用户D 的余弦相似度= 0.0</li>
-<li>[ ] 用户B 和 用户D 的余弦相似度= 0.435</li>
-</ul>
-<p>所以，可以看出用户B 很明显有最大的余弦相似度。下面是相应的代码：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line">_ = <span class="number">0</span> <span class="comment"># A missing value.</span></div><div class="line">users = &#123;</div><div class="line">    <span class="string">'A'</span>: [<span class="number">4</span>, _, _, <span class="number">5</span>, <span class="number">1</span>, _, _],</div><div class="line">    <span class="string">'B'</span>: [<span class="number">5</span>, <span class="number">5</span>, <span class="number">4</span>, _, _, _, _],</div><div class="line">    <span class="string">'C'</span>: [_, _, _, <span class="number">2</span>, <span class="number">4</span>, <span class="number">5</span>, _],</div><div class="line">    <span class="string">'D'</span>: [_, <span class="number">3</span>, _, _, _, _, <span class="number">3</span>],</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">cosine_distance</span><span class="params">(user1, user2)</span>:</span></div><div class="line">    top = <span class="number">0</span></div><div class="line">    user1bottom = <span class="number">0</span></div><div class="line">    user2bottom = <span class="number">0</span></div><div class="line"></div><div class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> range(<span class="number">0</span>, len(user1)):</div><div class="line">        top += user1[i] * user2[i]</div><div class="line">        user1bottom += user1[i] * user1[i]</div><div class="line">        user2bottom += user2[i] * user2[i]</div><div class="line"></div><div class="line">    <span class="keyword">return</span> top / (sqrt(user1bottom) * sqrt(user2bottom))</div><div class="line"></div><div class="line"><span class="keyword">print</span> cosine_distance(users[<span class="string">'A'</span>], users[<span class="string">'D'</span>])</div><div class="line"><span class="keyword">print</span> cosine_distance(users[<span class="string">'B'</span>], users[<span class="string">'D'</span>])</div></pre></td></tr></table></figure>
-<p>需要注意的是：前面我们是把缺失值置为0。但这意味着我们把没有评分的电影都认为是用户不喜欢的电影（因为评分若为0代表用户不喜欢这部电影，而缺失评分值实际上只是未知，并不代表喜欢，也不代表不喜欢）。一般更好的做法是计算出一个平衡值（balanced value）来替代缺失数据。在本例中选择2.5更好，在改变<strong>_</strong>的值后我们得到： </p>
-<ul>
-<li>[ ] 用户A 和 用户D 的余弦相似度= 0.915</li>
-<li>[ ] 用户B 和 用户D 的余弦相似度= 0.952</li>
-</ul>
-<p>我们找出用户<strong>B</strong>给出的电影评分，5 星好评。那说明用户<strong>D</strong> 也应该会喜欢&lt;哈利波特&gt;第一部，并给出5 星好评。</p>
-<p>代码如下：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">estimate_rating</span><span class="params">(users, userName, movie)</span>:</span></div><div class="line">    user_best_match = <span class="keyword">None</span></div><div class="line">    user_best_match_dist = <span class="number">0</span></div><div class="line"></div><div class="line">    <span class="keyword">for</span> user <span class="keyword">in</span> users:</div><div class="line">        <span class="comment"># We don't want to calculate ourself.</span></div><div class="line">        <span class="keyword">if</span> user == userName:</div><div class="line">            <span class="keyword">continue</span></div><div class="line"></div><div class="line">        <span class="comment"># Ignore users that haven't rated the movie.</span></div><div class="line">        <span class="keyword">if</span> users[user][movie] == <span class="number">0</span>:</div><div class="line">            <span class="keyword">continue</span></div><div class="line"></div><div class="line">        dist = cosine_distance(users[userName], users[user])</div><div class="line">        <span class="keyword">print</span> <span class="string">'%s -&gt; %s = %.3f'</span> % (userName, user, dist)</div><div class="line"></div><div class="line">        <span class="keyword">if</span> dist &gt;= user_best_match_dist:</div><div class="line">            user_best_match_dist = dist</div><div class="line">            user_best_match = user</div><div class="line"></div><div class="line">    <span class="comment"># Return the rating of the best matched user.</span></div><div class="line">    <span class="keyword">return</span> users[user_best_match][movie]</div><div class="line"></div><div class="line">HP1, HP2, HP3, TW, SW1, SW2, SW3 = range(<span class="number">0</span>, <span class="number">7</span>)</div><div class="line"><span class="keyword">print</span> estimate_rating(users, <span class="string">'D'</span>, HP1)</div></pre></td></tr></table></figure>
-<p>如果有更多的用户评分数据，我们将会得到更精确的结果。而且我们会给出固定数量的相似用户的平均相似值，而不是最大的相似值。</p>
-<h4 id="下期内容"><a href="#下期内容" class="headerlink" title="下期内容"></a>下期内容</h4><p>在下篇文章中，作者使用真实场景的数据集进行实战。主要关注三部分：推荐算法的性能、推荐结果质量和推荐算法精度的计算。</p>
-<p><a href="http://elliot.land/how-to-write-your-own-recommendation-system-part-1" target="_blank" rel="external">http://elliot.land/how-to-write-your-own-recommendation-system-part-1</a></p>
-<hr>
-<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
-<p>若发现以上文章有任何不妥，请联系我。</p>
-<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1798,7 +1733,7 @@ Aerys,Jaime,18
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">33</span>
+              <span class="site-state-item-count">34</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
