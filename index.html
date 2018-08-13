@@ -238,6 +238,222 @@
             
               
                 
+                <a class="post-title-link" href="/2018/08/13/deep-learning-with-python-chapter-6-6.1/" itemprop="url">
+                  《Deep Learning with Python》第六章 6.1 深度学习之文本处理
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-08-13T19:45:52+08:00" content="2018-08-13">
+              2018-08-13
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h5 id="6-1-深度学习之文本处理"><a href="#6-1-深度学习之文本处理" class="headerlink" title="6.1 深度学习之文本处理"></a>6.1 深度学习之文本处理</h5><p>文本是序列数据传播最广泛的形式之一，它可以理解成一个字母序列或者词序列，但是最常见的形式是词序列。后面章节介绍的深度学习序列处理模型有文档分类、情感分析、作者识别和限制语境问答（QA）。当然了，要记住的是：这些深度学习模型并不是真正意义上以人的思维去理解文字，而只是书面语的统计结构映射而已。基于深度学习的自然语言处理可以看作对字词、句子和段落的模式识别，这有点像计算机视觉中对像素的模式识别。</p>
+<p>跟其它所有神经网络一样，深度学习模型并不是以原始文本为输入，而是数值型张量。向量化文本是将文本转换成数值张量的过程。有以下几种方式可以做向量化文本：</p>
+<ul>
+<li>将文本分割为词，转换每个词为向量；</li>
+<li>将文本分割为字（字母），转换每个字为向量；</li>
+<li>抽取词或者字的n-gram，转换每个n-gram转换为向量。n-gram是多个连续词或者字的元组。</li>
+</ul>
+<p>将文本分割为字、词或者n-gram的过程称为分词（tokenization），拆分出来的字、词或者n-gram称为token。所有文本向量化的过程都包含分词和token转换为数值型向量。这些向量封装成序列张量“喂入”神经网络模型。有多种方式可以将token转换为数值向量，但是本小节介绍两种方法：one-hot编码和词嵌入。</p>
+<p><img src="http://img2.ph.126.net/thiBoGt_yeuknWzj1mmAPw==/1706019833943799118.png" alt="image"></p>
+<p>图6.1 文本向量化过程</p>
+<blockquote>
+<p>n-gram和词袋的理解</p>
+<p>n-gram是指从句子中抽取的N个连续词的组合。对于字也有相同的概念。</p>
+<p>下面是一个简单的例子。句子“the cat sat on the mat”拆分成2-gram的集合如下：</p>
+<p>{“The”, “The cat”, “cat”, “cat sat”, “sat”, “sat on”, “on”, “on the”, “the”, “the mat”, “mat”}</p>
+<p>拆分成3-gram的集合如下：</p>
+<p>{“The”, “The cat”, “cat”, “cat sat”, “The cat sat”, “sat”, “sat on”, “on”, “cat sat on”, “on the”, “the”, “sat on the”, “the mat”, “mat”, “on the mat”}</p>
+<p>上面这些集合相应地称为2-gram的词袋，3-gram的词袋。术语词袋（bag）是指token的集合，而不是一个列表或者序列：token是无序的。所有分词方法的结果统称为词袋。</p>
+<p>词袋是一个无序的分词方法，其丢失了文本序列的结构信息。词袋模型用于浅语言处理模型中，而不是深度学习模型。抽取n-gram是一种特征工程，但是深度学习是用一种简单粗暴的方法做特征工程，去代替复杂的特征工程。本章后面会讲述一维卷积和RNN，它们能从字、词的组合中学习表征。所以本书不再进一步展开介绍n-gram。但是记住，在轻量级模型或者浅文本处理模型（逻辑回归和随机森林）中，n-gram是一个强有力、不可替代的特征工程工具。</p>
+</blockquote>
+<h6 id="6-1-1-字词的one-hot编码"><a href="#6-1-1-字词的one-hot编码" class="headerlink" title="6.1.1 字词的one-hot编码"></a>6.1.1 字词的one-hot编码</h6><p>one-hot编码是最常见、最基本的文本向量化方法。在前面第三章的IMDB和Reuter例子中有使用过。one-hot编码中每个词有唯一的数值索引，然后将对应的索引转成大小为N的二值向量（N为字典的大小）：词所对应的索引位置的值为1，其它索引对应的值为0。</p>
+<p>当然，字级别也可以做one-hot编码。为了予以区分，列表6.1和6.2分别展示词和字的one-hot编码。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.1 Word-level one-hot encoding</span></div><div class="line"></div><div class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</div><div class="line"></div><div class="line"><span class="string">'''</span></div><div class="line">Initial data: one entry per sample (in this example, </div><div class="line">a sample is a sentence, </div><div class="line">but it could be an entire document)</div><div class="line">'''</div><div class="line">samples = [<span class="string">'The cat sat on the mat.'</span>, <span class="string">'The dog ate my homework.'</span>]</div><div class="line"></div><div class="line"><span class="string">'''</span></div><div class="line"> Builds an index of all tokens in the data</div><div class="line"> '''</div><div class="line">token_index = &#123;&#125;</div><div class="line"><span class="keyword">for</span> sample <span class="keyword">in</span> samples:</div><div class="line">    <span class="string">'''</span></div><div class="line">    Tokenizes the samples via the split method. </div><div class="line">    In real life, you’d also strip punctuation </div><div class="line">    and special characters from the samples.</div><div class="line">    '''</div><div class="line">    <span class="keyword">for</span> word <span class="keyword">in</span> sample.split():</div><div class="line">        <span class="keyword">if</span> word <span class="keyword">not</span> <span class="keyword">in</span> token_index:</div><div class="line">            <span class="string">'''</span></div><div class="line">            Assigns a unique index to each unique word. </div><div class="line">            Note that you don’t attribute index 0 to anything.</div><div class="line">            '''</div><div class="line">            token_index[word] = len(token_index) + <span class="number">1</span></div><div class="line"></div><div class="line"><span class="string">'''</span></div><div class="line">Vectorizes the samples. You’ll only consider </div><div class="line">the first max_length words in each sample.</div><div class="line">'''</div><div class="line">max_length = <span class="number">10</span></div><div class="line"><span class="string">'''</span></div><div class="line">This is where you store the results.</div><div class="line">'''</div><div class="line">results = np.zeros(shape=(len(samples),</div><div class="line">                          max_length,</div><div class="line">                          max(token_index.values()) + <span class="number">1</span>))</div><div class="line"></div><div class="line"><span class="keyword">for</span> i, sample <span class="keyword">in</span> enumerate(samples):</div><div class="line">    <span class="keyword">for</span> j, word <span class="keyword">in</span> list(enumerate(sample.split()))[:max_length]:</div><div class="line">        index = token_index.get(word)</div><div class="line">        results[i, j, index] = <span class="number">1.</span></div></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.2 Character-level one-hot encoding</span></div><div class="line"></div><div class="line"><span class="keyword">import</span> string</div><div class="line"></div><div class="line">samples = [<span class="string">'The cat sat on the mat.'</span>, <span class="string">'The dog ate my homework.'</span>]</div><div class="line"><span class="string">'''</span></div><div class="line">All printable ASCII characters</div><div class="line">'''</div><div class="line">characters = string.printable</div><div class="line">token_index = dict(zip(range(<span class="number">1</span>, len(characters) + <span class="number">1</span>), characters))</div><div class="line"></div><div class="line">max_length = <span class="number">50</span></div><div class="line">results = np.zeros((len(samples), max_length, max(token_index.keys()) + <span class="number">1</span>)) </div><div class="line"><span class="keyword">for</span> i, sample <span class="keyword">in</span> enumerate(samples):</div><div class="line">    <span class="keyword">for</span> j, character <span class="keyword">in</span> enumerate(sample):</div><div class="line">        index = token_index.get(character)</div><div class="line">        results[i, j, index] = <span class="number">1.</span></div></pre></td></tr></table></figure>
+<p>Keras有内建工具处理文本的one-hot编码。建议你使用这些工具，因为它们有不少功能，比如，删除指定字符，考虑数据集中最常用的N个字（严格来讲，是避免向量空间过大）。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.3 Using Keras for word-level one-hot encoding</span></div><div class="line"></div><div class="line"><span class="keyword">from</span> keras.preprocessing.text <span class="keyword">import</span> Tokenizer</div><div class="line"></div><div class="line">samples = [<span class="string">'The cat sat on the mat.'</span>, <span class="string">'The dog ate my homework.'</span>]</div><div class="line"></div><div class="line"><span class="string">'''</span></div><div class="line">Creates a tokenizer, configured to only take into account the 1,000 most common words</div><div class="line">'''</div><div class="line">tokenizer = Tokenizer(num_words=<span class="number">1000</span>)</div><div class="line"><span class="string">'''</span></div><div class="line">Builds the word index</div><div class="line">'''</div><div class="line">tokenizer.fit_on_texts(samples)</div><div class="line"></div><div class="line"><span class="string">'''</span></div><div class="line">Turns strings into lists of integer indices</div><div class="line">'''</div><div class="line">sequences = tokenizer.texts_to_sequences(samples)  </div><div class="line">     </div><div class="line"><span class="string">'''</span></div><div class="line">You could also directly get the one-hot binary representations. Vectorization modes other than one-hot encoding are supported by this tokenizer.</div><div class="line">'''</div><div class="line">one_hot_results = tokenizer.texts_to_matrix(samples, mode=<span class="string">'binary'</span>)</div><div class="line"></div><div class="line"><span class="string">'''</span></div><div class="line">How you can recover the word index that was computed</div><div class="line">'''</div><div class="line">word_index = tokenizer.word_index</div><div class="line">print(<span class="string">'Found %s unique tokens.'</span> % len(word_index))</div></pre></td></tr></table></figure>
+<p>one-hot 哈希（hash）编码是one-hot编码的一个变种，它主要用在字典太大难以处理的情况。one-hot 哈希编码是将词通过轻量级的哈希算法打散成固定长度的向量，而不是像one-hot编码将每个词分配给一个索引。one-hot 哈希编码最大的优势是节省内存和数据的在线编码。同时这种方法的一个缺点是碰到哈希碰撞冲突（hash collision），也就是两个不同词的哈希值相同，导致机器学习模型不能分辨这些词。哈希碰撞冲突的 可能性会随着哈希空间的维度越大而减小。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.4 Word-level one-hot encoding with hashing trick</span></div><div class="line"></div><div class="line">samples = [<span class="string">'The cat sat on the mat.'</span>, <span class="string">'The dog ate my homework.'</span>]</div><div class="line"></div><div class="line"><span class="string">'''</span></div><div class="line">Stores the words as vectors of size 1,000. If you have close to 1,000 words (or more), you’ll see many hash collisions, which will decrease the accuracy of this encoding method.</div><div class="line">'''</div><div class="line">dimensionality = <span class="number">1000</span></div><div class="line">max_length = <span class="number">10</span></div><div class="line"></div><div class="line">results = np.zeros((len(samples), max_length, dimensionality))</div><div class="line"><span class="keyword">for</span> i, sample <span class="keyword">in</span> enumerate(samples):</div><div class="line">    <span class="keyword">for</span> j, word <span class="keyword">in</span> list(enumerate(sample.split()))[:max_length]: </div><div class="line">        <span class="string">'''</span></div><div class="line">        Hashes the word into a random integer index </div><div class="line">        between 0 and 1,000</div><div class="line">        '''</div><div class="line">        index = abs(hash(word)) % dimensionality</div><div class="line">        results[i, j, index] = <span class="number">1.</span></div></pre></td></tr></table></figure>
+<h6 id="6-1-2-词嵌入"><a href="#6-1-2-词嵌入" class="headerlink" title="6.1.2 词嵌入"></a>6.1.2 词嵌入</h6><p>另外一种常用的、高效的文本向量化方法是稠密词向量，也称为词嵌入。one-hot编码得到的向量是二值的、稀疏的（大部分值为0）、高维度的（与字典的大小相同），而词嵌入是低维度的浮点型向量（意即，稠密向量），见图6.2。前面的向量是通过one-hot编码得到的，而词嵌入是由数据学习得到，最常见的词嵌入是256维、512维或者1024维。one-hot编码会导致向量的维度甚至超过20,000维（此处以20,000个词的字典举例）。所以词嵌入能够用更少的维度表示更多的信息。</p>
+<p><img src="http://img0.ph.126.net/CLHSBy3aKsFKTkMBntdgHw==/6608256197959394547.png" alt="image"></p>
+<p>图6.2 one-hot编码和词嵌入得到的向量对比</p>
+<p>有两种获得词嵌入的方式：</p>
+<ul>
+<li>在解决文档分类或者情感预测的任务中学习词嵌入。一般以随机词向量维开始，然后在训练神经网络模型权重的过程中学习到词向量。</li>
+<li>加载预训练的词向量。预训练的词向量一般是从不同于当前要解决的机器学习任务中学习得到的。</li>
+</ul>
+<p>下面学习前面的两种方法。</p>
+<p><strong>学习词嵌入：Embedding layer</strong></p>
+<p>词与稠密向量相关联的最简单方法是随机向量化。但是，这种方法使得嵌入空间变得毫无结构：比如，单词accurate和exact在大部分句子里是可互换的，但得到的嵌入可能完全不同。深度神经网络很难识别出这种噪音和非结构嵌入空间。</p>
+<p>更抽象一点的讲，词与词之间的语义相似性在词向量空间中应该以几何关系表现出来。词嵌入可以理解成是人类语言到几何空间的映射过程。例如，你会期望同义词被嵌入为相似的词向量；更一般地说，你期望任意两个词向量的几何距离（比如，L2距离）和相关词的语义距离是有相关性。除了距离之外，词向量在嵌入空间的方向也应该是有意义的。下面举个具体的例子来说明这两点。</p>
+<p><img src="http://img2.ph.126.net/F7ygznHuEc_Ut-9t3NBhqw==/1921066716150737009.png" alt="image"></p>
+<p>图6.3 词嵌入空间的实例</p>
+<p>在图6.3中，cat、dog、wolf和tiger四个词被嵌入到二维平面空间。在这里选择的词向量表示时，这些词的语义关系能用几何变换来编码表示。比如，从cat到tiger和从dog到wolf有着相同的向量，该向量可以用“从宠物到野生动物”来解释。同样，从dog到cat和从wolf到tiger有相同的向量，该向量表示“从犬科到猫科动物”。</p>
+<p>在实际的词嵌入空间中，常见的几何变换例子是“gender”词向量和“plural”词向量。比如，将“female”词向量加到“king”词向量上，可以得到“queen”词向量；将“plural”词向量加到“king”词向量上，可以得到“kings”词向量。</p>
+<p>那接下来就要问了，有完美的词向量空间能匹配人类语言吗？能用来解决任意种类的自然语言处理任务吗？答案是可能有，但是现阶段暂时没有。也没有一种词向量可以向人类语言一样有很多种语言，并且是不同形的，因为它们都是在特定文化和特定环境下形成的。但是，怎么才能得到一个优秀的词嵌入空间呢？从程序实现上讲是因任务而异：英文影评情感分析模型对应完美词嵌入空间与英文文档分类模型对应的完美词嵌入空间可能不同，因为不同任务的语义关系重要性是变化的。</p>
+<p>因此，对每个新任务来说，最好重新学习的词嵌入空间。幸运的是，反向传播算法和Keras使得学习词嵌入变得容易。下面学习Keras的Embedding layer权重。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.5 Instantiating an Embedding layer</span></div><div class="line"></div><div class="line"><span class="keyword">from</span> keras.layers <span class="keyword">import</span> Embedding</div><div class="line"></div><div class="line"><span class="string">'''</span></div><div class="line">The Embedding layer takes at least two arguments: the number of possible tokens (here, 1,000: 1 + maximum word index) and the dimensionality of the embeddings (here, 64).</div><div class="line">'''</div><div class="line">embedding_layer = Embedding(<span class="number">1000</span>, <span class="number">64</span>)</div></pre></td></tr></table></figure>
+<p>Embedding layer把词的整数索引映射为稠密向量。它输入整数，在中间字典中查找这些整数对应的向量。Embedding layer是一个高效的字典查表（见图6.4）。</p>
+<p><img src="http://img2.ph.126.net/dSD_Aa_Vj1VAyXCKA5f80A==/3234710432459376404.png" alt="image"></p>
+<p>图6.4 Embedding layer</p>
+<p>Embedding layer的输入是一个形状为（样本，序列长度）[^（sample，sequence_length）]的 2D 整数型张量，该张量的每项都是一个整数序列。Embedding layer能嵌入变长序列：比如，可以“喂入”形状为（32，10）（长度为10的序列数据，32个为一个batch）或者（64，15）（长度为15的序列数据64个为一个batch）。同一个batch中的所有序列数据必须有相同的长度，因为它们会被打包成一个张量。所以比其它序列数据短的序列将用“0”填充，另外，太长的序列会被截断。</p>
+<p>Embedding layer返回一个形状为（样本，序列长度，词向量大小）[^（samples，sequence_ length，embedding_dimensionality）]的3D浮点型张量，该张量可以被RNN layer或者1D 卷积layer处理。</p>
+<p>当你实例化一个Embedding layer时，它的权重（词向量的中间字典）是随机初始化，和其它layer一样。随着模型的训练，这些词向量通过反向传播算法逐渐调整，传入下游模型使用。一旦模型训练完，嵌入空间会显现出许多结构，不同的模型会训练出不同的特定结构。</p>
+<p>下面用熟悉的IMDB影评情感预测任务来说明上面的想法。首先，准备数据集。限制选取词频为top 10,000的常用词，只考虑影评前20个词。神经网络模型将学习8维的词嵌入，把输入的整数序列（2D整数张量）转化为嵌入序列（3D浮点张量）</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.6 Loading the IMDB data for use with an Embedding layer</span></div><div class="line"></div><div class="line"><span class="keyword">from</span> keras.datasets <span class="keyword">import</span> imdb</div><div class="line"><span class="keyword">from</span> keras <span class="keyword">import</span> preprocessing</div><div class="line"></div><div class="line"><span class="string">'''</span></div><div class="line">Number of words to consider as features</div><div class="line">'''</div><div class="line">max_features = <span class="number">10000</span></div><div class="line"><span class="string">'''</span></div><div class="line">Cuts off the text after this number of words (among the max_features most common words)</div><div class="line">'''</div><div class="line">maxlen = <span class="number">20</span></div><div class="line"></div><div class="line"><span class="string">'''</span></div><div class="line">Loads the data as lists of integers</div><div class="line">'''</div><div class="line">(x_train, y_train), (x_test, y_test) = imdb.load_data( num_words=max_features) </div><div class="line"></div><div class="line"><span class="string">'''</span></div><div class="line">Turns the lists of integers into a 2D integer tensor of shape (samples, maxlen)</div><div class="line">'''</div><div class="line">x_train = preprocessing.sequence.pad_sequences(x_train, maxlen=maxlen)</div><div class="line">x_test = preprocessing.sequence.pad_sequences(x_test, maxlen=maxlen)</div></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.7 Using an Embedding layer and classifier on the IMDB data</span></div><div class="line"></div><div class="line"><span class="keyword">from</span> keras.models <span class="keyword">import</span> Sequential</div><div class="line"><span class="keyword">from</span> keras.layers <span class="keyword">import</span> Flatten, Dense</div><div class="line"></div><div class="line">model = Sequential()</div><div class="line"><span class="string">'''</span></div><div class="line">Specifies the maximum input length to the Embedding layer so you can later flatten the embedded inputs. After the Embedding layer, the activations have shape (samples, maxlen, 8).</div><div class="line">'''</div><div class="line">model.add(Embedding(<span class="number">10000</span>, <span class="number">8</span>, input_length=maxlen))</div><div class="line"><span class="string">'''</span></div><div class="line">Flattens the 3D tensor of embeddings into a 2D tensor of shape (samples, maxlen * 8)</div><div class="line">'''</div><div class="line">model.add(Flatten())</div><div class="line"></div><div class="line"><span class="string">'''</span></div><div class="line">Adds the classifier on top</div><div class="line">'''</div><div class="line">model.add(Dense(<span class="number">1</span>, activation=<span class="string">'sigmoid'</span>))</div><div class="line">model.compile(optimizer=<span class="string">'rmsprop'</span>, loss=<span class="string">'binary_crossentropy'</span>, metrics=[<span class="string">'acc'</span>])</div><div class="line">model.summary()</div><div class="line"></div><div class="line">history = model.fit(x_train, y_train, </div><div class="line">                    epochs=<span class="number">10</span>, </div><div class="line">                    batch_size=<span class="number">32</span>, </div><div class="line">                    validation_split=<span class="number">0.2</span>)</div></pre></td></tr></table></figure>
+<p>上面的代码得到了约76%的验证准确度，这对于只考虑每个影评的前20个词来说效果已经不错了。注意，仅仅摊平嵌入序列，用单个Dense layer训练模型，会将输入序列的每个词隔离开，并没有考虑词之间的关系和句子结构（例如，该模型可能认为“this movie is a bomb”和“this movie is the bomb” 两句话都是负面影评）。所以在嵌入序列之上加入RNN layer或者1D卷积layer会将句子当做整体来学习特征，后续小节会详细讲解这些。</p>
+<p><strong>预训练的词嵌入</strong></p>
+<p>有时，你只有很少的训练数据集来学习词嵌入，那怎么办呢？</p>
+<p>你可以加载预计算好的词嵌入向量，而不用学习当前待解决任务的词嵌入。这些预计算好的词嵌入是高结构化的，具有有用的特性，其学习到了语言结构的泛化特征。在自然语言处理中使用预训练的词嵌入的基本理论，与图像分类中使用预训练的卷积网络相同：当没有足够的合适数据集来学习当前任务的特征时，你会期望从通用的视觉特征或者语义特征中学到泛化特征。</p>
+<p>一些词嵌入是用词共现矩阵统计计算，用各种技术，有些涉及神经网络，有些没有。用非监督的方法计算词的稠密的、低维度的嵌入空间是由Bengio在2000年提出的，但是直到2013年Google的Tomas Mikolov开发出著名的<a href="https://code.google.com/archive/p/word2vec" target="_blank" rel="external">Word2vec算法</a>才开始在学术研究和工业应用上广泛推广。Word2vec可以获取语义信息。</p>
+<p>Keras的Embedding layer有各种预训练词嵌入数据可以下载使用，Word2vec是其中之一。另外一个比较流行的词表示是<a href="https://nlp.stanford.edu/projects/glove" target="_blank" rel="external">GloVe</a>（Global Vector），它是由斯坦福研究组在2014开发。GloVe是基于词共现矩阵分解的一种词嵌入技术，它的开发者预训练好了成千上万的词嵌入。</p>
+<p>下面开始学习如何在Keras模型中使用GloVe词嵌入。其实它的使用方法与Word2vec词嵌入或者其它词嵌入数据相同。</p>
+<h6 id="6-1-3-从原始文本到词嵌入"><a href="#6-1-3-从原始文本到词嵌入" class="headerlink" title="6.1.3 从原始文本到词嵌入"></a>6.1.3 从原始文本到词嵌入</h6><p>这里的模型网络和上面的类似，只是换作预训练词嵌入。同时，直接从网上下载原始文本数据，而不是使用Keras分词好的IMDB数据。</p>
+<p><strong>下载IMDB原始文本</strong></p>
+<p>首先，前往<a href="http://mng.bz/0tIo下载原IMDB数据集，并解压。" target="_blank" rel="external">http://mng.bz/0tIo下载原IMDB数据集，并解压。</a></p>
+<p>接着，将单个训练影评装载为字符串列表，同时影评label装载为label的列表。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.8 Processing the labels of the raw IMDB data</span></div><div class="line"></div><div class="line"><span class="keyword">import</span> os</div><div class="line"></div><div class="line">imdb_dir = <span class="string">'/Users/fchollet/Downloads/aclImdb'</span></div><div class="line">train_dir = os.path.join(imdb_dir, <span class="string">'train'</span>)</div><div class="line"></div><div class="line">labels = []</div><div class="line">texts = []</div><div class="line"></div><div class="line"><span class="keyword">for</span> label_type <span class="keyword">in</span> [<span class="string">'neg'</span>, <span class="string">'pos'</span>]:</div><div class="line">    dir_name = os.path.join(train_dir, label_type)</div><div class="line">    <span class="keyword">for</span> fname <span class="keyword">in</span> os.listdir(dir_name):</div><div class="line">        <span class="keyword">if</span> fname[<span class="number">-4</span>:] == <span class="string">'.txt'</span>:</div><div class="line">            f = open(os.path.join(dir_name, fname))</div><div class="line">            texts.append(f.read())</div><div class="line">            f.close()</div><div class="line">            <span class="keyword">if</span> label_type == <span class="string">'neg'</span>:</div><div class="line">                labels.append(<span class="number">0</span>)</div><div class="line">            <span class="keyword">else</span>:</div><div class="line">                labels.append(<span class="number">1</span>)</div></pre></td></tr></table></figure>
+<p><strong>分词</strong></p>
+<p>开始向量化文本，准备训练集和验证集。因为预训练的词嵌入是对训练集较少时更好，这里加入步骤：取前200个样本数据集。所以你相当于只看了200条影评就开始做影评情感分类。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.9 Tokenizing the text of the raw IMDB data</span></div><div class="line"></div><div class="line"><span class="keyword">from</span> keras.preprocessing.text <span class="keyword">import</span> Tokenizer</div><div class="line"><span class="keyword">from</span> keras.preprocessing.sequence <span class="keyword">import</span> pad_sequences</div><div class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</div><div class="line"></div><div class="line"><span class="string">'''</span></div><div class="line">Cuts off reviews after 100 words</div><div class="line">'''</div><div class="line">maxlen = <span class="number">100</span>  </div><div class="line"><span class="string">'''</span></div><div class="line">Trains on 200 samples</div><div class="line">'''</div><div class="line">training_samples = <span class="number">200</span> </div><div class="line"><span class="string">'''</span></div><div class="line">Validates on 10,000 samples</div><div class="line">'''</div><div class="line">validation_samples = <span class="number">10000</span> </div><div class="line"><span class="string">'''</span></div><div class="line">Considers only the top 10,000 words in the dataset</div><div class="line">'''</div><div class="line">max_words = <span class="number">10000</span></div><div class="line"></div><div class="line">tokenizer = Tokenizer(num_words=max_words)</div><div class="line">tokenizer.fit_on_texts(texts)</div><div class="line">sequences = tokenizer.texts_to_sequences(texts)</div><div class="line"></div><div class="line">word_index = tokenizer.word_index</div><div class="line">print(<span class="string">'Found %s unique tokens.'</span> % len(word_index))</div><div class="line"></div><div class="line">data = pad_sequences(sequences, maxlen=maxlen)</div><div class="line"></div><div class="line">labels = np.asarray(labels)</div><div class="line">print(<span class="string">'Shape of data tensor:'</span>, data.shape)</div><div class="line">print(<span class="string">'Shape of label tensor:'</span>, labels.shape)</div><div class="line"></div><div class="line"><span class="string">'''</span></div><div class="line">Splits the data into a training set and a validation set, but first shuffles the data, because you’re starting with data in which samples are ordered (all negative first, then all positive)</div><div class="line">'''</div><div class="line">indices = np.arange(data.shape[<span class="number">0</span>])</div><div class="line">np.random.shuffle(indices)</div><div class="line">data = data[indices]</div><div class="line">labels = labels[indices]</div><div class="line"></div><div class="line">x_train = data[:training_samples]</div><div class="line">y_train = labels[:training_samples]</div><div class="line">x_val = data[training_samples: training_samples + validation_samples] </div><div class="line">y_val = labels[training_samples: training_samples + validation_samples]</div></pre></td></tr></table></figure>
+<p><strong>下载GloVe词嵌入</strong></p>
+<p>前往<a href="https://nlp.stanford.edu/projects/glove下载预训练的2014年英文维基百科的GloVe词嵌入。它是一个822" target="_blank" rel="external">https://nlp.stanford.edu/projects/glove下载预训练的2014年英文维基百科的GloVe词嵌入。它是一个822</a> MB的glove.6B.zip文件，包含400,000个词的100维嵌入向量。</p>
+<p><strong>预处理GloVe嵌入</strong></p>
+<p>下面解析解压的文件（a.txt）来构建索引，能将词映射为向量表示。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.10 Parsing the GloVe word-embeddings file</span></div><div class="line"></div><div class="line">glove_dir = <span class="string">'/Users/fchollet/Downloads/glove.6B'</span></div><div class="line"></div><div class="line">embeddings_index = &#123;&#125;</div><div class="line">f = open(os.path.join(glove_dir, <span class="string">'glove.6B.100d.txt'</span>))</div><div class="line"><span class="keyword">for</span> line <span class="keyword">in</span> f:</div><div class="line">    values = line.split()</div><div class="line">    word = values[<span class="number">0</span>]</div><div class="line">    coefs = np.asarray(values[<span class="number">1</span>:], dtype=<span class="string">'float32'</span>)</div><div class="line">    embeddings_index[word] = coefs</div><div class="line">f.close()</div><div class="line"></div><div class="line">print(<span class="string">'Found %s word vectors.'</span> % len(embeddings_index))</div></pre></td></tr></table></figure>
+<p>接着，构建能载入Embedding layer的嵌入矩阵。它的矩阵形状为（max_words, embedding_dim），其每项i是在参考词索引中为i的词对应的embedding_dim维向量。注意，索引0不代表任何词，只是个占位符。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.11 Preparing the GloVe word-embeddings matrix</span></div><div class="line"></div><div class="line">embedding_dim = <span class="number">100</span></div><div class="line"></div><div class="line">embedding_matrix = np.zeros((max_words, embedding_dim))</div><div class="line"><span class="keyword">for</span> word, i <span class="keyword">in</span> word_index.items():</div><div class="line">    <span class="keyword">if</span> i &lt; max_words:</div><div class="line">        embedding_vector = embeddings_index.get(word)</div><div class="line">        <span class="keyword">if</span> embedding_vector <span class="keyword">is</span> <span class="keyword">not</span> <span class="keyword">None</span>:</div><div class="line">            <span class="string">'''</span></div><div class="line">            Words not found in the embedding index will be all zeros.</div><div class="line">            '''</div><div class="line">            embedding_matrix[i] = embedding_vector</div></pre></td></tr></table></figure>
+<p><strong>定义模型</strong></p>
+<p>使用前面相同的模型结构。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.12 Model definition</span></div><div class="line"></div><div class="line"><span class="keyword">from</span> keras.models <span class="keyword">import</span> Sequential</div><div class="line"><span class="keyword">from</span> keras.layers <span class="keyword">import</span> Embedding, Flatten, Dense</div><div class="line"></div><div class="line">model = Sequential()</div><div class="line">model.add(Embedding(max_words, embedding_dim, input_length=maxlen)) model.add(Flatten())</div><div class="line">model.add(Dense(<span class="number">32</span>, activation=<span class="string">'relu'</span>))</div><div class="line">model.add(Dense(<span class="number">1</span>, activation=<span class="string">'sigmoid'</span>))</div><div class="line">model.summary()</div></pre></td></tr></table></figure>
+<p><strong>加载GloVe词嵌入</strong></p>
+<p>Embedding layer有一个权重矩阵：2D浮点型矩阵，每项i表示索引为i的词对应的词向量。在神经网络模型中加载GloVe词嵌入到Embedding layer</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.13 Loading pretrained word embeddings into the Embedding layer </span></div><div class="line"></div><div class="line">model.layers[<span class="number">0</span>].set_weights([embedding_matrix])</div><div class="line">model.layers[<span class="number">0</span>].trainable = <span class="keyword">False</span></div></pre></td></tr></table></figure>
+<p>此外，设置trainable为False，冻结Embedding layer。当一个模型的部分网络是预训练的（像Embedding layer）或者随机初始化（像分类），那该部分网络在模型训练过程中不能更新，避免模型忘记已有的特征。随机初始化layer会触发大的梯度更新，导致已经学习的特征丢失。</p>
+<p><strong>训练和评估模型</strong></p>
+<p>编译和训练模型。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.14 Training and evaluation</span></div><div class="line"></div><div class="line">model.compile(optimizer=<span class="string">'rmsprop'</span>,</div><div class="line">              loss=<span class="string">'binary_crossentropy'</span>,</div><div class="line">              metrics=[<span class="string">'acc'</span>])</div><div class="line">history = model.fit(x_train, y_train,</div><div class="line">                    epochs=<span class="number">10</span>,</div><div class="line">                    batch_size=<span class="number">32</span>,</div><div class="line">                    validation_data=(x_val, y_val))</div><div class="line">model.save_weights(<span class="string">'pre_trained_glove_model.h5'</span>)</div></pre></td></tr></table></figure>
+<p>现在绘制模型随时间的表现，见图6.5和6.6。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.15 Plotting the results</span></div><div class="line"></div><div class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</div><div class="line"></div><div class="line">acc = history.history[<span class="string">'acc'</span>]</div><div class="line">val_acc = history.history[<span class="string">'val_acc'</span>]</div><div class="line">loss = history.history[<span class="string">'loss'</span>]</div><div class="line">val_loss = history.history[<span class="string">'val_loss'</span>]</div><div class="line"></div><div class="line">epochs = range(<span class="number">1</span>, len(acc) + <span class="number">1</span>)</div><div class="line"></div><div class="line">plt.plot(epochs, acc, <span class="string">'bo'</span>, label=<span class="string">'Training acc'</span>)</div><div class="line">plt.plot(epochs, val_acc, <span class="string">'b'</span>, label=<span class="string">'Validation acc'</span>)</div><div class="line">plt.title(<span class="string">'Training and validation accuracy'</span>)</div><div class="line">plt.legend()</div><div class="line"></div><div class="line">plt.figure()</div><div class="line"></div><div class="line">plt.plot(epochs, loss, <span class="string">'bo'</span>, label=<span class="string">'Training loss'</span>)</div><div class="line">plt.plot(epochs, val_loss, <span class="string">'b'</span>, label=<span class="string">'Validation loss'</span>)</div><div class="line">plt.title(<span class="string">'Training and validation loss'</span>)</div><div class="line">plt.legend()</div><div class="line"></div><div class="line">plt.show()</div></pre></td></tr></table></figure>
+<p><img src="http://img2.ph.126.net/9zO16BERB_EHK05znLUCPA==/6597375430891734236.png" alt="image"></p>
+<p>图6.5 使用预训练词嵌入时的训练损失和验证损失曲线</p>
+<p><img src="http://img1.ph.126.net/G7Y_LWDBld3gYJ4WGBenwg==/1929792440428791385.png" alt="image"></p>
+<p>图6.6 使用预训练词嵌入时的训练准确度和验证准确度曲线</p>
+<p>模型训练在开始不久即出现过拟合，这在训练集较少的情况下很常见。验证准确度有高的variance，不过也到50%了。</p>
+<p>可能你的结果不同：因为训练集太少，导致模型效果严重依赖被选择的200个样本（这里选择是随机的）。</p>
+<p>你也可以在不加载预训练词嵌入和不冻结embedding layer的情况下训练相同的网络模型。训练集也使用前面相同的200个样本，见图6.7和6.8。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.16 Training the same model without pretrained word embeddings</span></div><div class="line"></div><div class="line"><span class="keyword">from</span> keras.models <span class="keyword">import</span> Sequential</div><div class="line"><span class="keyword">from</span> keras.layers <span class="keyword">import</span> Embedding, Flatten, Dense</div><div class="line"></div><div class="line">model = Sequential()</div><div class="line">model.add(Embedding(max_words, embedding_dim, input_length=maxlen)) model.add(Flatten())</div><div class="line">model.add(Dense(<span class="number">32</span>, activation=<span class="string">'relu'</span>))</div><div class="line">model.add(Dense(<span class="number">1</span>, activation=<span class="string">'sigmoid'</span>))</div><div class="line">model.summary()</div><div class="line"></div><div class="line">model.compile(optimizer=<span class="string">'rmsprop'</span>,</div><div class="line">              loss=<span class="string">'binary_crossentropy'</span>,</div><div class="line">              metrics=[<span class="string">'acc'</span>])</div><div class="line">history = model.fit(x_train, y_train,</div><div class="line">                    epochs=<span class="number">10</span>,</div><div class="line">                    batch_size=<span class="number">32</span>,</div><div class="line">                    validation_data=(x_val, y_val))</div></pre></td></tr></table></figure>
+<p><img src="http://img0.ph.126.net/jq-9h9EXTDB5pJCqLA23Hw==/2139209823101585259.png" alt="image"></p>
+<p>图6.7 未使用预训练词嵌入时的训练损失和验证损失曲线</p>
+<p><img src="http://img2.ph.126.net/NbuULTV9WORYsTUcEo-2Yw==/6608256197959394552.png" alt="image"></p>
+<p>图6.8 未使用预训练词嵌入时的训练准确度和验证准确度曲线</p>
+<p>这次的结果显示验证准确度不到50%。所以样本量较少的情况下，预训练词嵌入效果更优。</p>
+<p>最后，在测试数据集上评估模型。首先，对测试数据进行分词。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.17 Tokenizing the data of the test set</span></div><div class="line"></div><div class="line">test_dir = os.path.join(imdb_dir, <span class="string">'test'</span>)</div><div class="line"></div><div class="line">labels = []</div><div class="line">texts = []</div><div class="line"></div><div class="line"><span class="keyword">for</span> label_type <span class="keyword">in</span> [<span class="string">'neg'</span>, <span class="string">'pos'</span>]:</div><div class="line">    dir_name = os.path.join(test_dir, label_type)</div><div class="line">    <span class="keyword">for</span> fname <span class="keyword">in</span> sorted(os.listdir(dir_name)):</div><div class="line">        <span class="keyword">if</span> fname[<span class="number">-4</span>:] == <span class="string">'.txt'</span>:</div><div class="line">            f = open(os.path.join(dir_name, fname))</div><div class="line">            texts.append(f.read())</div><div class="line">            f.close()</div><div class="line">                    <span class="keyword">if</span> label_type == <span class="string">'neg'</span>:</div><div class="line">                       labels.append(<span class="number">0</span>)</div><div class="line">                   <span class="keyword">else</span>:</div><div class="line">                       labels.append(<span class="number">1</span>)</div><div class="line"></div><div class="line">sequences = tokenizer.texts_to_sequences(texts)</div><div class="line">x_test = pad_sequences(sequences, maxlen=maxlen)</div><div class="line">y_test = np.asarray(labels)</div></pre></td></tr></table></figure>
+<p>接着，加载并评估第一个模型。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.18 Evaluating the model on the test set</span></div><div class="line"></div><div class="line">model.load_weights(<span class="string">'pre_trained_glove_model.h5'</span>) model.evaluate(x_test, y_test)</div></pre></td></tr></table></figure>
+<p>返回测试准确度56%的结果。</p>
+<h6 id="6-1-4-小结"><a href="#6-1-4-小结" class="headerlink" title="6.1.4 小结"></a>6.1.4 小结</h6><p>你学到的知识有：</p>
+<ul>
+<li>文本分词</li>
+<li>使用Keras的Embedding layer学习特定的词嵌入</li>
+<li>使用预训练的词嵌入提升自然语言处理问题</li>
+</ul>
+<p>未完待续。。。</p>
+<p>Enjoy!</p>
+<blockquote>
+<p>翻译本书系列的初衷是，觉得其中把深度学习讲解的通俗易懂。不光有实例，也包含作者多年实践对深度学习概念、原理的深度理解。最后说不重要的一点，François Chollet是Keras作者。<br>声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。</p>
+</blockquote>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2018/07/04/deep-learning-with-python-chapter-3-3.6/" itemprop="url">
                   《Deep Learning with Python》第三章 3.6 走进神经网络之房价预测
                 </a>
@@ -1765,177 +1981,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/12/28/BeautifulSoup-scrap/" itemprop="url">
-                  Python:BeautifulSoup爬虫手把手实例教程
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-12-28T15:25:17+08:00" content="2017-12-28">
-              2017-12-28
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>Web爬虫能自动抽取数据，并以人们容易理解的方式展现。本文章将举个金融市场的例子，但是Web爬虫能做的远不止于此。</p>
-<p>如果你是一个狂热的投资者，当你需要的股票价格跨多个网站，那获取每天的股票价格是相当痛苦。本文通过创建一个Web爬虫自动从互联网上检索股指数据。</p>
-<h5 id="开始"><a href="#开始" class="headerlink" title="开始"></a>开始</h5><p>我们将使用Python和BeautifulSoup编写爬虫：</p>
-<ul>
-<li>对于Mac用户，Python已预装好。打开终端，输入python —version，你回看到Python版本是2.7.x；</li>
-<li>对于Windows用户，请按官方文档安装Python</li>
-</ul>
-<p>接下来使用<code>pip</code>安装BeautifulSoup库，在terminal中执行：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">easy_install pip  </div><div class="line">pip install BeautifulSoup4</div></pre></td></tr></table></figure>
-<p><strong>Note</strong>：如果执行以上命令失败，请尝试加上<code>sudo</code>再次执行。</p>
-<h5 id="基础知识"><a href="#基础知识" class="headerlink" title="基础知识"></a>基础知识</h5><p>在看代码之前，先理解一下HTML网页基本知识和爬取规则。</p>
-<h6 id="HTML标签"><a href="#HTML标签" class="headerlink" title="HTML标签"></a>HTML标签</h6><p>如果你已经熟悉HTML标签，可以跳过此部分。</p>
-<figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&lt;!DOCTYPE html&gt;</span>  </div><div class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span>  </div><div class="line">    <span class="tag">&lt;<span class="name">head</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">head</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">body</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">h1</span>&gt;</span> First Scraping <span class="tag">&lt;/<span class="name">h1</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">p</span>&gt;</span> Hello World <span class="tag">&lt;/<span class="name">p</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">body</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></div></pre></td></tr></table></figure>
-<p>上面是HTML网页基本的语法，网页中的每个<tag>代表一个功能块：</tag></p>
-<ol>
-<li><code>&lt;!DOCTYPE html&gt;</code>：HTML文档必须以&lt;!DOCTYPE html&gt;标签为起点；</li>
-<li>HTML文档包含在<code>&lt;html&gt;</code> 和<code>&lt;/html&gt;</code>标签之间；</li>
-<li>HTML文档的元数据和脚本声明放在<code>&lt;head&gt;</code> 和 <code>&lt;/head&gt;</code>标签之间；</li>
-<li>HTML文档的正文部分放在 <code>&lt;body&gt;</code> 和 <code>&lt;/body&gt;</code>标签内；</li>
-<li><code>&lt;h1&gt;</code> 到 <code>&lt;h6&gt;</code>标签定义标题；</li>
-<li><code>&lt;p&gt;</code> 标签定义段落； </li>
-</ol>
-<p>其它常用的标签有，<code>&lt;a&gt;</code> ：超链接，<code>&lt;table&gt;</code> ：表格；<code>&lt;tr&gt;</code> 表格的行，<code>&lt;td&gt;</code>表格的列。</p>
-<p>有时，HTML标签也带有 <code>id</code> 或者 <code>class</code>  属性。 <code>id</code> 属性是指定HTML标签的唯一id，其在HTML文档内取值唯一。 <code>class</code> 属性是表示同一类HTML标签。我们可以使用两个属性进行数据定位。</p>
-<p>W3Schools上可以学到更多关于HTML tag，id和class的知识。</p>
-<h6 id="爬取规则"><a href="#爬取规则" class="headerlink" title="爬取规则"></a>爬取规则</h6><ul>
-<li>爬取网站的第一步是，阅读网站的爬取协议或者声明。一般情况，爬取的数据不能用于商业目的。</li>
-<li>不能太频繁的请求网站数据，不然会被列入黑名单。最好能让你的程序模拟人的行为。一般设为每秒访问一个页面为最佳。</li>
-<li>网站的布局会随时改变，确保改写你的代码能重新爬取该网页。</li>
-</ul>
-<h5 id="检查（Inspect）网页"><a href="#检查（Inspect）网页" class="headerlink" title="检查（Inspect）网页"></a>检查（Inspect）网页</h5><p>下面拿<a href="http://www.bloomberg.com/quote/SPX:IND" target="_blank" rel="external">Bloomberg Quote</a>网站举例：</p>
-<p>当前炒股非常火，假设某个炒股者关注股票市场，想得到股指（S&amp;P 500）名字和价格。首先在浏览器打开该网页，使用浏览器的检查器（inspector）来检查网页。</p>
-<p><img src="https://cdn-images-1.medium.com/max/1600/1*KOJCuAYQyMIC8QdQyXERyw.png" alt="imge"></p>
-<p>鼠标悬停在价格的位置，你会看到价格周围蓝色的方框。当点击它时，相关的网页在浏览器控制台上显示被选中。</p>
-<p><img src="https://cdn-images-1.medium.com/max/1600/1*T0t6G2tawfTtKHR4yY_iVQ.png" alt="image"></p>
-<p>上面的结果显示，该股指的价格包含在HTML标签的一级， <code>&lt;div class=&quot;basic-quote&quot;&gt;</code> → <code>&lt;div class=&quot;price-container up&quot;&gt;</code> → <code>&lt;div class=&quot;price&quot;&gt;</code>。</p>
-<p>相似的，如果将鼠标悬停在“S&amp;P 500 Index”并点击名字，会看到它包含在<code>&lt;div class=&quot;basic-quote&quot;&gt;</code> 和 <code>&lt;h1 class=&quot;name&quot;&gt;</code>。</p>
-<p><img src="https://cdn-images-1.medium.com/max/1600/1*ga5bmPtLDdWUTvL-pNxBgg.png" alt="imge"></p>
-<p>现在我们知道可以通过<code>class</code> 标签辅助定位所需爬取的数据。</p>
-<h5 id="代码实践"><a href="#代码实践" class="headerlink" title="代码实践"></a>代码实践</h5><p>知道所要爬取的数据位置，那就动起手来开始爬虫。</p>
-<p>首先，导入所需的编程库：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># import libraries</span></div><div class="line"><span class="keyword">import</span> urllib2</div><div class="line"><span class="keyword">from</span> bs4 <span class="keyword">import</span> BeautifulSoup</div></pre></td></tr></table></figure>
-<p>接着，声明网页URL变量：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># specify the url</span></div><div class="line">quote_page = ‘http://www.bloomberg.com/quote/SPX:IND<span class="string">'</span></div></pre></td></tr></table></figure>
-<p>然后，使用Python urllib2获取HTML网页：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># query the website and return the html to the variable ‘page’</span></div><div class="line">page = urllib2.urlopen(quote_page)</div></pre></td></tr></table></figure>
-<p>最后，把网页解析成BeautifulSoup格式：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># parse the html using beautiful soap and store in variable `soup`</span></div><div class="line">soup = BeautifulSoup(page, ‘html.parser’)</div></pre></td></tr></table></figure>
-<p>上面<code>soup</code>变量获得网页的HTML内容。我们将从其中抽取数据。</p>
-<p>还记得所需爬取数据的唯一层吗？BeautifulSoup能帮我们获取这些层，并使用<code>find()</code>抽取其内容。因为HTML的class标签是唯一的，所以可简单的查询 <code>&lt;div class=&quot;name&quot;&gt;</code>。</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># Take out the &lt;div&gt; of name and get its value</span></div><div class="line">name_box = soup.find(‘h1’, attrs=&#123;‘<span class="class"><span class="keyword">class</span>’:</span> ‘name’&#125;)</div></pre></td></tr></table></figure>
-<p>通过 <code>text</code>函数获取数据：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">name = name_box.text.strip() <span class="comment"># strip() is used to remove starting and trailing</span></div><div class="line"><span class="keyword">print</span> name</div></pre></td></tr></table></figure>
-<p>同样地，我们获取股指价格：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># get the index price</span></div><div class="line">price_box = soup.find(‘div’, attrs=&#123;‘<span class="class"><span class="keyword">class</span>’:</span>’price’&#125;)</div><div class="line">price = price_box.text</div><div class="line"><span class="keyword">print</span> price</div></pre></td></tr></table></figure>
-<p>当运行程序，将会打印S&amp;P 500股指。</p>
-<p><img src="https://cdn-images-1.medium.com/max/1600/1*8sCE0XTu0Q0iHi2-QLpgXg.png" alt="image"></p>
-<h5 id="导出Excel-CSV文件"><a href="#导出Excel-CSV文件" class="headerlink" title="导出Excel CSV文件"></a>导出Excel CSV文件</h5><p>获取数据之后进行存储，Excel逗号分隔的格式看起来不错。你能用Excel打开查看数据。</p>
-<p>首先，导入Python的csv模块和datetime模块：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> csv</div><div class="line"><span class="keyword">from</span> datetime <span class="keyword">import</span> datetime</div></pre></td></tr></table></figure>
-<p>将爬取的数据存储到一个csv文件：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># open a csv file with append, so old data will not be erased</span></div><div class="line"><span class="keyword">with</span> open(‘index.csv’, ‘a’) <span class="keyword">as</span> csv_file:</div><div class="line"> writer = csv.writer(csv_file)</div><div class="line"> writer.writerow([name, price, datetime.now()])</div></pre></td></tr></table></figure>
-<p>执行程序后，你可以打开一个index.csv文件，看到如下内容：</p>
-<p><img src="http://img1.ph.126.net/7RTZNqWxEwVnVHR6LIA8Aw==/6632293721166253840.png" alt="image"></p>
-<p>如果每天执行该程序，你无需打开网站即可获得S&amp;P 500股指价格。</p>
-<h5 id="进阶使用"><a href="#进阶使用" class="headerlink" title="进阶使用"></a>进阶使用</h5><p>这时你可以轻松爬取一个股指，下面举例一次抽取多个股指数据。</p>
-<p>首先，更新quote_page变量为一个URL数组：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">quote_page = [‘http://www.bloomberg.com/quote/SPX:IND<span class="string">', ‘http://www.bloomberg.com/quote/CCMP:IND'</span>]</div></pre></td></tr></table></figure>
-<p>然后，将爬取代码加一个for循环，其处理每个URL并将数据存储到data：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># for loop</span></div><div class="line">data = []</div><div class="line"><span class="keyword">for</span> pg <span class="keyword">in</span> quote_page:</div><div class="line"> <span class="comment"># query the website and return the html to the variable ‘page’</span></div><div class="line"> page = urllib2.urlopen(pg)</div><div class="line"><span class="comment"># parse the html using beautiful soap and store in variable `soup`</span></div><div class="line"> soup = BeautifulSoup(page, ‘html.parser’)</div><div class="line"><span class="comment"># Take out the &lt;div&gt; of name and get its value</span></div><div class="line"> name_box = soup.find(‘h1’, attrs=&#123;‘<span class="class"><span class="keyword">class</span>’:</span> ‘name’&#125;)</div><div class="line"> name = name_box.text.strip() <span class="comment"># strip() is used to remove starting and trailing</span></div><div class="line"><span class="comment"># get the index price</span></div><div class="line"> price_box = soup.find(‘div’, attrs=&#123;‘<span class="class"><span class="keyword">class</span>’:</span>’price’&#125;)</div><div class="line"> price = price_box.text</div><div class="line"><span class="comment"># save the data in tuple</span></div><div class="line"> data.append((name, price))</div></pre></td></tr></table></figure>
-<p>同时，更改存储csv文件部分代码：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># open a csv file with append, so old data will not be erased</span></div><div class="line"><span class="keyword">with</span> open(‘index.csv’, ‘a’) <span class="keyword">as</span> csv_file:</div><div class="line"> writer = csv.writer(csv_file)</div><div class="line"> <span class="comment"># The for loop</span></div><div class="line"> <span class="keyword">for</span> name, price <span class="keyword">in</span> data:</div><div class="line"> writer.writerow([name, price, datetime.now()])</div></pre></td></tr></table></figure>
-<p>现在实现一次爬取两个股指价格。</p>
-<p>Enjoy!</p>
-<hr>
-<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
-<p>若发现以上文章有任何不妥，请联系我。</p>
-<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1981,7 +2026,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">34</span>
+              <span class="site-state-item-count">35</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>

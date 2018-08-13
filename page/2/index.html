@@ -238,6 +238,177 @@
             
               
                 
+                <a class="post-title-link" href="/2017/12/28/BeautifulSoup-scrap/" itemprop="url">
+                  Python:BeautifulSoup爬虫手把手实例教程
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-12-28T15:25:17+08:00" content="2017-12-28">
+              2017-12-28
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>Web爬虫能自动抽取数据，并以人们容易理解的方式展现。本文章将举个金融市场的例子，但是Web爬虫能做的远不止于此。</p>
+<p>如果你是一个狂热的投资者，当你需要的股票价格跨多个网站，那获取每天的股票价格是相当痛苦。本文通过创建一个Web爬虫自动从互联网上检索股指数据。</p>
+<h5 id="开始"><a href="#开始" class="headerlink" title="开始"></a>开始</h5><p>我们将使用Python和BeautifulSoup编写爬虫：</p>
+<ul>
+<li>对于Mac用户，Python已预装好。打开终端，输入python —version，你回看到Python版本是2.7.x；</li>
+<li>对于Windows用户，请按官方文档安装Python</li>
+</ul>
+<p>接下来使用<code>pip</code>安装BeautifulSoup库，在terminal中执行：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">easy_install pip  </div><div class="line">pip install BeautifulSoup4</div></pre></td></tr></table></figure>
+<p><strong>Note</strong>：如果执行以上命令失败，请尝试加上<code>sudo</code>再次执行。</p>
+<h5 id="基础知识"><a href="#基础知识" class="headerlink" title="基础知识"></a>基础知识</h5><p>在看代码之前，先理解一下HTML网页基本知识和爬取规则。</p>
+<h6 id="HTML标签"><a href="#HTML标签" class="headerlink" title="HTML标签"></a>HTML标签</h6><p>如果你已经熟悉HTML标签，可以跳过此部分。</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&lt;!DOCTYPE html&gt;</span>  </div><div class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span>  </div><div class="line">    <span class="tag">&lt;<span class="name">head</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">head</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">body</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">h1</span>&gt;</span> First Scraping <span class="tag">&lt;/<span class="name">h1</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">p</span>&gt;</span> Hello World <span class="tag">&lt;/<span class="name">p</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">body</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></div></pre></td></tr></table></figure>
+<p>上面是HTML网页基本的语法，网页中的每个<tag>代表一个功能块：</tag></p>
+<ol>
+<li><code>&lt;!DOCTYPE html&gt;</code>：HTML文档必须以&lt;!DOCTYPE html&gt;标签为起点；</li>
+<li>HTML文档包含在<code>&lt;html&gt;</code> 和<code>&lt;/html&gt;</code>标签之间；</li>
+<li>HTML文档的元数据和脚本声明放在<code>&lt;head&gt;</code> 和 <code>&lt;/head&gt;</code>标签之间；</li>
+<li>HTML文档的正文部分放在 <code>&lt;body&gt;</code> 和 <code>&lt;/body&gt;</code>标签内；</li>
+<li><code>&lt;h1&gt;</code> 到 <code>&lt;h6&gt;</code>标签定义标题；</li>
+<li><code>&lt;p&gt;</code> 标签定义段落； </li>
+</ol>
+<p>其它常用的标签有，<code>&lt;a&gt;</code> ：超链接，<code>&lt;table&gt;</code> ：表格；<code>&lt;tr&gt;</code> 表格的行，<code>&lt;td&gt;</code>表格的列。</p>
+<p>有时，HTML标签也带有 <code>id</code> 或者 <code>class</code>  属性。 <code>id</code> 属性是指定HTML标签的唯一id，其在HTML文档内取值唯一。 <code>class</code> 属性是表示同一类HTML标签。我们可以使用两个属性进行数据定位。</p>
+<p>W3Schools上可以学到更多关于HTML tag，id和class的知识。</p>
+<h6 id="爬取规则"><a href="#爬取规则" class="headerlink" title="爬取规则"></a>爬取规则</h6><ul>
+<li>爬取网站的第一步是，阅读网站的爬取协议或者声明。一般情况，爬取的数据不能用于商业目的。</li>
+<li>不能太频繁的请求网站数据，不然会被列入黑名单。最好能让你的程序模拟人的行为。一般设为每秒访问一个页面为最佳。</li>
+<li>网站的布局会随时改变，确保改写你的代码能重新爬取该网页。</li>
+</ul>
+<h5 id="检查（Inspect）网页"><a href="#检查（Inspect）网页" class="headerlink" title="检查（Inspect）网页"></a>检查（Inspect）网页</h5><p>下面拿<a href="http://www.bloomberg.com/quote/SPX:IND" target="_blank" rel="external">Bloomberg Quote</a>网站举例：</p>
+<p>当前炒股非常火，假设某个炒股者关注股票市场，想得到股指（S&amp;P 500）名字和价格。首先在浏览器打开该网页，使用浏览器的检查器（inspector）来检查网页。</p>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*KOJCuAYQyMIC8QdQyXERyw.png" alt="imge"></p>
+<p>鼠标悬停在价格的位置，你会看到价格周围蓝色的方框。当点击它时，相关的网页在浏览器控制台上显示被选中。</p>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*T0t6G2tawfTtKHR4yY_iVQ.png" alt="image"></p>
+<p>上面的结果显示，该股指的价格包含在HTML标签的一级， <code>&lt;div class=&quot;basic-quote&quot;&gt;</code> → <code>&lt;div class=&quot;price-container up&quot;&gt;</code> → <code>&lt;div class=&quot;price&quot;&gt;</code>。</p>
+<p>相似的，如果将鼠标悬停在“S&amp;P 500 Index”并点击名字，会看到它包含在<code>&lt;div class=&quot;basic-quote&quot;&gt;</code> 和 <code>&lt;h1 class=&quot;name&quot;&gt;</code>。</p>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*ga5bmPtLDdWUTvL-pNxBgg.png" alt="imge"></p>
+<p>现在我们知道可以通过<code>class</code> 标签辅助定位所需爬取的数据。</p>
+<h5 id="代码实践"><a href="#代码实践" class="headerlink" title="代码实践"></a>代码实践</h5><p>知道所要爬取的数据位置，那就动起手来开始爬虫。</p>
+<p>首先，导入所需的编程库：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># import libraries</span></div><div class="line"><span class="keyword">import</span> urllib2</div><div class="line"><span class="keyword">from</span> bs4 <span class="keyword">import</span> BeautifulSoup</div></pre></td></tr></table></figure>
+<p>接着，声明网页URL变量：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># specify the url</span></div><div class="line">quote_page = ‘http://www.bloomberg.com/quote/SPX:IND<span class="string">'</span></div></pre></td></tr></table></figure>
+<p>然后，使用Python urllib2获取HTML网页：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># query the website and return the html to the variable ‘page’</span></div><div class="line">page = urllib2.urlopen(quote_page)</div></pre></td></tr></table></figure>
+<p>最后，把网页解析成BeautifulSoup格式：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># parse the html using beautiful soap and store in variable `soup`</span></div><div class="line">soup = BeautifulSoup(page, ‘html.parser’)</div></pre></td></tr></table></figure>
+<p>上面<code>soup</code>变量获得网页的HTML内容。我们将从其中抽取数据。</p>
+<p>还记得所需爬取数据的唯一层吗？BeautifulSoup能帮我们获取这些层，并使用<code>find()</code>抽取其内容。因为HTML的class标签是唯一的，所以可简单的查询 <code>&lt;div class=&quot;name&quot;&gt;</code>。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># Take out the &lt;div&gt; of name and get its value</span></div><div class="line">name_box = soup.find(‘h1’, attrs=&#123;‘<span class="class"><span class="keyword">class</span>’:</span> ‘name’&#125;)</div></pre></td></tr></table></figure>
+<p>通过 <code>text</code>函数获取数据：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">name = name_box.text.strip() <span class="comment"># strip() is used to remove starting and trailing</span></div><div class="line"><span class="keyword">print</span> name</div></pre></td></tr></table></figure>
+<p>同样地，我们获取股指价格：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># get the index price</span></div><div class="line">price_box = soup.find(‘div’, attrs=&#123;‘<span class="class"><span class="keyword">class</span>’:</span>’price’&#125;)</div><div class="line">price = price_box.text</div><div class="line"><span class="keyword">print</span> price</div></pre></td></tr></table></figure>
+<p>当运行程序，将会打印S&amp;P 500股指。</p>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*8sCE0XTu0Q0iHi2-QLpgXg.png" alt="image"></p>
+<h5 id="导出Excel-CSV文件"><a href="#导出Excel-CSV文件" class="headerlink" title="导出Excel CSV文件"></a>导出Excel CSV文件</h5><p>获取数据之后进行存储，Excel逗号分隔的格式看起来不错。你能用Excel打开查看数据。</p>
+<p>首先，导入Python的csv模块和datetime模块：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> csv</div><div class="line"><span class="keyword">from</span> datetime <span class="keyword">import</span> datetime</div></pre></td></tr></table></figure>
+<p>将爬取的数据存储到一个csv文件：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># open a csv file with append, so old data will not be erased</span></div><div class="line"><span class="keyword">with</span> open(‘index.csv’, ‘a’) <span class="keyword">as</span> csv_file:</div><div class="line"> writer = csv.writer(csv_file)</div><div class="line"> writer.writerow([name, price, datetime.now()])</div></pre></td></tr></table></figure>
+<p>执行程序后，你可以打开一个index.csv文件，看到如下内容：</p>
+<p><img src="http://img1.ph.126.net/7RTZNqWxEwVnVHR6LIA8Aw==/6632293721166253840.png" alt="image"></p>
+<p>如果每天执行该程序，你无需打开网站即可获得S&amp;P 500股指价格。</p>
+<h5 id="进阶使用"><a href="#进阶使用" class="headerlink" title="进阶使用"></a>进阶使用</h5><p>这时你可以轻松爬取一个股指，下面举例一次抽取多个股指数据。</p>
+<p>首先，更新quote_page变量为一个URL数组：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">quote_page = [‘http://www.bloomberg.com/quote/SPX:IND<span class="string">', ‘http://www.bloomberg.com/quote/CCMP:IND'</span>]</div></pre></td></tr></table></figure>
+<p>然后，将爬取代码加一个for循环，其处理每个URL并将数据存储到data：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># for loop</span></div><div class="line">data = []</div><div class="line"><span class="keyword">for</span> pg <span class="keyword">in</span> quote_page:</div><div class="line"> <span class="comment"># query the website and return the html to the variable ‘page’</span></div><div class="line"> page = urllib2.urlopen(pg)</div><div class="line"><span class="comment"># parse the html using beautiful soap and store in variable `soup`</span></div><div class="line"> soup = BeautifulSoup(page, ‘html.parser’)</div><div class="line"><span class="comment"># Take out the &lt;div&gt; of name and get its value</span></div><div class="line"> name_box = soup.find(‘h1’, attrs=&#123;‘<span class="class"><span class="keyword">class</span>’:</span> ‘name’&#125;)</div><div class="line"> name = name_box.text.strip() <span class="comment"># strip() is used to remove starting and trailing</span></div><div class="line"><span class="comment"># get the index price</span></div><div class="line"> price_box = soup.find(‘div’, attrs=&#123;‘<span class="class"><span class="keyword">class</span>’:</span>’price’&#125;)</div><div class="line"> price = price_box.text</div><div class="line"><span class="comment"># save the data in tuple</span></div><div class="line"> data.append((name, price))</div></pre></td></tr></table></figure>
+<p>同时，更改存储csv文件部分代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># open a csv file with append, so old data will not be erased</span></div><div class="line"><span class="keyword">with</span> open(‘index.csv’, ‘a’) <span class="keyword">as</span> csv_file:</div><div class="line"> writer = csv.writer(csv_file)</div><div class="line"> <span class="comment"># The for loop</span></div><div class="line"> <span class="keyword">for</span> name, price <span class="keyword">in</span> data:</div><div class="line"> writer.writerow([name, price, datetime.now()])</div></pre></td></tr></table></figure>
+<p>现在实现一次爬取两个股指价格。</p>
+<p>Enjoy!</p>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2017/12/28/how-apache-flink-enables-new-streaming-applications/" itemprop="url">
                   Flink开启流处理技术新潮流：解决流处理event time和消息乱序
                 </a>
@@ -2233,199 +2404,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/08/21/spark-two-series-part-2/" itemprop="url">
-                  【Spark 2.0系列】：Catalog和自定义Optimizer
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-08-21T23:37:48+08:00" content="2016-08-21">
-              2016-08-21
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h4 id="Catalog和自定义Optimizer"><a href="#Catalog和自定义Optimizer" class="headerlink" title="Catalog和自定义Optimizer"></a>Catalog和自定义Optimizer</h4><p>Spark 2.0系列第一篇见<a href="http://mp.weixin.qq.com/s?__biz=MzI0MDIxMDM0MQ==&amp;mid=2247483729&amp;idx=1&amp;sn=22c40fd932ba7ffc3684a45e1861dd27#wechat_redirect" target="_blank" rel="external">Spark 2.0系列】：Spark Session API和Dataset API</a>，本文将讲解Spark 2.0 的Catalog 和Custom Optimizer。</p>
-<p>首先，先了解下RDD 和Dataset 在开发中使用对比。</p>
-<h5 id="RDD-和Dataset-使用对比"><a href="#RDD-和Dataset-使用对比" class="headerlink" title="RDD 和Dataset 使用对比"></a>RDD 和Dataset 使用对比</h5><p>Dataset API 是RDD 和DataFrame API 的统一，但大部分Dataset API 与RDD API使用方法看起来是相似的（其实实现方法是不同的）。所以RDD代码很容易转换成Dataset API。下面直接上代码：</p>
-<h6 id="WordCount"><a href="#WordCount" class="headerlink" title="WordCount"></a>WordCount</h6><ul>
-<li>RDD</li>
-</ul>
-<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> rdd = sparkContext.textFile(<span class="string">"src/main/resources/data.txt"</span>)</div><div class="line">  </div><div class="line"><span class="keyword">val</span> wordsRDD = rdd.flatMap(value =&gt; value.split(<span class="string">"\\s+"</span>))</div><div class="line"><span class="keyword">val</span> wordsPair = wordsRDD.map(word =&gt; (word,<span class="number">1</span>))</div><div class="line"><span class="keyword">val</span> wordCount = wordsPair.reduceByKey(_+_)</div></pre></td></tr></table></figure>
-<ul>
-<li>Dataset</li>
-</ul>
-<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> ds = sparkSession.read.text(<span class="string">"src/main/resources/data.txt"</span>)</div><div class="line"></div><div class="line"><span class="keyword">import</span> sparkSession.implicits._</div><div class="line"><span class="keyword">val</span> wordsDs = ds.flatMap(value =&gt; value.split(<span class="string">"\\s+"</span>))</div><div class="line"><span class="keyword">val</span> wordsPairDs = wordsDs.groupByKey(value =&gt; value)</div><div class="line"><span class="keyword">val</span> wordCountDs = wordsPairDs.count()</div></pre></td></tr></table></figure>
-<h6 id="其它"><a href="#其它" class="headerlink" title="其它"></a>其它</h6><table>
-<thead>
-<tr>
-<th></th>
-<th>RDD</th>
-<th>Dataset</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Caching</td>
-<td>rdd.cache()</td>
-<td>ds.cache()</td>
-</tr>
-<tr>
-<td>Filter</td>
-<td>val filteredRDD = wordsRDD.filter(value =&gt; value ==”hello”)</td>
-<td>val filteredDS = wordsDs.filter(value =&gt; value ==”hello”)</td>
-</tr>
-<tr>
-<td>Map Partition</td>
-<td>val mapPartitionsRDD = rdd.mapPartitions(iterator =&gt; List(iterator.count(value =&gt; true)).iterator)</td>
-<td>val mapPartitionsDs = ds.mapPartitions(iterator =&gt; List(iterator.count(value =&gt; true)).iterator)</td>
-</tr>
-<tr>
-<td>reduceByKey</td>
-<td>val reduceCountByRDD = wordsPair.reduceByKey(<em>+</em>)</td>
-<td>val reduceCountByDs = wordsPairDs.mapGroups((key,values) =&gt;(key,values.length))</td>
-</tr>
-</tbody>
-</table>
-<h6 id="Dataset-和RDD-相互转换"><a href="#Dataset-和RDD-相互转换" class="headerlink" title="Dataset 和RDD 相互转换"></a>Dataset 和RDD 相互转换</h6><ul>
-<li>RDD</li>
-</ul>
-<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> dsToRDD = ds.rdd</div></pre></td></tr></table></figure>
-<ul>
-<li>Dataset</li>
-</ul>
-<p>RDD 转换成Dataframe稍麻烦，需要指定schema。</p>
-<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> rddStringToRowRDD = rdd.map(value =&gt; <span class="type">Row</span>(value))</div><div class="line"><span class="keyword">val</span> dfschema = <span class="type">StructType</span>(<span class="type">Array</span>(<span class="type">StructField</span>(<span class="string">"value"</span>,<span class="type">StringType</span>)))</div><div class="line"><span class="keyword">val</span> rddToDF = sparkSession.createDataFrame(rddStringToRowRDD,dfschema)</div><div class="line"><span class="keyword">val</span> rDDToDataSet = rddToDF.as[<span class="type">String</span>]</div></pre></td></tr></table></figure>
-<h5 id="Catalog-API"><a href="#Catalog-API" class="headerlink" title="Catalog API"></a>Catalog API</h5><p>DataSet 和Dataframe API 支持结构化数据分析，而结构化数据重要的是管理metadata。这里的metadata包括temporary metadata（临时表）；registered udfs；permanent metadata（Hive metadata或HCatalog）。</p>
-<p>早期Spark版本并未提供标准的API访问metadata，开发者需要使用类似<em>show tables</em>的查询来查询metadata；而Spark 2.0 在Spark SQL中提供标准API 调用catalog来访问metadata。</p>
-<h6 id="访问Catalog"><a href="#访问Catalog" class="headerlink" title="访问Catalog"></a>访问Catalog</h6><p>建立SparkSession，然后调用Catalog：</p>
-<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> catalog = sparkSession.catalog</div></pre></td></tr></table></figure>
-<h6 id="查询数据库"><a href="#查询数据库" class="headerlink" title="查询数据库"></a>查询数据库</h6><figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">catalog.listDatabases().select(<span class="string">"name"</span>).show()</div></pre></td></tr></table></figure>
-<p><em>listDatabases</em>可查询所有数据库。在Hive中，Catalog可以访问Hive metadata中的数据库。<em>listDatabases</em>返回一个dataset，所以你可以使用适用于dataset的所有操作去处理metadata。</p>
-<h6 id="用createTempView-注册Dataframe"><a href="#用createTempView-注册Dataframe" class="headerlink" title="用createTempView 注册Dataframe"></a>用createTempView 注册Dataframe</h6><p>早期版本Spark用<em>registerTempTable</em>注册dataframe，而Spark 2.0 用<em>createTempView</em>替代。</p>
-<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">df.createTempView(<span class="string">"sales"</span>)</div></pre></td></tr></table></figure>
-<p>一旦注册视图，即可使用<em>listTables</em>访问所有表。</p>
-<h6 id="查询表"><a href="#查询表" class="headerlink" title="查询表"></a>查询表</h6><figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">catalog.listTables().select(<span class="string">"name"</span>).show()</div></pre></td></tr></table></figure>
-<h6 id="检查表缓存"><a href="#检查表缓存" class="headerlink" title="检查表缓存"></a>检查表缓存</h6><p>通过Catalog可检查表是否缓存。访问频繁的表缓存起来是非常有用的。</p>
-<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">catalog.isCached(<span class="string">"sales"</span>)</div></pre></td></tr></table></figure>
-<p>默认表是不缓存的，所以你会得到false。</p>
-<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">df.cache()</div><div class="line">catalog.isCached(<span class="string">"sales"</span>)</div></pre></td></tr></table></figure>
-<p>现在将会打印true。</p>
-<h6 id="删除视图"><a href="#删除视图" class="headerlink" title="删除视图"></a>删除视图</h6><figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">catalog.dropTempView(<span class="string">"sales"</span>)</div></pre></td></tr></table></figure>
-<h6 id="查询注册函数"><a href="#查询注册函数" class="headerlink" title="查询注册函数"></a>查询注册函数</h6><figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">catalog.listFunctions().</div><div class="line">select(<span class="string">"name"</span>,<span class="string">"description"</span>,<span class="string">"className"</span>,<span class="string">"isTemporary"</span>).show(<span class="number">100</span>)</div></pre></td></tr></table></figure>
-<p>Catalog不仅能查询表，也可以访问UDF。上面代码会显示Spark Session中所有的注册函数（包括内建函数）。</p>
-<h5 id="自定义-Optimizer"><a href="#自定义-Optimizer" class="headerlink" title="自定义 Optimizer"></a>自定义 Optimizer</h5><h6 id="Catalyst-optimizer"><a href="#Catalyst-optimizer" class="headerlink" title="Catalyst optimizer"></a>Catalyst optimizer</h6><p>Spark SQL使用Catalyst优化所有的查询，优化之后的查询比直接操作RDD速度要快。Catalyst是基于rule的，每个rule都有一个特定optimization，比如，<em>ConstantFolding</em> rule用来移除常数表达式，具体可直接看Spark SQL源代码。</p>
-<p>在早期版本Spark中，如果想自定义optimization，需要开发者修改Spark源代码。操作起来麻烦，而且要求开发者能读懂源码。在Spark 2.0中，已提供API自定义optimization。</p>
-<h6 id="访问Optimized-plan"><a href="#访问Optimized-plan" class="headerlink" title="访问Optimized plan"></a>访问Optimized plan</h6><p>在开始编写自定义optimization之前，先来看看如何访问optimized plan：</p>
-<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> df = sparkSession.read.option(<span class="string">"header"</span>,<span class="string">"true"</span>).csv(<span class="string">"src/main/resources/data.csv"</span>)</div><div class="line"><span class="keyword">val</span> multipliedDF = df.selectExpr(<span class="string">"amountPaid * 1"</span>)</div><div class="line">println(multipliedDF.queryExecution.optimizedPlan.numberedTreeString)</div></pre></td></tr></table></figure>
-<p>上面的代码是加载一个csv文件，并对某一行所有值乘以1。<em>queryExecution</em> 可访问查询相关的所有执行信息。 <em>queryExecution</em> 的<em>optimizedPlan</em>对象可以访问dataframe的optimized plan。</p>
-<p>Spark中的执行计划以tree表示，所以用<em>numberedTreeString</em>打印optimized plan。打印结果如下：</p>
-<blockquote>
-<p>00 Project [(cast(amountPaid#3 as double) <em> 1.0) AS (amountPaid </em> 1)#5]<br>01 +- Relation[transactionId#0,customerId#1,itemId#2,amountPaid#3] csv</p>
-</blockquote>
-<p>所有执行计划是由底向上读取：</p>
-<ul>
-<li>01 Relation - 从csv 文件建立一个dataframe</li>
-<li>00 Project - 投影操作</li>
-</ul>
-<h6 id="编写自定义optimizer-rule"><a href="#编写自定义optimizer-rule" class="headerlink" title="编写自定义optimizer rule"></a>编写自定义optimizer rule</h6><p>从上面的执行计划可以清晰的看到：对一列的每个值乘以1 这里并没有优化。我们知道，乘以1 这个操作应该返回的是值本身，所以可以利用这个特点来增加只能点的optimizer。代码如下：</p>
-<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">object</span> <span class="title">MultiplyOptimizationRule</span> <span class="keyword">extends</span> <span class="title">Rule</span>[<span class="type">LogicalPlan</span>] </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">apply</span></span>(plan: <span class="type">LogicalPlan</span>): <span class="type">LogicalPlan</span> = plan transformAllExpressions &#123;</div><div class="line">      <span class="keyword">case</span> <span class="type">Multiply</span>(left,right) <span class="keyword">if</span> right.isInstanceOf[<span class="type">Literal</span>] &amp;&amp;</div><div class="line">        right.asInstanceOf[<span class="type">Literal</span>].value.asInstanceOf[<span class="type">Double</span>] == <span class="number">1.0</span> =&gt;</div><div class="line">        println(<span class="string">"optimization of one applied"</span>)</div><div class="line">        left</div><div class="line">    &#125;</div><div class="line">  &#125;</div></pre></td></tr></table></figure>
-<p>这里MultiplyOptimizationRule扩展自Rule类，采用Scala的模式匹配编写。检测右操作数是否是 1，如果是1 则直接返回左节点。</p>
-<p>把MultiplyOptimizationRule加入进optimizer：</p>
-<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sparkSession.experimental.extraOptimizations = <span class="type">Seq</span>(<span class="type">MultiplyOptimizationRule</span>)</div></pre></td></tr></table></figure>
-<p>你可以使用<em>extraOptimizations</em>将定义好的Rule加入 catalyst。</p>
-<p>下面实际使用看看效果：</p>
-<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> multipliedDFWithOptimization = df.selectExpr(<span class="string">"amountPaid * 1"</span>)</div><div class="line">println(<span class="string">"after optimization"</span>)</div><div class="line">println(multipliedDFWithOptimization.queryExecution.</div><div class="line">optimizedPlan.numberedTreeString)</div></pre></td></tr></table></figure>
-<p>我们看到打印结果：</p>
-<blockquote>
-<p>00 Project [cast(amountPaid#3 as double) AS (amountPaid * 1)#7]<br>01 +- Relation[transactionId#0,customerId#1,itemId#2,amountPaid#3] csv</p>
-</blockquote>
-<p>说明自定义Optimizer已生效。</p>
-<hr>
-<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
-<p>若发现以上文章有任何不妥，请联系我。</p>
-<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -2471,7 +2449,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">34</span>
+              <span class="site-state-item-count">35</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>

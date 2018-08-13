@@ -238,6 +238,199 @@
             
               
                 
+                <a class="post-title-link" href="/2016/08/21/spark-two-series-part-2/" itemprop="url">
+                  【Spark 2.0系列】：Catalog和自定义Optimizer
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-08-21T23:37:48+08:00" content="2016-08-21">
+              2016-08-21
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h4 id="Catalog和自定义Optimizer"><a href="#Catalog和自定义Optimizer" class="headerlink" title="Catalog和自定义Optimizer"></a>Catalog和自定义Optimizer</h4><p>Spark 2.0系列第一篇见<a href="http://mp.weixin.qq.com/s?__biz=MzI0MDIxMDM0MQ==&amp;mid=2247483729&amp;idx=1&amp;sn=22c40fd932ba7ffc3684a45e1861dd27#wechat_redirect" target="_blank" rel="external">Spark 2.0系列】：Spark Session API和Dataset API</a>，本文将讲解Spark 2.0 的Catalog 和Custom Optimizer。</p>
+<p>首先，先了解下RDD 和Dataset 在开发中使用对比。</p>
+<h5 id="RDD-和Dataset-使用对比"><a href="#RDD-和Dataset-使用对比" class="headerlink" title="RDD 和Dataset 使用对比"></a>RDD 和Dataset 使用对比</h5><p>Dataset API 是RDD 和DataFrame API 的统一，但大部分Dataset API 与RDD API使用方法看起来是相似的（其实实现方法是不同的）。所以RDD代码很容易转换成Dataset API。下面直接上代码：</p>
+<h6 id="WordCount"><a href="#WordCount" class="headerlink" title="WordCount"></a>WordCount</h6><ul>
+<li>RDD</li>
+</ul>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> rdd = sparkContext.textFile(<span class="string">"src/main/resources/data.txt"</span>)</div><div class="line">  </div><div class="line"><span class="keyword">val</span> wordsRDD = rdd.flatMap(value =&gt; value.split(<span class="string">"\\s+"</span>))</div><div class="line"><span class="keyword">val</span> wordsPair = wordsRDD.map(word =&gt; (word,<span class="number">1</span>))</div><div class="line"><span class="keyword">val</span> wordCount = wordsPair.reduceByKey(_+_)</div></pre></td></tr></table></figure>
+<ul>
+<li>Dataset</li>
+</ul>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> ds = sparkSession.read.text(<span class="string">"src/main/resources/data.txt"</span>)</div><div class="line"></div><div class="line"><span class="keyword">import</span> sparkSession.implicits._</div><div class="line"><span class="keyword">val</span> wordsDs = ds.flatMap(value =&gt; value.split(<span class="string">"\\s+"</span>))</div><div class="line"><span class="keyword">val</span> wordsPairDs = wordsDs.groupByKey(value =&gt; value)</div><div class="line"><span class="keyword">val</span> wordCountDs = wordsPairDs.count()</div></pre></td></tr></table></figure>
+<h6 id="其它"><a href="#其它" class="headerlink" title="其它"></a>其它</h6><table>
+<thead>
+<tr>
+<th></th>
+<th>RDD</th>
+<th>Dataset</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Caching</td>
+<td>rdd.cache()</td>
+<td>ds.cache()</td>
+</tr>
+<tr>
+<td>Filter</td>
+<td>val filteredRDD = wordsRDD.filter(value =&gt; value ==”hello”)</td>
+<td>val filteredDS = wordsDs.filter(value =&gt; value ==”hello”)</td>
+</tr>
+<tr>
+<td>Map Partition</td>
+<td>val mapPartitionsRDD = rdd.mapPartitions(iterator =&gt; List(iterator.count(value =&gt; true)).iterator)</td>
+<td>val mapPartitionsDs = ds.mapPartitions(iterator =&gt; List(iterator.count(value =&gt; true)).iterator)</td>
+</tr>
+<tr>
+<td>reduceByKey</td>
+<td>val reduceCountByRDD = wordsPair.reduceByKey(<em>+</em>)</td>
+<td>val reduceCountByDs = wordsPairDs.mapGroups((key,values) =&gt;(key,values.length))</td>
+</tr>
+</tbody>
+</table>
+<h6 id="Dataset-和RDD-相互转换"><a href="#Dataset-和RDD-相互转换" class="headerlink" title="Dataset 和RDD 相互转换"></a>Dataset 和RDD 相互转换</h6><ul>
+<li>RDD</li>
+</ul>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> dsToRDD = ds.rdd</div></pre></td></tr></table></figure>
+<ul>
+<li>Dataset</li>
+</ul>
+<p>RDD 转换成Dataframe稍麻烦，需要指定schema。</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> rddStringToRowRDD = rdd.map(value =&gt; <span class="type">Row</span>(value))</div><div class="line"><span class="keyword">val</span> dfschema = <span class="type">StructType</span>(<span class="type">Array</span>(<span class="type">StructField</span>(<span class="string">"value"</span>,<span class="type">StringType</span>)))</div><div class="line"><span class="keyword">val</span> rddToDF = sparkSession.createDataFrame(rddStringToRowRDD,dfschema)</div><div class="line"><span class="keyword">val</span> rDDToDataSet = rddToDF.as[<span class="type">String</span>]</div></pre></td></tr></table></figure>
+<h5 id="Catalog-API"><a href="#Catalog-API" class="headerlink" title="Catalog API"></a>Catalog API</h5><p>DataSet 和Dataframe API 支持结构化数据分析，而结构化数据重要的是管理metadata。这里的metadata包括temporary metadata（临时表）；registered udfs；permanent metadata（Hive metadata或HCatalog）。</p>
+<p>早期Spark版本并未提供标准的API访问metadata，开发者需要使用类似<em>show tables</em>的查询来查询metadata；而Spark 2.0 在Spark SQL中提供标准API 调用catalog来访问metadata。</p>
+<h6 id="访问Catalog"><a href="#访问Catalog" class="headerlink" title="访问Catalog"></a>访问Catalog</h6><p>建立SparkSession，然后调用Catalog：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> catalog = sparkSession.catalog</div></pre></td></tr></table></figure>
+<h6 id="查询数据库"><a href="#查询数据库" class="headerlink" title="查询数据库"></a>查询数据库</h6><figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">catalog.listDatabases().select(<span class="string">"name"</span>).show()</div></pre></td></tr></table></figure>
+<p><em>listDatabases</em>可查询所有数据库。在Hive中，Catalog可以访问Hive metadata中的数据库。<em>listDatabases</em>返回一个dataset，所以你可以使用适用于dataset的所有操作去处理metadata。</p>
+<h6 id="用createTempView-注册Dataframe"><a href="#用createTempView-注册Dataframe" class="headerlink" title="用createTempView 注册Dataframe"></a>用createTempView 注册Dataframe</h6><p>早期版本Spark用<em>registerTempTable</em>注册dataframe，而Spark 2.0 用<em>createTempView</em>替代。</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">df.createTempView(<span class="string">"sales"</span>)</div></pre></td></tr></table></figure>
+<p>一旦注册视图，即可使用<em>listTables</em>访问所有表。</p>
+<h6 id="查询表"><a href="#查询表" class="headerlink" title="查询表"></a>查询表</h6><figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">catalog.listTables().select(<span class="string">"name"</span>).show()</div></pre></td></tr></table></figure>
+<h6 id="检查表缓存"><a href="#检查表缓存" class="headerlink" title="检查表缓存"></a>检查表缓存</h6><p>通过Catalog可检查表是否缓存。访问频繁的表缓存起来是非常有用的。</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">catalog.isCached(<span class="string">"sales"</span>)</div></pre></td></tr></table></figure>
+<p>默认表是不缓存的，所以你会得到false。</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">df.cache()</div><div class="line">catalog.isCached(<span class="string">"sales"</span>)</div></pre></td></tr></table></figure>
+<p>现在将会打印true。</p>
+<h6 id="删除视图"><a href="#删除视图" class="headerlink" title="删除视图"></a>删除视图</h6><figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">catalog.dropTempView(<span class="string">"sales"</span>)</div></pre></td></tr></table></figure>
+<h6 id="查询注册函数"><a href="#查询注册函数" class="headerlink" title="查询注册函数"></a>查询注册函数</h6><figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">catalog.listFunctions().</div><div class="line">select(<span class="string">"name"</span>,<span class="string">"description"</span>,<span class="string">"className"</span>,<span class="string">"isTemporary"</span>).show(<span class="number">100</span>)</div></pre></td></tr></table></figure>
+<p>Catalog不仅能查询表，也可以访问UDF。上面代码会显示Spark Session中所有的注册函数（包括内建函数）。</p>
+<h5 id="自定义-Optimizer"><a href="#自定义-Optimizer" class="headerlink" title="自定义 Optimizer"></a>自定义 Optimizer</h5><h6 id="Catalyst-optimizer"><a href="#Catalyst-optimizer" class="headerlink" title="Catalyst optimizer"></a>Catalyst optimizer</h6><p>Spark SQL使用Catalyst优化所有的查询，优化之后的查询比直接操作RDD速度要快。Catalyst是基于rule的，每个rule都有一个特定optimization，比如，<em>ConstantFolding</em> rule用来移除常数表达式，具体可直接看Spark SQL源代码。</p>
+<p>在早期版本Spark中，如果想自定义optimization，需要开发者修改Spark源代码。操作起来麻烦，而且要求开发者能读懂源码。在Spark 2.0中，已提供API自定义optimization。</p>
+<h6 id="访问Optimized-plan"><a href="#访问Optimized-plan" class="headerlink" title="访问Optimized plan"></a>访问Optimized plan</h6><p>在开始编写自定义optimization之前，先来看看如何访问optimized plan：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> df = sparkSession.read.option(<span class="string">"header"</span>,<span class="string">"true"</span>).csv(<span class="string">"src/main/resources/data.csv"</span>)</div><div class="line"><span class="keyword">val</span> multipliedDF = df.selectExpr(<span class="string">"amountPaid * 1"</span>)</div><div class="line">println(multipliedDF.queryExecution.optimizedPlan.numberedTreeString)</div></pre></td></tr></table></figure>
+<p>上面的代码是加载一个csv文件，并对某一行所有值乘以1。<em>queryExecution</em> 可访问查询相关的所有执行信息。 <em>queryExecution</em> 的<em>optimizedPlan</em>对象可以访问dataframe的optimized plan。</p>
+<p>Spark中的执行计划以tree表示，所以用<em>numberedTreeString</em>打印optimized plan。打印结果如下：</p>
+<blockquote>
+<p>00 Project [(cast(amountPaid#3 as double) <em> 1.0) AS (amountPaid </em> 1)#5]<br>01 +- Relation[transactionId#0,customerId#1,itemId#2,amountPaid#3] csv</p>
+</blockquote>
+<p>所有执行计划是由底向上读取：</p>
+<ul>
+<li>01 Relation - 从csv 文件建立一个dataframe</li>
+<li>00 Project - 投影操作</li>
+</ul>
+<h6 id="编写自定义optimizer-rule"><a href="#编写自定义optimizer-rule" class="headerlink" title="编写自定义optimizer rule"></a>编写自定义optimizer rule</h6><p>从上面的执行计划可以清晰的看到：对一列的每个值乘以1 这里并没有优化。我们知道，乘以1 这个操作应该返回的是值本身，所以可以利用这个特点来增加只能点的optimizer。代码如下：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">object</span> <span class="title">MultiplyOptimizationRule</span> <span class="keyword">extends</span> <span class="title">Rule</span>[<span class="type">LogicalPlan</span>] </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">apply</span></span>(plan: <span class="type">LogicalPlan</span>): <span class="type">LogicalPlan</span> = plan transformAllExpressions &#123;</div><div class="line">      <span class="keyword">case</span> <span class="type">Multiply</span>(left,right) <span class="keyword">if</span> right.isInstanceOf[<span class="type">Literal</span>] &amp;&amp;</div><div class="line">        right.asInstanceOf[<span class="type">Literal</span>].value.asInstanceOf[<span class="type">Double</span>] == <span class="number">1.0</span> =&gt;</div><div class="line">        println(<span class="string">"optimization of one applied"</span>)</div><div class="line">        left</div><div class="line">    &#125;</div><div class="line">  &#125;</div></pre></td></tr></table></figure>
+<p>这里MultiplyOptimizationRule扩展自Rule类，采用Scala的模式匹配编写。检测右操作数是否是 1，如果是1 则直接返回左节点。</p>
+<p>把MultiplyOptimizationRule加入进optimizer：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sparkSession.experimental.extraOptimizations = <span class="type">Seq</span>(<span class="type">MultiplyOptimizationRule</span>)</div></pre></td></tr></table></figure>
+<p>你可以使用<em>extraOptimizations</em>将定义好的Rule加入 catalyst。</p>
+<p>下面实际使用看看效果：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> multipliedDFWithOptimization = df.selectExpr(<span class="string">"amountPaid * 1"</span>)</div><div class="line">println(<span class="string">"after optimization"</span>)</div><div class="line">println(multipliedDFWithOptimization.queryExecution.</div><div class="line">optimizedPlan.numberedTreeString)</div></pre></td></tr></table></figure>
+<p>我们看到打印结果：</p>
+<blockquote>
+<p>00 Project [cast(amountPaid#3 as double) AS (amountPaid * 1)#7]<br>01 +- Relation[transactionId#0,customerId#1,itemId#2,amountPaid#3] csv</p>
+</blockquote>
+<p>说明自定义Optimizer已生效。</p>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2016/08/21/spark_and_redis_connector/" itemprop="url">
                   Spark借助Redis提升45倍处理效率！
                 </a>
@@ -1565,129 +1758,6 @@ Aerys,Jaime,18
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/08/09/tensorflow-not-just-deep-learning/" itemprop="url">
-                  TensorFlow——岂止于深度学习
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-08-09T22:12:34+08:00" content="2016-08-09">
-              2016-08-09
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p><em>摘要</em>：TensorFlow，机器学习构建模块和算法合集。</p>
-<p><em>TensorFlow——岂止于深度学习</em>。TensorFlow提供了“一揽子”常用数值计算和机器学习算法的构建模块。在本文中，作者将介绍广泛使用的机器学习算法以及它们在TensorFlow的<em>tf.contrib</em>中的构建模块。<em>Note</em>：许多<em>tf.contrib</em>中的稳定模块将会移到TensorFlow的主模块。</p>
-<h4 id="High-level的TF-Learn-Estimator"><a href="#High-level的TF-Learn-Estimator" class="headerlink" title="High level的TF.Learn Estimator"></a>High level的<em>TF.Learn Estimator</em></h4><p><a href="https://www.tensorflow.org/versions/master/tutorials/tflearn/index.html" target="_blank" rel="external"><em>TF.Learn</em></a> 是TensorFlow内部的high-level模块，并提供各种机器学习算法以及相应的estimator模块。除了简单易用的深度学习API（Deep Neural Networks，Recurrent Neural Networks等）外，TensorFlow提供的流行的机器学习算法如下，包括且不限于：</p>
-<ul>
-<li><a href="https://github.com/tensorflow/tensorflow/blob/32bd3d024f33e920a67a1081bc0ae0048350fdee/tensorflow/contrib/factorization/python/ops/kmeans.py" target="_blank" rel="external">K均值聚类</a>（K-means clustering）</li>
-<li><a href="https://github.com/tensorflow/tensorflow/blob/v0.10.0rc0/tensorflow/contrib/learn/python/learn/estimators/random_forest.py" target="_blank" rel="external">随机森林</a>（Random Forests）</li>
-<li><a href="https://github.com/tensorflow/tensorflow/blob/v0.10.0rc0/tensorflow/contrib/learn/python/learn/estimators/svm.py" target="_blank" rel="external">支持向量机</a>（SVM）</li>
-<li><a href="https://github.com/tensorflow/tensorflow/blob/32bd3d024f33e920a67a1081bc0ae0048350fdee/tensorflow/contrib/factorization/python/ops/gmm.py" target="_blank" rel="external">高斯混合模型聚类</a>（Gaussian Mixture Model clustering）</li>
-<li><a href="https://github.com/tensorflow/tensorflow/blob/v0.10.0rc0/tensorflow/contrib/learn/python/learn/estimators/logistic_regressor.py" target="_blank" rel="external">线性/逻辑回归</a>（Linear/logistic regression）</li>
-</ul>
-<p>学习如何构建自定义机器学习estimator，请看上篇文章《<a href="http://mp.weixin.qq.com/s?__biz=MzI0MDIxMDM0MQ==&amp;mid=2247483708&amp;idx=1&amp;sn=825a95910aeb14a9b0b769a9321d4177&amp;scene=0#wechat_redirect" target="_blank" rel="external">深度解析TensorFlow组件Estimator：构建自定义Estimator</a>》。</p>
-<h4 id="Statistical-Distribution"><a href="#Statistical-Distribution" class="headerlink" title="Statistical Distribution"></a>Statistical Distribution</h4><p>TensorFlow提供了主流的各种统计分布函数，在<em>tf.contrib.distributions</em>中，包括且不限于Bernoulli，Beta, Chi2，Dirichlet，Gamma，Uniform等分布函数。这些统计分布函数是构建机器学习算法的重要构建模块，特别是像Bayesian这一类的概率模型。</p>
-<h4 id="Layer-Component"><a href="#Layer-Component" class="headerlink" title="Layer Component"></a>Layer Component</h4><p>在<em>tf.contrib.layers</em>内部，有许多产生layer操作及其相关权重和偏差变量的函数。这些大部分都是用来构建不同深度学习架构的。也有些函数是提供归一化，卷积层，dropout层（<em>注</em>：Dropout是在训练过程中以一定概率1-p将隐含层节点的输出值清0），‘one-hot’编码等。下面来粗略浏览一下：</p>
-<ul>
-<li><em>tf.contrib.layers.optimizers</em>模块：<em>tf.contrib.layers.optimizers</em>包括的优化器有Adagrad，SGD，Momentum等。它们用来解决数值分析的优化问题，比如，优化参数空间寻找最优模型；</li>
-<li><em>tf.contrib.layers.regularizers</em>模块：<em>tf.contrib.layers.regularizers</em>包括的正则化有L1规则化和L2规则化。规则化经常被用来抑制模型训练时特征数过大导致的过拟合（overfitting）问题；有时也作为Lasso回归和Ridge回归的构建模块；</li>
-<li><em>tf.contrib.layers.initializers</em>模块：<em>tf.contrib.layers.initializers</em>一般用来做模型初始化。包括深度学习在内的许多算法都要求计算梯度来优化模型。随机初始化模型参数有助于在参数空间中找到最优参数解。TensorFlow提供的有Xavier初始化器，用来在所有层中保持梯度大体相同；</li>
-<li><em>tf.contrib.layers.feature_column</em>模块：<em>tf.contrib.layers.feature_column</em>提供函数（比如，bucketing/binning，crossing/compostion，和embedding）来转换连续特征和离散特征；</li>
-<li><em>tf.contrib.layers.embedding</em>模块：<em>tf.contrib.layers.embedding</em>转化高维分类特征成低维、密集实数值向量。</li>
-</ul>
-<h4 id="损失函数（Loss-Function）和Metric"><a href="#损失函数（Loss-Function）和Metric" class="headerlink" title="损失函数（Loss Function）和Metric"></a>损失函数（Loss Function）和Metric</h4><ul>
-<li><em>tf.contrib.losses</em>模块：机器学习算法优化依赖于损失函数。TensorFlow在<em>tf.contrib.losses</em>模块中提供大量的损失函数以供选择，比如，Sigmoid 交叉熵损失函数（sigmoid cross entropy）和Softmax（softmax cross entropy），Log损失函数，Hinge损失函数等；</li>
-<li><em>tf.contrib.metrics</em>模块：<em>tf.contrib.metrics</em>中提供了各种Metric，比如，precision，recall，accuracy， auc，MSE等。</li>
-</ul>
-<h4 id="其它"><a href="#其它" class="headerlink" title="其它"></a>其它</h4><p>前面作者仅仅抛砖引玉地给出TensorFlow的contrib模块中重要的内容。其它更重要的函数，比如，DataFrame和Monitors可参考以前的文章。</p>
-<h4 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h4><p>[1] <a href="http://terrytangyuan.github.io/2016/08/06/tensorflow-not-just-deep-learning" target="_blank" rel="external">http://terrytangyuan.github.io/2016/08/06/tensorflow-not-just-deep-learning</a></p>
-<hr>
-<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
-<p>若发现以上文章有任何不妥，请联系我。</p>
-<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1733,7 +1803,7 @@ Aerys,Jaime,18
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">34</span>
+              <span class="site-state-item-count">35</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
