@@ -1,0 +1,685 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="神机喵算" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="沉下心来，踏实干，会成功的。
+
+6.2 理解循环神经网络（RNN）前面所有见过的神经网络模型，比如，全联结网络和卷积网络，它们最主要的特征是没有记忆。每个输入被单独处理，也没有保留输入之间的状态。在这种神经网络中，要想处理序列数据或者时序数据，那就需要一次输入整个序列到神经网络模型：把整个序列当作单个数据点。例如，在IMDB的例子中，将一个完整的影评转换成一个向量，并一次性处理。我们把这类神经网">
+<meta property="og:type" content="article">
+<meta property="og:title" content="《Deep Learning with Python》第六章 6.2 理解循环神经网络（RNN）">
+<meta property="og:url" content="http://yoursite.com/2018/09/01/deep-learning-with-python-chapter-6-6.2/index.html">
+<meta property="og:site_name" content="神机喵算">
+<meta property="og:description" content="沉下心来，踏实干，会成功的。
+
+6.2 理解循环神经网络（RNN）前面所有见过的神经网络模型，比如，全联结网络和卷积网络，它们最主要的特征是没有记忆。每个输入被单独处理，也没有保留输入之间的状态。在这种神经网络中，要想处理序列数据或者时序数据，那就需要一次输入整个序列到神经网络模型：把整个序列当作单个数据点。例如，在IMDB的例子中，将一个完整的影评转换成一个向量，并一次性处理。我们把这类神经网">
+<meta property="og:image" content="http://img1.ph.126.net/iDjXqJ03RnpKRYwvw3ZMOA==/6597665701961222224.jpeg">
+<meta property="og:image" content="http://img0.ph.126.net/aadCndJydlKCg1HxvZFwmw==/6608258396982679950.jpeg">
+<meta property="og:image" content="http://img1.ph.126.net/SMY3SDmk9RLeEuVE61KkKw==/6608210018471068813.jpeg">
+<meta property="og:image" content="http://img1.ph.126.net/API6q2MRfH4O0K5Q01d1uQ==/6597836126263535413.jpeg">
+<meta property="og:image" content="http://img0.ph.126.net/k7DLP4NhI9mno9tMc1hCVQ==/6608199023354942475.jpeg">
+<meta property="og:image" content="http://img0.ph.126.net/gFciF0DRD4PU4lQeqC2Ztw==/6597970266682121952.jpeg">
+<meta property="og:image" content="http://img0.ph.126.net/loNyIJwXYBxPPVMYJnOQEw==/6631702183912748601.jpeg">
+<meta property="og:image" content="http://img0.ph.126.net/vmzrIg1t9MI7HkmThi4FPg==/6632742321910026900.jpeg">
+<meta property="og:image" content="http://img0.ph.126.net/0S1KepjPiQuV7ErnBlgjOA==/1812135900163689537.jpeg">
+<meta property="og:image" content="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg">
+<meta property="og:updated_time" content="2018-09-01T12:30:38.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="《Deep Learning with Python》第六章 6.2 理解循环神经网络（RNN）">
+<meta name="twitter:description" content="沉下心来，踏实干，会成功的。
+
+6.2 理解循环神经网络（RNN）前面所有见过的神经网络模型，比如，全联结网络和卷积网络，它们最主要的特征是没有记忆。每个输入被单独处理，也没有保留输入之间的状态。在这种神经网络中，要想处理序列数据或者时序数据，那就需要一次输入整个序列到神经网络模型：把整个序列当作单个数据点。例如，在IMDB的例子中，将一个完整的影评转换成一个向量，并一次性处理。我们把这类神经网">
+<meta name="twitter:image" content="http://img1.ph.126.net/iDjXqJ03RnpKRYwvw3ZMOA==/6597665701961222224.jpeg">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/09/01/deep-learning-with-python-chapter-6-6.2/"/>
+
+  <title> 《Deep Learning with Python》第六章 6.2 理解循环神经网络（RNN） | 神机喵算 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">神机喵算</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                《Deep Learning with Python》第六章 6.2 理解循环神经网络（RNN）
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-09-01T20:30:38+08:00" content="2018-09-01">
+              2018-09-01
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <blockquote>
+<p>沉下心来，踏实干，会成功的。</p>
+</blockquote>
+<h5 id="6-2-理解循环神经网络（RNN）"><a href="#6-2-理解循环神经网络（RNN）" class="headerlink" title="6.2 理解循环神经网络（RNN）"></a>6.2 理解循环神经网络（RNN）</h5><p>前面所有见过的神经网络模型，比如，全联结网络和卷积网络，它们最主要的特征是没有记忆。每个输入被单独处理，也没有保留输入之间的状态。在这种神经网络中，要想处理序列数据或者时序数据，那就需要一次输入整个序列到神经网络模型：把整个序列当作单个数据点。例如，在IMDB的例子中，将一个完整的影评转换成一个向量，并一次性处理。我们把这类神经网络称为前向传播神经网络（feedforward network）。</p>
+<p>相比之下，你正在读的句子，是一个词一个词的理解，并记住前一个处理的词；这给了一个句子意思很好的表示。当生物智能处理逐渐增长的信息时，它会保存正在处理信息的中间状态，建立上一个信息到当前信息的更新。</p>
+<p>循环神经网络也采用相同的方式，尽管只是一个极其简单的版本。它通过迭代序列数据的每个元素，并保持所见过的相应信息的状态。RNN是一种内循环的神经网络，见图6.9。RNN的状态只存在于一个序列数据中，RNN处理两个不同的、不相关的序列数据时会重置状态。所以你仍然可以把一个序列数据看作单个数据点，并作为神经网络模型的一个输入。不同的是，这个数据点不再是一步处理完，而是对序列元素进行内部迭代。</p>
+<p><img src="http://img1.ph.126.net/iDjXqJ03RnpKRYwvw3ZMOA==/6597665701961222224.jpeg" alt="image"></p>
+<p>图6.9 循环神经网络（RNN）</p>
+<p>下面用Numpy实现一个简单的前向传播的RNN，更好的说明循环（loop）和状态（state）这些术语。该RNN输入一个形状为（时间步长，特征数）[^(timesteps, input_features)]的向量序列，随着时间步长迭代。在t个步长时，它利用当前的状态和输入（形状为（input_features, ））生成输出output。接着把下一步的状态设为前一步的输出。对于第一个时间步长来说，前一步的输出没有定义，即是没有当前状态。所以初始化第一步的状态为零向量，也称为RNN的初始状态（initial state）。</p>
+<p>以下是RNN的伪代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.19 Pseudocode RNN</span></div><div class="line"></div><div class="line"><span class="string">'''The state at t</span></div><div class="line">'''</div><div class="line">state_t = <span class="number">0</span></div><div class="line"><span class="string">'''Iterates over sequence elements</span></div><div class="line">'''</div><div class="line"><span class="keyword">for</span> input_t <span class="keyword">in</span> input_sequence:</div><div class="line">output_t = f(input_t, state_t)</div><div class="line"><span class="string">'''The previous output becomes the state for the next iteration.</span></div><div class="line">'''</div><div class="line">state_t = output_t</div></pre></td></tr></table></figure>
+<p>你应该能直接写出上面的函数f：用两个矩阵W和U，以及一个偏置向量把输入和状态转换成输出。这类似于前向网络中全联结layer的转换操作。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.20 More detailed pseudocode for the RNN</span></div><div class="line"></div><div class="line">state_t = <span class="number">0</span></div><div class="line"><span class="keyword">for</span> input_t <span class="keyword">in</span> input_sequence:</div><div class="line">output_t = activation(dot(W, input_t) + dot(U, state_t) + b)</div><div class="line">state_t = output_t</div></pre></td></tr></table></figure>
+<p>为了彻底搞清楚上面的术语，这里用原生Numpy写个前向传播的简单RNN。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.21 Numpy implementation of a simple RNN</span></div><div class="line"></div><div class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</div><div class="line"></div><div class="line"><span class="string">'''Number of timesteps in</span></div><div class="line">the input sequence</div><div class="line">'''</div><div class="line">timesteps = <span class="number">100</span></div><div class="line"><span class="string">'''Dimensionality of the</span></div><div class="line">input feature space</div><div class="line">'''</div><div class="line">input_features = <span class="number">32</span></div><div class="line"><span class="string">'''Dimensionality of the</span></div><div class="line">output feature space</div><div class="line">'''</div><div class="line">output_features = <span class="number">64</span></div><div class="line"></div><div class="line"><span class="string">'''Input data: random</span></div><div class="line">noise for the sake of</div><div class="line">the example</div><div class="line">'''</div><div class="line">inputs = np.random.random((timesteps, input_features))</div><div class="line"></div><div class="line"><span class="string">'''Initial state: an</span></div><div class="line">all-zero vector</div><div class="line">'''</div><div class="line">state_t = np.zeros((output_features,))</div><div class="line"></div><div class="line"><span class="string">'''Creates random weight matrices</span></div><div class="line">'''</div><div class="line">W = np.random.random((output_features, input_features))</div><div class="line">U = np.random.random((output_features, output_features))</div><div class="line">b = np.random.random((output_features,))</div><div class="line"></div><div class="line">successive_outputs = []</div><div class="line"><span class="string">'''input_t is a vector of shape (input_features,).</span></div><div class="line">'''</div><div class="line"></div><div class="line"><span class="keyword">for</span> input_t <span class="keyword">in</span> inputs:</div><div class="line">    <span class="string">'''Combines the input with the current </span></div><div class="line">    state (the previous output) to obtain </div><div class="line">    the current output</div><div class="line">    '''</div><div class="line">    output_t = np.tanh(np.dot(W, input_t) + np.dot(U, state_t) + b)</div><div class="line">    </div><div class="line">    <span class="string">'''Stores this output in a list</span></div><div class="line">    '''</div><div class="line">    successive_outputs.append(output_t)</div><div class="line">    </div><div class="line">    <span class="string">'''Updates the state of the </span></div><div class="line">    network for the next timestep</div><div class="line">    '''</div><div class="line">    state_t = output_t</div><div class="line">    </div><div class="line"><span class="string">'''The final output is a 2D tensor of</span></div><div class="line">shape (timesteps, output_features).</div><div class="line">'''</div><div class="line">final_output_sequence = np.concatenate(successive_outputs, axis=<span class="number">0</span>)</div></pre></td></tr></table></figure>
+<p>看起来很容易，RNN只是一个for循环，重复利用上一个循环的计算结果，仅此而已。当然，你也可以构建许多不同类型的RNN。RNN的特征是阶跃函数（step function），比如下面的函数，见图6.10:：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">output_t = np.tanh(np.dot(W, input_t) + np.dot(U, state_t) + b)</div></pre></td></tr></table></figure>
+<p><img src="http://img0.ph.126.net/aadCndJydlKCg1HxvZFwmw==/6608258396982679950.jpeg" alt="image"></p>
+<p>图6.10 一个简单的、随时间展开的RNN</p>
+<blockquote>
+<p>注意：上面例子是在时间步长 t 的最终输出：一个形状为（时间步长，特征数）[^(timesteps, input_features)]的2D张量。在处理一个输入序列时，时间步长 t 的输出张量包含从时间步长0到t的信息。因此，在许多情况下，你并不需要所有输出的序列，只要循环（loop）的最后一个输出（output_t）即可。，因为它已包含整个序列的信息。</p>
+</blockquote>
+<h6 id="6-2-1-Keras中的RNN-layer"><a href="#6-2-1-Keras中的RNN-layer" class="headerlink" title="6.2.1 Keras中的RNN layer"></a>6.2.1 Keras中的RNN layer</h6><p>前面用Numpy实现的RNN实际上是Keras的SimpleRNN layer：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">from</span> keras.layers <span class="keyword">import</span> SimpleRNN</div></pre></td></tr></table></figure>
+<p>但是它俩有个小小的区别：与所有其它Keras layer一样，SimpleRNN处理的是批量序列，而不是单个序列。这意味着，SimpleRNN layer的输入形状为（批大小，时间步长，特征）[^(batch_size, timesteps, input_features)]，而不是（时间步长，特征）[^(timesteps, input_features)]。</p>
+<p>像Keras中所有RNN layer一样，SimpleRNN有两种模式：一，返回时间步长的所有输出的序列，形状为（批大小，时间步长，输出）[^(batch_size, timesteps, out_features)]；二，返回每个输入的最后一个输出，（时间步长，输出）[^(timesteps, out_features)]。这两种模式可以用参数return_sequences来控制。下面来看一个简单的SimpleRNN例子，其只返回最后一个时间步长的输出。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">from</span> keras.models <span class="keyword">import</span> Sequential</div><div class="line"><span class="keyword">from</span> keras.layers <span class="keyword">import</span> Embedding, SimpleRNN</div><div class="line">model = Sequential()</div><div class="line">model.add(Embedding(<span class="number">10000</span>, <span class="number">32</span>))</div><div class="line">model.add(SimpleRNN(<span class="number">32</span>))</div><div class="line">model.summary()</div></pre></td></tr></table></figure>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">________________________________________________________________</div><div class="line">Layer (<span class="built_in">type</span>)                  Output Shape        Param <span class="comment">#</span></div><div class="line">================================================================</div><div class="line">embedding_22 (Embedding)      (None, None, 32)    320000</div><div class="line">________________________________________________________________</div><div class="line">simplernn_10 (SimpleRNN)      (None, 32)          2080</div><div class="line">================================================================</div><div class="line">Total params: 322,080</div><div class="line">Trainable params: 322,080</div><div class="line">Non-trainable params: 0</div></pre></td></tr></table></figure>
+<p>下面是返回所有状态序列的例子。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">model = Sequential()</div><div class="line">model.add(Embedding(<span class="number">10000</span>, <span class="number">32</span>))</div><div class="line">model.add(SimpleRNN(<span class="number">32</span>, return_sequences=<span class="keyword">True</span>))</div><div class="line">model.summary()</div></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">________________________________________________________________</div><div class="line">Layer (type)                Output Shape        Param <span class="comment">#</span></div><div class="line">================================================================</div><div class="line">embedding_23 (Embedding)    (<span class="keyword">None</span>, <span class="keyword">None</span>, <span class="number">32</span>)    <span class="number">320000</span></div><div class="line">________________________________________________________________</div><div class="line">simplernn_11 (SimpleRNN)    (<span class="keyword">None</span>, <span class="keyword">None</span>, <span class="number">32</span>)    <span class="number">2080</span></div><div class="line">================================================================</div><div class="line">Total params: <span class="number">322</span>,<span class="number">080</span></div><div class="line">Trainable params: <span class="number">322</span>,<span class="number">080</span></div><div class="line">Non-trainable params: <span class="number">0</span></div></pre></td></tr></table></figure>
+<p>有时堆叠多层RNN layer来增加神经网络模型的表征能力。在这种情况下，必须返回中间层layer输出的所有序列：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>model = Sequential()</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>model.add(Embedding(<span class="number">10000</span>, <span class="number">32</span>))</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>model.add(SimpleRNN(<span class="number">32</span>, return_sequences=<span class="keyword">True</span>))</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>model.add(SimpleRNN(<span class="number">32</span>, return_sequences=<span class="keyword">True</span>))</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>model.add(SimpleRNN(<span class="number">32</span>, return_sequences=<span class="keyword">True</span>))</div><div class="line"><span class="comment">#Last layer only returns the last output</span></div><div class="line"><span class="meta">&gt;&gt;&gt; </span>model.add(SimpleRNN(<span class="number">32</span>))</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>model.summary()</div></pre></td></tr></table></figure>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">________________________________________________________________</div><div class="line">Layer (<span class="built_in">type</span>)             Output Shape      Param <span class="comment">#</span></div><div class="line">================================================================</div><div class="line">embedding_24 (Embedding)  (None, None, 32) 320000</div><div class="line">________________________________________________________________</div><div class="line">simplernn_12 (SimpleRNN)  (None, None, 32) 2080</div><div class="line">________________________________________________________________</div><div class="line">simplernn_13 (SimpleRNN)  (None, None, 32) 2080</div><div class="line">________________________________________________________________</div><div class="line">simplernn_14 (SimpleRNN)  (None, None, 32) 2080</div><div class="line">________________________________________________________________</div><div class="line">simplernn_15 (SimpleRNN)  (None, 32)       2080</div><div class="line">================================================================</div><div class="line">Total params: 328,320</div><div class="line">Trainable params: 328,320</div><div class="line">Non-trainable params: 0</div></pre></td></tr></table></figure>
+<p>让我们将上述模型应用于IMDB影评分类问题。首先，先处理数据。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.22 Preparing the IMDB data</span></div><div class="line"></div><div class="line"><span class="keyword">from</span> keras.datasets <span class="keyword">import</span> imdb</div><div class="line"><span class="keyword">from</span> keras.preprocessing <span class="keyword">import</span> sequence</div><div class="line"></div><div class="line"><span class="string">'''Number of words to</span></div><div class="line">consider as features</div><div class="line">'''</div><div class="line">max_features = <span class="number">10000</span></div><div class="line"><span class="string">'''Cuts off texts after this many words (among</span></div><div class="line">the max_features most common words)</div><div class="line">'''</div><div class="line">maxlen = <span class="number">500</span></div><div class="line">batch_size = <span class="number">32</span></div><div class="line"></div><div class="line">print(<span class="string">'Loading data...'</span>)</div><div class="line">(input_train, y_train), (input_test, y_test) = imdb.load_data(</div><div class="line">    num_words=max_features)</div><div class="line">print(len(input_train), <span class="string">'train sequences'</span>)</div><div class="line">print(len(input_test), <span class="string">'test sequences'</span>)</div><div class="line"></div><div class="line">print(<span class="string">'Pad sequences (samples x time)'</span>)</div><div class="line">input_train = sequence.pad_sequences(input_train, maxlen=maxlen)</div><div class="line">input_test = sequence.pad_sequences(input_test, maxlen=maxlen)</div><div class="line">print(<span class="string">'input_train shape:'</span>, input_train.shape)</div><div class="line">print(<span class="string">'input_test shape:'</span>, input_test.shape)</div></pre></td></tr></table></figure>
+<p>接着用Embedding layer和SimpleRNN layer训练简单的循环神经网络。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.23 Training the model with Embedding and SimpleRNN layers</span></div><div class="line"></div><div class="line"><span class="keyword">from</span> keras.layers <span class="keyword">import</span> Dense</div><div class="line"></div><div class="line">model = Sequential()</div><div class="line">model.add(Embedding(max_features, <span class="number">32</span>))</div><div class="line">model.add(SimpleRNN(<span class="number">32</span>))</div><div class="line">model.add(Dense(<span class="number">1</span>, activation=<span class="string">'sigmoid'</span>))</div><div class="line"></div><div class="line">model.compile(optimizer=<span class="string">'rmsprop'</span>, loss=<span class="string">'binary_crossentropy'</span>, metrics=[<span class="string">'acc'</span>])</div><div class="line">history = model.fit(input_train, y_train,</div><div class="line">                    epochs=<span class="number">10</span>,</div><div class="line">                    batch_size=<span class="number">128</span>,</div><div class="line">                    validation_split=<span class="number">0.2</span>)</div></pre></td></tr></table></figure>
+<p>下面显示训练和验证的损失和准确度，见图6.11和6.12。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.24 Plotting results</span></div><div class="line"></div><div class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</div><div class="line"></div><div class="line">acc = history.history[<span class="string">'acc'</span>]</div><div class="line">val_acc = history.history[<span class="string">'val_acc'</span>]</div><div class="line">loss = history.history[<span class="string">'loss'</span>]</div><div class="line">val_loss = history.history[<span class="string">'val_loss'</span>]</div><div class="line"></div><div class="line">epochs = range(<span class="number">1</span>, len(acc) + <span class="number">1</span>)</div><div class="line"></div><div class="line">plt.plot(epochs, acc, <span class="string">'bo'</span>, label=<span class="string">'Training acc'</span>)</div><div class="line">plt.plot(epochs, val_acc, <span class="string">'b'</span>, label=<span class="string">'Validation acc'</span>)</div><div class="line">plt.title(<span class="string">'Training and validation accuracy'</span>)</div><div class="line">plt.legend()</div><div class="line"></div><div class="line">plt.figure()</div><div class="line"></div><div class="line">plt.plot(epochs, loss, <span class="string">'bo'</span>, label=<span class="string">'Training loss'</span>)</div><div class="line">plt.plot(epochs, val_loss, <span class="string">'b'</span>, label=<span class="string">'Validation loss'</span>)</div><div class="line">plt.title(<span class="string">'Training and validation loss'</span>)</div><div class="line">plt.legend()</div><div class="line"></div><div class="line">plt.show()</div></pre></td></tr></table></figure>
+<p><img src="http://img1.ph.126.net/SMY3SDmk9RLeEuVE61KkKw==/6608210018471068813.jpeg" alt="image"></p>
+<p>图6.11 在IMDB影评集上使用SimpleRNN训练和验证的损失曲线</p>
+<p><img src="http://img1.ph.126.net/API6q2MRfH4O0K5Q01d1uQ==/6597836126263535413.jpeg" alt="image"></p>
+<p>图6.12 在IMDB影评集上使用SimpleRNN训练和验证的准确度曲线</p>
+<p>在第三章中实现的方法得到的测试准确度为88%。不幸的是，上面简单的RNN的结果竟然没有baseline的好（只有85%的验证准确度）。一部分原因是，输入文本只考虑了前500个词，而不是整个文本序列。因此RNN只获取到少量的信息；另一个问题是，SimpleRNN并不擅长处理长序列，比如文本。</p>
+<p>这就要开始介绍高级循环神经网络了。</p>
+<h6 id="6-2-2-理解LSTM和GRU-layer"><a href="#6-2-2-理解LSTM和GRU-layer" class="headerlink" title="6.2.2 理解LSTM和GRU layer"></a>6.2.2 理解LSTM和GRU layer</h6><p>SimpleRNN不是Keras中唯一的循环神经网络，其它两个是LSTM和GRU。一般实践中会使用后面两个循环神经网络中的一种。SimpleRNN有一个主要的问题：虽然理论上它在 t 时刻会保持 t 之前所有时刻的输入信息，但是实际是由于依赖太长而学习不到。这是由于梯度爆炸问题导致（vanishing gradient problem），随着层数加深时模型训练失败，具体理论原因由Hochreiter，Schmidhuber和Bengio在1990年代提出，LSTM和GRU layer就是为解决该问题而设计的。</p>
+<p>LSTM（Long Short-Term Memory）算法是由Hochreiter和Schmidhuber在1997年开发的，它是SimpleRNN layer的一个变种，增加了跨时间步长的信息记忆。LSTM的本质是为后续时刻保持信息，防止处理过程中老信号的逐渐消失。</p>
+<p>为了更好的讲解细节，我们从图6.13的SimpleRNN单元开始。由于权重矩阵较多，这里的output表达式中用字母o作为矩阵W和U的索引（Wo和Uo）。</p>
+<p><img src="http://img0.ph.126.net/k7DLP4NhI9mno9tMc1hCVQ==/6608199023354942475.jpeg" alt="image"></p>
+<p>图6.13 LSTM layer的起点：SimpleRNN</p>
+<p>接着在上面的图中增加一条携带跨时间步长的信息流，用Ct表示，这里C表示carry。这个信息流的影响：它将整合输入连接和循环连接，影响输入到下一个时间步长的状态。相应的，carry信息流会调整下一个输出和下一个状态，见图6.14，就这么简单。</p>
+<p><img src="http://img0.ph.126.net/gFciF0DRD4PU4lQeqC2Ztw==/6597970266682121952.jpeg" alt="image"></p>
+<p>图6.14 从SimpleRNN到LSTM：增加一个carry track</p>
+<p>计算下一时刻的carry信息流稍有不同，它涉及到三个不同的变换，类似SimpleRNN单元的表达形式：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">y = activation(dot(state_t, U) + dot(input_t, W) + b)</div></pre></td></tr></table></figure>
+<p>但是这三个变换都有自己的权重矩阵，分别用字母i，f和k索引。如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.25 Pseudocode details of the LSTM architecture (1/2)</span></div><div class="line"></div><div class="line">output_t = activation(dot(state_t, Uo) + dot(input_t, Wo) + dot(C_t, Vo) + bo)</div><div class="line"></div><div class="line">i_t = activation(dot(state_t, Ui) + dot(input_t, Wi) + bi)</div><div class="line">f_t = activation(dot(state_t, Uf) + dot(input_t, Wf) + bf)</div><div class="line">k_t = activation(dot(state_t, Uk) + dot(input_t, Wk) + bk)</div></pre></td></tr></table></figure>
+<p>计算新的carry状态c_t是综合i_t，f_t 和k_t。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.26 Pseudocode details of the LSTM architecture (2/2)</span></div><div class="line"></div><div class="line">c_t+<span class="number">1</span> = i_t * k_t + c_t * f_t</div></pre></td></tr></table></figure>
+<p>将上面的过程添加到图6.15上，这就得到了LSTM，不复杂。</p>
+<p><img src="http://img0.ph.126.net/loNyIJwXYBxPPVMYJnOQEw==/6631702183912748601.jpeg" alt="image"></p>
+<p>图5.15  LSTM的剖析图</p>
+<p>LSTM的实际物理意义：c_t和f_t相乘可以认为是carry信息流中遗忘不相关的信息；同时，i_t和k_t提供当前信息，并更新carry track。时至今日，其实这些解释并不太重要，因为这些操作由参数化的权重决定，通过多轮训练学习权重。RNN单元的规格决定模型的假设空间，但这不能决定模型单元做什么，它取决于单元的权重。对于相同的模型单元，不同的权重意味着模型做的事情完全不同。所以组成RNN单元的操作可以解释为一系列的约束，而不是工程意义上的设计。</p>
+<h6 id="6-2-3-Keras中LSTM实践"><a href="#6-2-3-Keras中LSTM实践" class="headerlink" title="6.2.3 Keras中LSTM实践"></a>6.2.3 Keras中LSTM实践</h6><p>下面使用LSTM layer在IMDB数据集上训练模型，见图6.16和6.17。神经网络结构与前面的SimpleRNN类似，你只需要设置LSTM layer的输出维度，其它参数使用默认值。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.27 Using the LSTM layer in Keras</span></div><div class="line"></div><div class="line"><span class="keyword">from</span> keras.layers <span class="keyword">import</span> LSTM</div><div class="line"></div><div class="line">model = Sequential()</div><div class="line">model.add(Embedding(max_features, <span class="number">32</span>))</div><div class="line">model.add(LSTM(<span class="number">32</span>))</div><div class="line">model.add(Dense(<span class="number">1</span>, activation=<span class="string">'sigmoid'</span>))</div><div class="line"></div><div class="line">model.compile(optimizer=<span class="string">'rmsprop'</span>,</div><div class="line">              loss=<span class="string">'binary_crossentropy'</span>,</div><div class="line">              metrics=[<span class="string">'acc'</span>])</div><div class="line">history = model.fit(input_train, y_train,</div><div class="line">                    epochs=<span class="number">10</span>,</div><div class="line">                    batch_size=<span class="number">128</span>,</div><div class="line">                    validation_split=<span class="number">0.2</span>)</div></pre></td></tr></table></figure>
+<p><img src="http://img0.ph.126.net/vmzrIg1t9MI7HkmThi4FPg==/6632742321910026900.jpeg" alt="image"></p>
+<p>图6.16  在IMDB影评集上使用LSTM训练和验证的损失曲线</p>
+<p><img src="http://img0.ph.126.net/0S1KepjPiQuV7ErnBlgjOA==/1812135900163689537.jpeg" alt="image"></p>
+<p>图6.17 在IMDB影评集上使用LSTM训练和验证的准确度曲线</p>
+<p>从上面的曲线可以看出，LSTM模型达到了89%的验证准确度。不算太差，比SimpleRNN神经网络模型好点（主要是因为LSTM解决了梯度消失的问题），也比第三章的全联结方法要好（即使比第三章用的数据少）。</p>
+<p>但是为啥这次结果也没太好？其中的一个原因是，没有进行超参调优，比如词嵌入维度或者LSTM的输出维度。另外一个是，缺乏规则化。但是，说老实话，分析长影评并不能有效的解决情感分析问题。该问题的解决办法是在影评中计算词频，这也是第一个全联结方法所做的。</p>
+<h6 id="6-2-4-小结"><a href="#6-2-4-小结" class="headerlink" title="6.2.4 小结"></a>6.2.4 小结</h6><p>本小节所学到的知识点：</p>
+<ul>
+<li>什么是RNN？以及如何工作？</li>
+<li>LSTM是什么？它为什么在处理长序列上比原生RNN效果好？</li>
+<li>如何使用Keras的RNN layer处理序列数据</li>
+</ul>
+<p>未完待续。。。</p>
+<p>Enjoy!</p>
+<blockquote>
+<p>翻译本书系列的初衷是，觉得其中把深度学习讲解的通俗易懂。不光有实例，也包含作者多年实践对深度学习概念、原理的深度理解。最后说不重要的一点，François Chollet是Keras作者。<br>声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。</p>
+</blockquote>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/09/01/ubuntu-install-pylucene/" rel="next" title="Ubuntu上安装PyLucene">
+                <i class="fa fa-chevron-left"></i> Ubuntu上安装PyLucene
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="http://img0.ph.126.net/3vPAbMoh_6fH3-g_I0zo-w==/6631748363397501906.jpg"
+               alt="侠天" />
+          <p class="site-author-name" itemprop="name">侠天</p>
+          <p class="site-description motion-element" itemprop="description">侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">37</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/1333564335" target="_blank" title="微博">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  微博
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://www.infoq.com/cn/author/%E4%BE%A0%E5%A4%A9" target="_blank" title="InfoQ">
+                  
+                    <i class="fa fa-fw fa-infoq"></i>
+                  
+                  InfoQ
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#6-2-理解循环神经网络（RNN）"><span class="nav-number">1.</span> <span class="nav-text">6.2 理解循环神经网络（RNN）</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#6-2-1-Keras中的RNN-layer"><span class="nav-number">1.1.</span> <span class="nav-text">6.2.1 Keras中的RNN layer</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#6-2-2-理解LSTM和GRU-layer"><span class="nav-number">1.2.</span> <span class="nav-text">6.2.2 理解LSTM和GRU layer</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#6-2-3-Keras中LSTM实践"><span class="nav-number">1.3.</span> <span class="nav-text">6.2.3 Keras中LSTM实践</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#6-2-4-小结"><span class="nav-number">1.4.</span> <span class="nav-text">6.2.4 小结</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">侠天</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+  </script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+    });
+  </script>
+  <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+  
+
+  
+
+</body>
+</html>

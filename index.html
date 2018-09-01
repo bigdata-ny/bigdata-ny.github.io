@@ -238,6 +238,338 @@
             
               
                 
+                <a class="post-title-link" href="/2018/09/01/deep-learning-with-python-chapter-6-6.2/" itemprop="url">
+                  《Deep Learning with Python》第六章 6.2 理解循环神经网络（RNN）
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-09-01T20:30:38+08:00" content="2018-09-01">
+              2018-09-01
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <blockquote>
+<p>沉下心来，踏实干，会成功的。</p>
+</blockquote>
+<h5 id="6-2-理解循环神经网络（RNN）"><a href="#6-2-理解循环神经网络（RNN）" class="headerlink" title="6.2 理解循环神经网络（RNN）"></a>6.2 理解循环神经网络（RNN）</h5><p>前面所有见过的神经网络模型，比如，全联结网络和卷积网络，它们最主要的特征是没有记忆。每个输入被单独处理，也没有保留输入之间的状态。在这种神经网络中，要想处理序列数据或者时序数据，那就需要一次输入整个序列到神经网络模型：把整个序列当作单个数据点。例如，在IMDB的例子中，将一个完整的影评转换成一个向量，并一次性处理。我们把这类神经网络称为前向传播神经网络（feedforward network）。</p>
+<p>相比之下，你正在读的句子，是一个词一个词的理解，并记住前一个处理的词；这给了一个句子意思很好的表示。当生物智能处理逐渐增长的信息时，它会保存正在处理信息的中间状态，建立上一个信息到当前信息的更新。</p>
+<p>循环神经网络也采用相同的方式，尽管只是一个极其简单的版本。它通过迭代序列数据的每个元素，并保持所见过的相应信息的状态。RNN是一种内循环的神经网络，见图6.9。RNN的状态只存在于一个序列数据中，RNN处理两个不同的、不相关的序列数据时会重置状态。所以你仍然可以把一个序列数据看作单个数据点，并作为神经网络模型的一个输入。不同的是，这个数据点不再是一步处理完，而是对序列元素进行内部迭代。</p>
+<p><img src="http://img1.ph.126.net/iDjXqJ03RnpKRYwvw3ZMOA==/6597665701961222224.jpeg" alt="image"></p>
+<p>图6.9 循环神经网络（RNN）</p>
+<p>下面用Numpy实现一个简单的前向传播的RNN，更好的说明循环（loop）和状态（state）这些术语。该RNN输入一个形状为（时间步长，特征数）[^(timesteps, input_features)]的向量序列，随着时间步长迭代。在t个步长时，它利用当前的状态和输入（形状为（input_features, ））生成输出output。接着把下一步的状态设为前一步的输出。对于第一个时间步长来说，前一步的输出没有定义，即是没有当前状态。所以初始化第一步的状态为零向量，也称为RNN的初始状态（initial state）。</p>
+<p>以下是RNN的伪代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.19 Pseudocode RNN</span></div><div class="line"></div><div class="line"><span class="string">'''The state at t</span></div><div class="line">'''</div><div class="line">state_t = <span class="number">0</span></div><div class="line"><span class="string">'''Iterates over sequence elements</span></div><div class="line">'''</div><div class="line"><span class="keyword">for</span> input_t <span class="keyword">in</span> input_sequence:</div><div class="line">output_t = f(input_t, state_t)</div><div class="line"><span class="string">'''The previous output becomes the state for the next iteration.</span></div><div class="line">'''</div><div class="line">state_t = output_t</div></pre></td></tr></table></figure>
+<p>你应该能直接写出上面的函数f：用两个矩阵W和U，以及一个偏置向量把输入和状态转换成输出。这类似于前向网络中全联结layer的转换操作。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.20 More detailed pseudocode for the RNN</span></div><div class="line"></div><div class="line">state_t = <span class="number">0</span></div><div class="line"><span class="keyword">for</span> input_t <span class="keyword">in</span> input_sequence:</div><div class="line">output_t = activation(dot(W, input_t) + dot(U, state_t) + b)</div><div class="line">state_t = output_t</div></pre></td></tr></table></figure>
+<p>为了彻底搞清楚上面的术语，这里用原生Numpy写个前向传播的简单RNN。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.21 Numpy implementation of a simple RNN</span></div><div class="line"></div><div class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</div><div class="line"></div><div class="line"><span class="string">'''Number of timesteps in</span></div><div class="line">the input sequence</div><div class="line">'''</div><div class="line">timesteps = <span class="number">100</span></div><div class="line"><span class="string">'''Dimensionality of the</span></div><div class="line">input feature space</div><div class="line">'''</div><div class="line">input_features = <span class="number">32</span></div><div class="line"><span class="string">'''Dimensionality of the</span></div><div class="line">output feature space</div><div class="line">'''</div><div class="line">output_features = <span class="number">64</span></div><div class="line"></div><div class="line"><span class="string">'''Input data: random</span></div><div class="line">noise for the sake of</div><div class="line">the example</div><div class="line">'''</div><div class="line">inputs = np.random.random((timesteps, input_features))</div><div class="line"></div><div class="line"><span class="string">'''Initial state: an</span></div><div class="line">all-zero vector</div><div class="line">'''</div><div class="line">state_t = np.zeros((output_features,))</div><div class="line"></div><div class="line"><span class="string">'''Creates random weight matrices</span></div><div class="line">'''</div><div class="line">W = np.random.random((output_features, input_features))</div><div class="line">U = np.random.random((output_features, output_features))</div><div class="line">b = np.random.random((output_features,))</div><div class="line"></div><div class="line">successive_outputs = []</div><div class="line"><span class="string">'''input_t is a vector of shape (input_features,).</span></div><div class="line">'''</div><div class="line"></div><div class="line"><span class="keyword">for</span> input_t <span class="keyword">in</span> inputs:</div><div class="line">    <span class="string">'''Combines the input with the current </span></div><div class="line">    state (the previous output) to obtain </div><div class="line">    the current output</div><div class="line">    '''</div><div class="line">    output_t = np.tanh(np.dot(W, input_t) + np.dot(U, state_t) + b)</div><div class="line">    </div><div class="line">    <span class="string">'''Stores this output in a list</span></div><div class="line">    '''</div><div class="line">    successive_outputs.append(output_t)</div><div class="line">    </div><div class="line">    <span class="string">'''Updates the state of the </span></div><div class="line">    network for the next timestep</div><div class="line">    '''</div><div class="line">    state_t = output_t</div><div class="line">    </div><div class="line"><span class="string">'''The final output is a 2D tensor of</span></div><div class="line">shape (timesteps, output_features).</div><div class="line">'''</div><div class="line">final_output_sequence = np.concatenate(successive_outputs, axis=<span class="number">0</span>)</div></pre></td></tr></table></figure>
+<p>看起来很容易，RNN只是一个for循环，重复利用上一个循环的计算结果，仅此而已。当然，你也可以构建许多不同类型的RNN。RNN的特征是阶跃函数（step function），比如下面的函数，见图6.10:：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">output_t = np.tanh(np.dot(W, input_t) + np.dot(U, state_t) + b)</div></pre></td></tr></table></figure>
+<p><img src="http://img0.ph.126.net/aadCndJydlKCg1HxvZFwmw==/6608258396982679950.jpeg" alt="image"></p>
+<p>图6.10 一个简单的、随时间展开的RNN</p>
+<blockquote>
+<p>注意：上面例子是在时间步长 t 的最终输出：一个形状为（时间步长，特征数）[^(timesteps, input_features)]的2D张量。在处理一个输入序列时，时间步长 t 的输出张量包含从时间步长0到t的信息。因此，在许多情况下，你并不需要所有输出的序列，只要循环（loop）的最后一个输出（output_t）即可。，因为它已包含整个序列的信息。</p>
+</blockquote>
+<h6 id="6-2-1-Keras中的RNN-layer"><a href="#6-2-1-Keras中的RNN-layer" class="headerlink" title="6.2.1 Keras中的RNN layer"></a>6.2.1 Keras中的RNN layer</h6><p>前面用Numpy实现的RNN实际上是Keras的SimpleRNN layer：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">from</span> keras.layers <span class="keyword">import</span> SimpleRNN</div></pre></td></tr></table></figure>
+<p>但是它俩有个小小的区别：与所有其它Keras layer一样，SimpleRNN处理的是批量序列，而不是单个序列。这意味着，SimpleRNN layer的输入形状为（批大小，时间步长，特征）[^(batch_size, timesteps, input_features)]，而不是（时间步长，特征）[^(timesteps, input_features)]。</p>
+<p>像Keras中所有RNN layer一样，SimpleRNN有两种模式：一，返回时间步长的所有输出的序列，形状为（批大小，时间步长，输出）[^(batch_size, timesteps, out_features)]；二，返回每个输入的最后一个输出，（时间步长，输出）[^(timesteps, out_features)]。这两种模式可以用参数return_sequences来控制。下面来看一个简单的SimpleRNN例子，其只返回最后一个时间步长的输出。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">from</span> keras.models <span class="keyword">import</span> Sequential</div><div class="line"><span class="keyword">from</span> keras.layers <span class="keyword">import</span> Embedding, SimpleRNN</div><div class="line">model = Sequential()</div><div class="line">model.add(Embedding(<span class="number">10000</span>, <span class="number">32</span>))</div><div class="line">model.add(SimpleRNN(<span class="number">32</span>))</div><div class="line">model.summary()</div></pre></td></tr></table></figure>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">________________________________________________________________</div><div class="line">Layer (<span class="built_in">type</span>)                  Output Shape        Param <span class="comment">#</span></div><div class="line">================================================================</div><div class="line">embedding_22 (Embedding)      (None, None, 32)    320000</div><div class="line">________________________________________________________________</div><div class="line">simplernn_10 (SimpleRNN)      (None, 32)          2080</div><div class="line">================================================================</div><div class="line">Total params: 322,080</div><div class="line">Trainable params: 322,080</div><div class="line">Non-trainable params: 0</div></pre></td></tr></table></figure>
+<p>下面是返回所有状态序列的例子。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">model = Sequential()</div><div class="line">model.add(Embedding(<span class="number">10000</span>, <span class="number">32</span>))</div><div class="line">model.add(SimpleRNN(<span class="number">32</span>, return_sequences=<span class="keyword">True</span>))</div><div class="line">model.summary()</div></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">________________________________________________________________</div><div class="line">Layer (type)                Output Shape        Param <span class="comment">#</span></div><div class="line">================================================================</div><div class="line">embedding_23 (Embedding)    (<span class="keyword">None</span>, <span class="keyword">None</span>, <span class="number">32</span>)    <span class="number">320000</span></div><div class="line">________________________________________________________________</div><div class="line">simplernn_11 (SimpleRNN)    (<span class="keyword">None</span>, <span class="keyword">None</span>, <span class="number">32</span>)    <span class="number">2080</span></div><div class="line">================================================================</div><div class="line">Total params: <span class="number">322</span>,<span class="number">080</span></div><div class="line">Trainable params: <span class="number">322</span>,<span class="number">080</span></div><div class="line">Non-trainable params: <span class="number">0</span></div></pre></td></tr></table></figure>
+<p>有时堆叠多层RNN layer来增加神经网络模型的表征能力。在这种情况下，必须返回中间层layer输出的所有序列：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span>model = Sequential()</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>model.add(Embedding(<span class="number">10000</span>, <span class="number">32</span>))</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>model.add(SimpleRNN(<span class="number">32</span>, return_sequences=<span class="keyword">True</span>))</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>model.add(SimpleRNN(<span class="number">32</span>, return_sequences=<span class="keyword">True</span>))</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>model.add(SimpleRNN(<span class="number">32</span>, return_sequences=<span class="keyword">True</span>))</div><div class="line"><span class="comment">#Last layer only returns the last output</span></div><div class="line"><span class="meta">&gt;&gt;&gt; </span>model.add(SimpleRNN(<span class="number">32</span>))</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>model.summary()</div></pre></td></tr></table></figure>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">________________________________________________________________</div><div class="line">Layer (<span class="built_in">type</span>)             Output Shape      Param <span class="comment">#</span></div><div class="line">================================================================</div><div class="line">embedding_24 (Embedding)  (None, None, 32) 320000</div><div class="line">________________________________________________________________</div><div class="line">simplernn_12 (SimpleRNN)  (None, None, 32) 2080</div><div class="line">________________________________________________________________</div><div class="line">simplernn_13 (SimpleRNN)  (None, None, 32) 2080</div><div class="line">________________________________________________________________</div><div class="line">simplernn_14 (SimpleRNN)  (None, None, 32) 2080</div><div class="line">________________________________________________________________</div><div class="line">simplernn_15 (SimpleRNN)  (None, 32)       2080</div><div class="line">================================================================</div><div class="line">Total params: 328,320</div><div class="line">Trainable params: 328,320</div><div class="line">Non-trainable params: 0</div></pre></td></tr></table></figure>
+<p>让我们将上述模型应用于IMDB影评分类问题。首先，先处理数据。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.22 Preparing the IMDB data</span></div><div class="line"></div><div class="line"><span class="keyword">from</span> keras.datasets <span class="keyword">import</span> imdb</div><div class="line"><span class="keyword">from</span> keras.preprocessing <span class="keyword">import</span> sequence</div><div class="line"></div><div class="line"><span class="string">'''Number of words to</span></div><div class="line">consider as features</div><div class="line">'''</div><div class="line">max_features = <span class="number">10000</span></div><div class="line"><span class="string">'''Cuts off texts after this many words (among</span></div><div class="line">the max_features most common words)</div><div class="line">'''</div><div class="line">maxlen = <span class="number">500</span></div><div class="line">batch_size = <span class="number">32</span></div><div class="line"></div><div class="line">print(<span class="string">'Loading data...'</span>)</div><div class="line">(input_train, y_train), (input_test, y_test) = imdb.load_data(</div><div class="line">    num_words=max_features)</div><div class="line">print(len(input_train), <span class="string">'train sequences'</span>)</div><div class="line">print(len(input_test), <span class="string">'test sequences'</span>)</div><div class="line"></div><div class="line">print(<span class="string">'Pad sequences (samples x time)'</span>)</div><div class="line">input_train = sequence.pad_sequences(input_train, maxlen=maxlen)</div><div class="line">input_test = sequence.pad_sequences(input_test, maxlen=maxlen)</div><div class="line">print(<span class="string">'input_train shape:'</span>, input_train.shape)</div><div class="line">print(<span class="string">'input_test shape:'</span>, input_test.shape)</div></pre></td></tr></table></figure>
+<p>接着用Embedding layer和SimpleRNN layer训练简单的循环神经网络。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.23 Training the model with Embedding and SimpleRNN layers</span></div><div class="line"></div><div class="line"><span class="keyword">from</span> keras.layers <span class="keyword">import</span> Dense</div><div class="line"></div><div class="line">model = Sequential()</div><div class="line">model.add(Embedding(max_features, <span class="number">32</span>))</div><div class="line">model.add(SimpleRNN(<span class="number">32</span>))</div><div class="line">model.add(Dense(<span class="number">1</span>, activation=<span class="string">'sigmoid'</span>))</div><div class="line"></div><div class="line">model.compile(optimizer=<span class="string">'rmsprop'</span>, loss=<span class="string">'binary_crossentropy'</span>, metrics=[<span class="string">'acc'</span>])</div><div class="line">history = model.fit(input_train, y_train,</div><div class="line">                    epochs=<span class="number">10</span>,</div><div class="line">                    batch_size=<span class="number">128</span>,</div><div class="line">                    validation_split=<span class="number">0.2</span>)</div></pre></td></tr></table></figure>
+<p>下面显示训练和验证的损失和准确度，见图6.11和6.12。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.24 Plotting results</span></div><div class="line"></div><div class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</div><div class="line"></div><div class="line">acc = history.history[<span class="string">'acc'</span>]</div><div class="line">val_acc = history.history[<span class="string">'val_acc'</span>]</div><div class="line">loss = history.history[<span class="string">'loss'</span>]</div><div class="line">val_loss = history.history[<span class="string">'val_loss'</span>]</div><div class="line"></div><div class="line">epochs = range(<span class="number">1</span>, len(acc) + <span class="number">1</span>)</div><div class="line"></div><div class="line">plt.plot(epochs, acc, <span class="string">'bo'</span>, label=<span class="string">'Training acc'</span>)</div><div class="line">plt.plot(epochs, val_acc, <span class="string">'b'</span>, label=<span class="string">'Validation acc'</span>)</div><div class="line">plt.title(<span class="string">'Training and validation accuracy'</span>)</div><div class="line">plt.legend()</div><div class="line"></div><div class="line">plt.figure()</div><div class="line"></div><div class="line">plt.plot(epochs, loss, <span class="string">'bo'</span>, label=<span class="string">'Training loss'</span>)</div><div class="line">plt.plot(epochs, val_loss, <span class="string">'b'</span>, label=<span class="string">'Validation loss'</span>)</div><div class="line">plt.title(<span class="string">'Training and validation loss'</span>)</div><div class="line">plt.legend()</div><div class="line"></div><div class="line">plt.show()</div></pre></td></tr></table></figure>
+<p><img src="http://img1.ph.126.net/SMY3SDmk9RLeEuVE61KkKw==/6608210018471068813.jpeg" alt="image"></p>
+<p>图6.11 在IMDB影评集上使用SimpleRNN训练和验证的损失曲线</p>
+<p><img src="http://img1.ph.126.net/API6q2MRfH4O0K5Q01d1uQ==/6597836126263535413.jpeg" alt="image"></p>
+<p>图6.12 在IMDB影评集上使用SimpleRNN训练和验证的准确度曲线</p>
+<p>在第三章中实现的方法得到的测试准确度为88%。不幸的是，上面简单的RNN的结果竟然没有baseline的好（只有85%的验证准确度）。一部分原因是，输入文本只考虑了前500个词，而不是整个文本序列。因此RNN只获取到少量的信息；另一个问题是，SimpleRNN并不擅长处理长序列，比如文本。</p>
+<p>这就要开始介绍高级循环神经网络了。</p>
+<h6 id="6-2-2-理解LSTM和GRU-layer"><a href="#6-2-2-理解LSTM和GRU-layer" class="headerlink" title="6.2.2 理解LSTM和GRU layer"></a>6.2.2 理解LSTM和GRU layer</h6><p>SimpleRNN不是Keras中唯一的循环神经网络，其它两个是LSTM和GRU。一般实践中会使用后面两个循环神经网络中的一种。SimpleRNN有一个主要的问题：虽然理论上它在 t 时刻会保持 t 之前所有时刻的输入信息，但是实际是由于依赖太长而学习不到。这是由于梯度爆炸问题导致（vanishing gradient problem），随着层数加深时模型训练失败，具体理论原因由Hochreiter，Schmidhuber和Bengio在1990年代提出，LSTM和GRU layer就是为解决该问题而设计的。</p>
+<p>LSTM（Long Short-Term Memory）算法是由Hochreiter和Schmidhuber在1997年开发的，它是SimpleRNN layer的一个变种，增加了跨时间步长的信息记忆。LSTM的本质是为后续时刻保持信息，防止处理过程中老信号的逐渐消失。</p>
+<p>为了更好的讲解细节，我们从图6.13的SimpleRNN单元开始。由于权重矩阵较多，这里的output表达式中用字母o作为矩阵W和U的索引（Wo和Uo）。</p>
+<p><img src="http://img0.ph.126.net/k7DLP4NhI9mno9tMc1hCVQ==/6608199023354942475.jpeg" alt="image"></p>
+<p>图6.13 LSTM layer的起点：SimpleRNN</p>
+<p>接着在上面的图中增加一条携带跨时间步长的信息流，用Ct表示，这里C表示carry。这个信息流的影响：它将整合输入连接和循环连接，影响输入到下一个时间步长的状态。相应的，carry信息流会调整下一个输出和下一个状态，见图6.14，就这么简单。</p>
+<p><img src="http://img0.ph.126.net/gFciF0DRD4PU4lQeqC2Ztw==/6597970266682121952.jpeg" alt="image"></p>
+<p>图6.14 从SimpleRNN到LSTM：增加一个carry track</p>
+<p>计算下一时刻的carry信息流稍有不同，它涉及到三个不同的变换，类似SimpleRNN单元的表达形式：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">y = activation(dot(state_t, U) + dot(input_t, W) + b)</div></pre></td></tr></table></figure>
+<p>但是这三个变换都有自己的权重矩阵，分别用字母i，f和k索引。如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.25 Pseudocode details of the LSTM architecture (1/2)</span></div><div class="line"></div><div class="line">output_t = activation(dot(state_t, Uo) + dot(input_t, Wo) + dot(C_t, Vo) + bo)</div><div class="line"></div><div class="line">i_t = activation(dot(state_t, Ui) + dot(input_t, Wi) + bi)</div><div class="line">f_t = activation(dot(state_t, Uf) + dot(input_t, Wf) + bf)</div><div class="line">k_t = activation(dot(state_t, Uk) + dot(input_t, Wk) + bk)</div></pre></td></tr></table></figure>
+<p>计算新的carry状态c_t是综合i_t，f_t 和k_t。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.26 Pseudocode details of the LSTM architecture (2/2)</span></div><div class="line"></div><div class="line">c_t+<span class="number">1</span> = i_t * k_t + c_t * f_t</div></pre></td></tr></table></figure>
+<p>将上面的过程添加到图6.15上，这就得到了LSTM，不复杂。</p>
+<p><img src="http://img0.ph.126.net/loNyIJwXYBxPPVMYJnOQEw==/6631702183912748601.jpeg" alt="image"></p>
+<p>图5.15  LSTM的剖析图</p>
+<p>LSTM的实际物理意义：c_t和f_t相乘可以认为是carry信息流中遗忘不相关的信息；同时，i_t和k_t提供当前信息，并更新carry track。时至今日，其实这些解释并不太重要，因为这些操作由参数化的权重决定，通过多轮训练学习权重。RNN单元的规格决定模型的假设空间，但这不能决定模型单元做什么，它取决于单元的权重。对于相同的模型单元，不同的权重意味着模型做的事情完全不同。所以组成RNN单元的操作可以解释为一系列的约束，而不是工程意义上的设计。</p>
+<h6 id="6-2-3-Keras中LSTM实践"><a href="#6-2-3-Keras中LSTM实践" class="headerlink" title="6.2.3 Keras中LSTM实践"></a>6.2.3 Keras中LSTM实践</h6><p>下面使用LSTM layer在IMDB数据集上训练模型，见图6.16和6.17。神经网络结构与前面的SimpleRNN类似，你只需要设置LSTM layer的输出维度，其它参数使用默认值。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#Listing 6.27 Using the LSTM layer in Keras</span></div><div class="line"></div><div class="line"><span class="keyword">from</span> keras.layers <span class="keyword">import</span> LSTM</div><div class="line"></div><div class="line">model = Sequential()</div><div class="line">model.add(Embedding(max_features, <span class="number">32</span>))</div><div class="line">model.add(LSTM(<span class="number">32</span>))</div><div class="line">model.add(Dense(<span class="number">1</span>, activation=<span class="string">'sigmoid'</span>))</div><div class="line"></div><div class="line">model.compile(optimizer=<span class="string">'rmsprop'</span>,</div><div class="line">              loss=<span class="string">'binary_crossentropy'</span>,</div><div class="line">              metrics=[<span class="string">'acc'</span>])</div><div class="line">history = model.fit(input_train, y_train,</div><div class="line">                    epochs=<span class="number">10</span>,</div><div class="line">                    batch_size=<span class="number">128</span>,</div><div class="line">                    validation_split=<span class="number">0.2</span>)</div></pre></td></tr></table></figure>
+<p><img src="http://img0.ph.126.net/vmzrIg1t9MI7HkmThi4FPg==/6632742321910026900.jpeg" alt="image"></p>
+<p>图6.16  在IMDB影评集上使用LSTM训练和验证的损失曲线</p>
+<p><img src="http://img0.ph.126.net/0S1KepjPiQuV7ErnBlgjOA==/1812135900163689537.jpeg" alt="image"></p>
+<p>图6.17 在IMDB影评集上使用LSTM训练和验证的准确度曲线</p>
+<p>从上面的曲线可以看出，LSTM模型达到了89%的验证准确度。不算太差，比SimpleRNN神经网络模型好点（主要是因为LSTM解决了梯度消失的问题），也比第三章的全联结方法要好（即使比第三章用的数据少）。</p>
+<p>但是为啥这次结果也没太好？其中的一个原因是，没有进行超参调优，比如词嵌入维度或者LSTM的输出维度。另外一个是，缺乏规则化。但是，说老实话，分析长影评并不能有效的解决情感分析问题。该问题的解决办法是在影评中计算词频，这也是第一个全联结方法所做的。</p>
+<h6 id="6-2-4-小结"><a href="#6-2-4-小结" class="headerlink" title="6.2.4 小结"></a>6.2.4 小结</h6><p>本小节所学到的知识点：</p>
+<ul>
+<li>什么是RNN？以及如何工作？</li>
+<li>LSTM是什么？它为什么在处理长序列上比原生RNN效果好？</li>
+<li>如何使用Keras的RNN layer处理序列数据</li>
+</ul>
+<p>未完待续。。。</p>
+<p>Enjoy!</p>
+<blockquote>
+<p>翻译本书系列的初衷是，觉得其中把深度学习讲解的通俗易懂。不光有实例，也包含作者多年实践对深度学习概念、原理的深度理解。最后说不重要的一点，François Chollet是Keras作者。<br>声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。</p>
+</blockquote>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/09/01/ubuntu-install-pylucene/" itemprop="url">
+                  Ubuntu上安装PyLucene
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-09-01T20:28:19+08:00" content="2018-09-01">
+              2018-09-01
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>机器环境：Ubuntu 16.04，Java 1.8</p>
+<ol>
+<li>安装ANT：</li>
+</ol>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt install ant</div></pre></td></tr></table></figure>
+<ol>
+<li><p>下载<a href="http://mirrors.hust.edu.cn/apache/lucene/pylucene/pylucene-4.10.1-1-src.tar.gz" target="_blank" rel="external">pylucene-4.10.1-1</a>或者<a href="http://mirrors.hust.edu.cn/apache/lucene/pylucene/pylucene-6.5.0-src.tar.gz" target="_blank" rel="external">pylucene-6.5.0</a>包，并解压。</p>
+<blockquote>
+<p>注意，不要去pylucene的github仓库<a href="https://github.com/svn2github/pylucene下载，其中缺少部分文件。" target="_blank" rel="external">https://github.com/svn2github/pylucene下载，其中缺少部分文件。</a></p>
+<p>当执行make命令时会报错：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">&gt; make</div><div class="line">&gt; mkdir -p lucene-java-7.4.0</div><div class="line">&gt; tar -C ~/apache/lucene.git -cf - lucene | tar -C lucene-java-7.4.0 -xvf -</div><div class="line">&gt; tar: ~/apache/lucene.git: Cannot open: No such file or directory</div><div class="line">&gt; tar: Error is not recoverable: exiting now</div><div class="line">&gt; tar: This does not look like a tar archive</div><div class="line">&gt; tar: Exiting with failure status due to previous errors</div><div class="line">&gt; Makefile:191: recipe <span class="keyword">for</span> target <span class="string">'lucene-java-7.4.0'</span> failed</div><div class="line">&gt; make: *** [lucene-java-7.4.0] Error 2</div><div class="line">&gt;</div></pre></td></tr></table></figure>
+</blockquote>
+</li>
+<li><p><a href="http://lucene.apache.org/pylucene/jcc/install.html" target="_blank" rel="external">安装JCC</a>：</p>
+<ul>
+<li><p>pylucene-4.10.1-1</p>
+<p>进入jcc，修改setup.py：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">JDK = &#123;</div><div class="line">    <span class="string">'darwin'</span>: JAVAHOME or JAVAFRAMEWORKS,</div><div class="line">    <span class="string">'ipod'</span>: <span class="string">'/usr/include/gcc'</span>,</div><div class="line">    <span class="string">'linux2'</span>: <span class="string">'/usr/lib/jvm/java-8-oracle'</span>,</div><div class="line"><span class="comment">#    'linux2': '/usr/lib/jvm/java-7-openjdk-amd64',</span></div><div class="line">    <span class="string">'sunos5'</span>: <span class="string">'/usr/jdk/instances/jdk1.6.0'</span>,</div><div class="line">    <span class="string">'win32'</span>: JAVAHOME,</div><div class="line">    <span class="string">'mingw32'</span>: JAVAHOME,</div><div class="line">    <span class="string">'freebsd7'</span>: <span class="string">'/usr/local/diablo-jdk1.6.0'</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>执行下面的命令：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">sudo python setup.py build</div><div class="line">sudo python setup.py install</div></pre></td></tr></table></figure>
+<p>验证JCC安装成功：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">python -m jcc</div></pre></td></tr></table></figure>
+</li>
+<li><p>pylucene-6.5.0</p>
+<p>进入jcc文件夹，</p>
+<p>执行下面的命令：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">sudo python setup.py build</div><div class="line">sudo python setup.py install</div></pre></td></tr></table></figure>
+<p>验证JCC安装成功：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">python -m jcc</div></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li><p><a href="http://lucene.apache.org/pylucene/install.html" target="_blank" rel="external">安装pylucene</a>：</p>
+<p>根据系统环境修改Makefile文件：</p>
+<p><a href="http://mirrors.hust.edu.cn/apache/lucene/pylucene/pylucene-4.10.1-1-src.tar.gz" target="_blank" rel="external">pylucene-4.10.1-1</a></p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">PREFIX_PYTHON=/usr</div><div class="line"><span class="comment">#ANT=JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64 /usr/bin/ant</span></div><div class="line">ANT=JAVA_HOME=/usr/lib/jvm/java-8-oracle /usr/bin/ant</div><div class="line">PYTHON=$(PREFIX_PYTHON)/bin/python</div><div class="line">JCC=$(PYTHON) -m jcc --shared</div><div class="line">NUM_FILES=8</div></pre></td></tr></table></figure>
+<p><a href="http://mirrors.hust.edu.cn/apache/lucene/pylucene/pylucene-6.5.0-src.tar.gz" target="_blank" rel="external">pylucene-6.5.0</a></p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">PREFIX_PYTHON=/usr</div><div class="line">ANT=JAVA_HOME=/usr/lib/jvm/java-8-oracle /usr/bin/ant</div><div class="line">PYTHON=$(PREFIX_PYTHON)/bin/python</div><div class="line">JCC=$(PYTHON) -m jcc --shared</div><div class="line">NUM_FILES=8</div></pre></td></tr></table></figure>
+<p>执行下面的命令：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">make</div><div class="line">sudo make install</div></pre></td></tr></table></figure>
+<p>验证lucene安装成功：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">python -c <span class="string">"import lucene"</span></div></pre></td></tr></table></figure>
+</li>
+<li><p>遇到的问题</p>
+<p>执行make命令时报错：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">...</div><div class="line">BUILD SUCCESSFUL</div><div class="line">Total time: 12 seconds</div><div class="line">ICU not installed</div><div class="line">/opt/apache/pylucene/_install/bin/python -m jcc --shared --jar lucene-java-6.5.0/lucene/build/core/lucene-core-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/analysis/common/lucene-analyzers-common-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/memory/lucene-memory-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/highlighter/lucene-highlighter-6.5.0.jar --jar build/jar/extensions.jar --jar lucene-java-6.5.0/lucene/build/queries/lucene-queries-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/queryparser/lucene-queryparser-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/sandbox/lucene-sandbox-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/analysis/stempel/lucene-analyzers-stempel-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/grouping/lucene-grouping-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/join/lucene-join-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/facet/lucene-facet-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/suggest/lucene-suggest-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/expressions/lucene-expressions-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/analysis/kuromoji/lucene-analyzers-kuromoji-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/misc/lucene-misc-6.5.0.jar  --use_full_names --include lucene-java-6.5.0/lucene/expressions/lib/antlr4-runtime-4.5.1-1.jar --include lucene-java-6.5.0/lucene/expressions/lib/asm-5.1.jar --include lucene-java-6.5.0/lucene/expressions/lib/asm-commons-5.1.jar --package java.lang java.lang.System java.lang.Runtime --package java.util java.util.Arrays java.util.Collections java.util.HashMap java.util.HashSet java.util.TreeSet java.lang.IllegalStateException java.lang.IndexOutOfBoundsException java.util.NoSuchElementException java.text.SimpleDateFormat java.text.DecimalFormat java.text.Collator --package java.util.concurrent java.util.concurrent.Executors --package java.util.regex --package java.io java.io.StringReader --package java.nio.file java.nio.file.Path java.nio.file.Files java.nio.file.Paths --exclude org.apache.lucene.sandbox.queries.regex.JakartaRegexpCapabilities --exclude org.apache.regexp.RegexpTunnel --exclude org.apache.lucene.store.WindowsDirectory --exclude org.apache.lucene.store.NativePosixUtil --python lucene --mapping org.apache.lucene.document.Document <span class="string">'get:(Ljava/lang/String;)Ljava/lang/String;'</span> --mapping java.util.Properties <span class="string">'getProperty:(Ljava/lang/String;)Ljava/lang/String;'</span> --sequence java.util.AbstractList <span class="string">'size:()I'</span> <span class="string">'get:(I)Ljava/lang/Object;'</span> org.apache.lucene.index.IndexWriter:getReader org.apache.lucene.analysis.Tokenizer:input --version 6.5.0 --module python/collections.py --module python/ICUNormalizer2Filter.py --module python/ICUFoldingFilter.py --module python/ICUTransformFilter.py  --files 8 --build </div><div class="line">make: /opt/apache/pylucene/_install/bin/python: Command not found</div><div class="line">Makefile:340: recipe <span class="keyword">for</span> target <span class="string">'compile'</span> failed</div><div class="line">make: *** [compile] Error 127</div></pre></td></tr></table></figure>
+<p>原因是：Makefile文件中的“PREFIX_PYTHON”配置错误，</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">PREFIX_PYTHON=/opt/apache/pylucene/_install</div></pre></td></tr></table></figure>
+<p>解决办法：按上面的Makefile修改即可。</p>
+</li>
+</ol>
+<p>Enjoy!</p>
+<blockquote>
+<p>翻译本书系列的初衷是，觉得其中把深度学习讲解的通俗易懂。不光有实例，也包含作者多年实践对深度学习概念、原理的深度理解。最后说不重要的一点，François Chollet是Keras作者。<br>声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。</p>
+</blockquote>
+<hr>
+<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2018/08/13/deep-learning-with-python-chapter-6-6.1/" itemprop="url">
                   《Deep Learning with Python》第六章 6.1 深度学习之文本处理
                 </a>
@@ -1642,345 +1974,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/12/28/deep-learning-with-python-chapter-1-1.1/" itemprop="url">
-                  《Deep Learning with Python》第一章 1.1 人工智能、机器学习和深度学习
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-12-28T16:21:11+08:00" content="2017-12-28">
-              2017-12-28
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>第一章 什么是深度学习？</p>
-<p>本章涉及的知识点：</p>
-<ul>
-<li>基本概念的高层次（High-level）定义</li>
-<li>机器学习的发展历程</li>
-<li>深度学习兴起背后的关键因素以及未来的展望</li>
-</ul>
-<p>过去几十年，人工智能（artificial intelligence，AI）一直是媒体强烈炒作的主题。机器学习、深度学习和人工智能也经常出现在无数非技术刊物上。人们构想将来智能聊天机器人、自动驾驶汽车和虚拟助理的工作生活的画面——在昏暗的灯光下，人类的工作很少，而大部分经济活动都有机器人或者AI智能实体。对于当前或者未来机器学习的从业者来讲，需要从吹捧过度的新闻中意识到改变世界的新产品。你们的将来将承担重要的任务：读完本书后，你将会成为开发AI智能实体的开发者。接着解决这几个问题：目前深度学习能实现什么？深度学习的意义如何？人类下一步该如何做？你相信关于人工智能的宣传吗？</p>
-<p>本章介绍人工智能、机器学习和深度学习相关知识。</p>
-<h5 id="1-1-人工智能、机器学习和深度学习"><a href="#1-1-人工智能、机器学习和深度学习" class="headerlink" title="1.1 人工智能、机器学习和深度学习"></a>1.1 人工智能、机器学习和深度学习</h5><p>首先，当人们讨论AI时要清楚谈论的是什么？什么是人工智能、机器学习和深度学习（见图1.1）？它们之间又有什么关系呢？</p>
-<p><img src="http://img2.ph.126.net/_vMUT5Tf4E2AW8xp0PwRSQ==/3083558369884862744.jpg" alt="image"></p>
-<p>图1.1 人工智能、机器学习和深度学习</p>
-<h6 id="1-1-1-人工智能"><a href="#1-1-1-人工智能" class="headerlink" title="1.1.1 人工智能"></a>1.1.1 人工智能</h6><p>人工智能诞生于1950年代，当时少数计算机科学的先行者开始探讨计算机是否能够像人类一样“思考”——这个问题到现在还在探索。其简明的定义如下：像人类一样自动化完成智力任务。比如，AI通常认为包括机器学习和深度学习的领域，但是也包含许多非学习的方法。例如，早期的棋类程序只涉及程序设定的硬编码规则，没用到机器学习。在相当长一段时期内，许多专家相信：程序处理足够大的基于知识的显式规则集合能达到人类水平的智能。这种方法称之为符号型AI（symbolic AI），它是1950年代到1980年代主流的AI，并在1980年代专家系统方面快速达到巅峰。</p>
-<p>虽然符号型AI能解决定义明确的、逻辑性的问题，比如棋类问题，但是却不能解决更复杂、模糊类的问题，比如，图像分类、语音识别和语言翻译。随之而来的是机器学习这种新方法取代了符号型AI。</p>
-<h6 id="1-1-2-机器学习"><a href="#1-1-2-机器学习" class="headerlink" title="1.1.2 机器学习"></a>1.1.2 机器学习</h6><p>在英国维多利亚时代，埃达·洛夫莱斯伯爵夫人（Ada Lovelace）是查尔斯·巴贝奇（Charles Babbage）的好友和合作者。巴贝奇是分析机（<em>Analytical Engine</em>）的发明者。该分析机是公认的第一个机械式通用电脑。虽然预言性的远见超越了当时的时代，但是，在1830年代到1840年代设计的分析机并不是真正意义上的通用电脑。因为通用计算机的概念那时尚未出现，它仅仅是一种自动的数学计算分析，因此命名为分析机。在1843年，埃达注记分析机，“分析机谈不上能创造什么东西。但是能做我们命令它做的任何工作……它的职责是帮助我们去实现已知的事情。”</p>
-<p>在1950年，AI先行者阿兰·图灵（Alan Turing）在他的著作《计算机器和智能》中引用这个注记作为“洛夫莱斯伯爵夫人的异议”，并提出图灵测试（<em>Turing test</em>）的概念。图灵思考通用计算机是否有学习和创造的能力，并得出下面的结论：</p>
-<p>机器学习起因于以下问题：对于计算机来说，除“我们命令它做的任务”之外，它能自我学习完成特定任务吗？计算机能做的工作会让我们感到意外吗？除了程序员人为制定规则的数据处理外，计算机从数据中能自我学习出规则吗？</p>
-<p>上述问题打开了新编程范式的大门。在经典编程中，即符号型AI范式，人们输入规则（即为程序）和数据，根据这些规则处理数据，输出答案（见图1.2）；在机器学习中，人们输入数据和该数据对应的答案，输出的是程序规则。这些学习来的规则能应用到新的数据上，并产生原创性的答案。</p>
-<p><img src="http://img2.ph.126.net/zS-WEc-ALKQMRPfBMCdxDw==/1277896394286009152.jpg" alt="image"></p>
-<p>图1.2 机器学习：新的编程范式</p>
-<p>机器学习系统是训练得到的，而不是用显式的编制。给机器学习一个任务相关的许多例子，它能发现这些例子的统计性的结构，并形成规则自动完成任务。例如，如果想给假期照片自动化打标签，你需要提出一个机器学习系统，输入许多打好标签的照片，该系统学习统计性规则并为指定的照片打标签。</p>
-<p>虽然机器学习在1990年代才开始繁荣，但是由于硬件性能和数据大小的提升，机器学习很快变得非常流行，并成为AI最成功的子领域。机器学习与数学统计紧密相关，但是它在许多方面又有别于统计学。不像统计学，机器学习试图处理海量、复杂的数据集（比如，数百万张图片，包含数以万计的像素），然而经典统计分析（比如贝叶斯分析）将对此无能为力。因此，机器学习，特别是深度学习，展现相对较少的数学理论，更多的是工程化导向。</p>
-<h6 id="1-1-3-数据的特征学习"><a href="#1-1-3-数据的特征学习" class="headerlink" title="1.1.3 数据的特征学习"></a>1.1.3 数据的特征学习</h6><p>为了定义深度学习，以及理解深度学习和其它机器学习方法的不同，首先，需要知道机器学习算法在做什么。这里仅仅讲述机器学习在给定期望的数据例子下发现规则，执行数据处理的任务。所以为了实现机器学习，需要知道下面三件事：</p>
-<ul>
-<li>输入数据点（<em>Input data points</em>）：例如，如果是语音识别的任务，这些数据点应该是语音文件。如果是图标标注的任务，数据点应该是图片；</li>
-<li>期望的输出样例（<em>Examples of the expected output</em>）：语音识别的任务中，期望的输出样例是语音的手写文本；图像标注的任务中，期望的输出样例是“狗”，“猫”等等的标签；</li>
-<li>算法的评估标准：算法的评估标准是为了判断当前算法的输出值与期望的输出值之间的距离。评估标准可以反馈调节算法的工作，这个调节的步骤经常成为学习（<em>learning</em>）。</li>
-</ul>
-<p>机器学习模型将输入数据集转化成有意义的输出，这个过程是从已有的输入和输出对的例子中学习到的。因此，机器学习和深度学习的中心问题是可读性的转化数据（<em>transform data</em>）：换句话说，学习输入数据的有用的表征（<em>representations</em>）。数据表征使得数据更接近期望的输出。</p>
-<p>那什么是数据的表征？其核心是数据的表现形式——表示（<em>represent</em>）或者编码（<em>encode</em>）数据。例如，彩色图片可以编码为RGB格式（红－绿－蓝）或者HSV格式（色相，饱和度，色调）。机器学习模型就是为了找到输入数据的合适表征——数据的转换是为了任务的更容易处理，比如，分类任务。</p>
-<p>下面举一个例子。假设有x轴，y轴和一些数据点坐标（x，y），见图1.3：</p>
-<p><img src="http://img0.ph.126.net/04Sz9oujEoWniyq8hB1c5Q==/6632724729723197958.jpg" alt="image"></p>
-<p>图1.3 样本数据点</p>
-<p>正如你所见，有一些白色的数据点，一些黑色的数据点。本例假设想实现一个算法：输入数据点的坐标（x，y），输出该数据点是黑色还是白色的。在本例中，</p>
-<ul>
-<li>输入是数据点的坐标；</li>
-<li>期望输出是数据点的颜色；</li>
-<li>算法评估标准：判断正确的数据点的百分比</li>
-</ul>
-<p>此处的首要任务是数据集的新表征，该数据表征需要能清晰分离白色的点和黑色的点。本例使用的数据转换是坐标变换，见图1.4：</p>
-<p><img src="http://img2.ph.126.net/ozi-X0Uo6GzqaInar-PlBQ==/6632474041074666089.jpg" alt="image"></p>
-<p>图1.4 坐标变换</p>
-<p>在新的坐标系统中，数据点的坐标可以看成是数据集的一个新表征。并且效果非常棒！使用了数据集的新表征，黑/白分类问题就可以用很简单的规则解决了：“黑色数据点的x &gt; 0，或者”白色数据点的x &lt; 0“。”这个新表征方法基本解决了分类问题。</p>
-<p>在本例中，人工定义了坐标变换。但是，如果尝试系统性地搜索所有不同的可能的坐标变换，并将正确分类数据点的百分比作为反馈，那就是在做机器学习。机器学习中的“学习”，是描述自动搜索更优的数据表征的过程。</p>
-<p>所有机器学习算法都包含自动化寻找这么一个转换：该转换能根据给定的任务将数据集转化成有用的特征表示。这个操作可能是坐标变换，如前所见，或者线性投影（线性投影可能损失有用的信息），翻译，非线性操作（比如，当x &gt; 0时，选中所有数据点），等等。机器学习算法通常不能创造性地搜索到这些转换；它们仅仅通过预定义的操作集合进行搜索，此过程也称为超参数空间（<em>hypothesis space</em>）。</p>
-<p>那究什么是竟机器学习呢？从技术上来讲，在预定义的参数空间内，自动搜索输入数据集有效的表征，并以反馈信号做引导。这个简单的理念可以解决广大的人工职能任务，从语音识别到自动驾驶。</p>
-<p>现在理解完机器学习的学习，下面开始探索是什么让深度学习比较特别。</p>
-<h6 id="1-1-4-何为深度学习的“深度”"><a href="#1-1-4-何为深度学习的“深度”" class="headerlink" title="1.1.4 何为深度学习的“深度”"></a>1.1.4 何为深度学习的“深度”</h6><p>深度学习是机器学习的一个特定子领域，其数据集的学习表征强调学习一系列连续的表征层，这些逐层的表征层不断地增加了有效的数据表征。深度学习的“深度”并不涉及更深度的学习方法；而是表示一系列连续的特征层的理念。数据模型的层数称为模型的深度（<em>depth</em>）。深度学习的其它叫法有，分层表征学习和多级表征学习。当前的深度学习经常涉及十层甚至上百层的连续特征表示层，它们都是从训练数据集自动学习的。其它机器学习的方法一般倾向于从训练数据学习一层或者两层的表征，因此，这种机器学习也称为浅层学习（<em>shallow learning</em>）。</p>
-<p>在深度学习中，这些表征层通常是通过多层神经网络（<em>neural network</em>）模型学习得到的。神经网络来源于生物科学，深度学习的核心概念启发自对人类大脑的理解，但是深度学习模型并不是大脑的模型。没有证据表明大脑实现的学习机制被用在了当前的深度学习模型。你可能偶然发现某些顶级科学文章宣称深度学习像大脑一样工作或者模拟大脑，但是实际情况不是这样的。这可能对该领域的新人在理解深度学习上带来疑惑和困扰。你不需要搞得像大脑一样神秘，只管忘掉看到的关于深度学习和生物相关的假设。深度学习是一个从训练数据学习表征的数学框架。</p>
-<p>深度学习算法到底如何进行表征学习呢？下面看一个几层深度网络的例子，其转换数字图片来识别图片中的数字，见图1.5：</p>
-<p><img src="http://img1.ph.126.net/zcurzP-FbaeciNhnqPCh-A==/6632257437283995751.jpg" alt="image"></p>
-<p>图1.5 图片识别数字的分类神经网络</p>
-<p>如图1.6所示，神经网络将数字图片转换为学习特征，对原始图片进行图像增强，从而识别出最终的结果。你可以认为神经网络经过多层连续的过滤器进行信息提取，最后得到结果。</p>
-<p><img src="http://img0.ph.126.net/GBppKkcw7ElSMkcN1nBC8A==/2590132735711099905.jpg" alt="image"></p>
-<p>图1.6 数字分类模型的深度学习表征</p>
-<p>所以，什么是深度学习呢？从技术性上讲，深度学习是多级数据集表征学习。就这么简单的机制，经过足够多层的扩展，能够魔术般的解决问题。</p>
-<h6 id="1-1-5-三张图理解深度学习工作原理"><a href="#1-1-5-三张图理解深度学习工作原理" class="headerlink" title="1.1.5 三张图理解深度学习工作原理"></a>1.1.5 三张图理解深度学习工作原理</h6><p>此时，你已经知道机器学习是通过观察样本数据集的输入和目标，进而学习将输入（比如，图片）和目标（比如，“cat”标签）映射。你也知道深度神经网络是从样本数据集中学习数据转换（也即学习表征），通过多层数据转换层实现输入和目标的映射。下面看下这个学习过程具体是如何工作的？</p>
-<p>layer处理输入数据的规范要求存储在layer的权重（<em>weights</em>）中，这些权重其实是一堆数值。从技术术语上讲，layer通过权重参数化实现了数据转换（权重有时也称layer的参数），见图1.7。本文中，学习（learning）意味着寻找神经网络中所有layer的权重值的集合，比如正确地将样本数据集的输入和相关的目标映射。这里需要注意的是，一个神经网络可能包含成千上万个参数。修改某个参数可能会影响其它所有的参数，那找到所有参数的正确值看似是个相当艰巨的任务。</p>
-<p><img src="http://img1.ph.126.net/qscFw2XAikKq0BnRFpyIpQ==/6632556504446747512.jpg" alt="image"></p>
-<p>图1.7  权重参数化的神经网络</p>
-<p>为了控制神经网络的输出，需要度量模型输出和期望值之间的距离。这部分是神经网络模型的损失函数（<em>loss function</em>）的工作，有时也称观察函数（<em>objective function</em>）。损失函数输入神经网络模型的预测值和实际目标（期望输出），计算两者之间的距离值，评估神经网络在训练模型上的效果，见图1.8。</p>
-<p><img src="http://img0.ph.126.net/WKE1LCZ2BbXaYf3mNGaejA==/6632287124097945627.jpg" alt="image"></p>
-<p>图1.8 度量神经网络模型输出的损失函数</p>
-<p>深度学习的主要诀窍是，使用损失函数值作为反馈信号微调权重值，降低训练数据在某个方向上的损失值，见图1.9。前面的调节过程是神经网络的优化器（<em>optimizer</em>）的工作。优化器是由后向传播算法（<em>Backpropagation</em>）实现的，其是深度学习的核心算法，下一章惠详细讲解向传播算法是如何工作的。</p>
-<p><img src="http://img2.ph.126.net/Vt1sOr95zZ_p5MSEzRD7yQ==/6632646664397631389.jpg" alt="image"></p>
-<p>图1.9 损失函数值调节权重值</p>
-<p>一般神经网络权重值先随机初始化，这时神经网络完成的看起来仅仅是些随机数据转换，它输出的结果自然地远离理想值，损失函数值也相应很高。但是随着神经网络数据处理的推进，权重值也在正确的方向上逐步微调，损失值也在降低。前面描述的过程称为迭代训练（<em>training loop</em>）。重复迭代足够的训练次数后得到的权重值会最小化损失函数值。具有最小化损失值的神经网络模型输出与期望的目标值几乎相同。</p>
-<h6 id="1-16-深度学习的应用场景"><a href="#1-16-深度学习的应用场景" class="headerlink" title="1.16 深度学习的应用场景"></a>1.16 深度学习的应用场景</h6><p>虽然深度学习是机器学习中早期的子领域，但是其也就在2010年代才稍微兴盛起来。过去几十年，深度学习没什么进展，只在感知学习问题上有点成绩。</p>
-<p>深度学习当前已经在机器学习难以出成绩的领域有了以下突破：</p>
-<ul>
-<li>图像分类</li>
-<li>语音识别</li>
-<li>手写字识别</li>
-<li>机器翻译</li>
-<li>文本语音转换</li>
-<li>智能数字设备，比如 Google Now和Amazon Alexa</li>
-<li>自动驾驶</li>
-<li>广告投放，比如Google，百度和微软的Bing</li>
-<li>网站搜索</li>
-<li>自然语言的问答</li>
-<li>AlphaGo</li>
-</ul>
-<p>人们仍在探索深度学习更广泛的领域，如果成功的话，深度学习可能在科学、软件开发等方面帮助人类开辟新世纪。</p>
-<p>未完待续。。。</p>
-<p>Enjoy!</p>
-<blockquote>
-<p>翻译本书系列的初衷是，觉得其中把深度学习讲解的通俗易懂。不光有实例，也包含作者多年实践对深度学习概念、原理的深度理解。最后说不重要的一点，François Chollet是Keras作者。<br>声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。</p>
-</blockquote>
-<hr>
-<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
-<p>若发现以上文章有任何不妥，请联系我。</p>
-<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/12/28/face-emotion-recognition/" itemprop="url">
-                  面部表情（表情包）识别
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-12-28T16:07:41+08:00" content="2017-12-28">
-              2017-12-28
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h5 id="动机"><a href="#动机" class="headerlink" title="动机"></a>动机</h5><p>人类面部表情丰富，但可以总结归纳为7类基本表情： happy, sad, surprise, fear, anger, disgust, and neutral。面部表情是通过面部肌肉活动表达出来，有些比较微妙且复杂，包含了大量内心活动信息。通过面部表情识别，我们能简单而低成本地度量出观众/用户对内容和服务的态度。例如，零售商使用这些度量评估客户的满意度。健康医疗提供商能在治疗的过程根据病人的表情状态来提高服务。娱乐厂商能够监控观众的喜欢来持续的生产优质的内容。</p>
-<p>训练过的人类很容易读懂其他人的情绪。事实上，只有14个月大的婴儿就可以区别出happy和sad的区别。但是计算机能够比人类在识别情绪上做的更好吗？为了找到答案，我们设计一个深度神经网络使得机器可以读懂人类情绪。换句话说，给机器以“眼”识别面部表情。</p>
-<h5 id="语料数据"><a href="#语料数据" class="headerlink" title="语料数据"></a>语料数据</h5><p>训练模型的数据集使用的是Kaggle面部识别挑战赛的数据集（2013年）。它由35887张面部图片组成，48x48像素灰度图片，标注为7类基本表情： happy, sad, surprise, fear, anger, disgust, and neutral。<br><img src="http://img1.ph.126.net/rMw0LOC29HbsfzcAXU7zLw==/6632541111283960069.png" alt="image"><br>Figure 1. An overview of FER2013</p>
-<p>当作者分析语料数据集时，发现“disgust”分类相对于其它分类不均衡（只有113张样本）。作者将两类相似的情感（disgust和anger）合并起来。为了防止数据倾斜，作者构建一个数据生成器 <a href="https://github.com/JostineHo/mememoji/blob/master/src/fer2013datagen.py" target="_blank" rel="external">fer2013datagen.py</a>，该生成器很容易分割训练集和保留数据集。本例使用28709张面部图片作为训练集，余下的图片作为测试集和验证集（每个数据集3589张）。这样我们获得了6类均衡的数据集，见图2，包含happy, sad, surprise, fear, anger, and neutral。</p>
-<p><img src="http://img1.ph.126.net/-94jcsPjstG_I4Lh5Q6KUw==/1286622118564049914.png" alt="image"><br>Figure 2. Training and validation data distribution.</p>
-<h5 id="算法模型"><a href="#算法模型" class="headerlink" title="算法模型"></a>算法模型</h5><p><img src="http://img1.ph.126.net/jQoTGwwtyMz4CVnTExalYg==/6632600484911863570.png" alt="image"><br>Figure 3. Mr. Bean, the model for the model.</p>
-<p>深度学习在计算机视觉上是非常流行的技术。本文选择卷积神经网络（CNN）层作为构建基础创建模型架构。CNN是有名的模仿人脑工作的模型。本文使用憨豆先生的图片作为示例来解释如何将图像赋值给卷积神经网络模型。</p>
-<p>典型的卷积神经网络包涵输入层，卷积层，稠密层（比如，全联接层）和输出层（见图4）。这些层按序组合，在 <a href="https://keras.io/models/sequential/" target="_blank" rel="external">Keras</a>中，使用Sequential()函数创建模型，再把其它层加入进来。<br><img src="http://img0.ph.126.net/yxSj5yiIKuZ-0KCmNk-l4w==/6632346497725842891.png" alt="image"><br>Figure 4. Facial Emotion Recognition CNN Architecture (modification from Eindhoven University of Technology-PARsE).</p>
-<h6 id="输入层"><a href="#输入层" class="headerlink" title="输入层"></a>输入层</h6><ul>
-<li>输入层需要预处理，输入固定维度的数据。所以图片需先预处理再传入输入层。作者使用 <a href="http://docs.opencv.org/3.1.0/d7/d8b/tutorial_py_face_detection.html#gsc.tab=0" target="_blank" rel="external">OpenCV</a>（计算机视觉库）做图像面部识别。OpenCV的haar-cascade_frontalface_default.xml文件包含预训练的过滤器，使用Adaboost算法能快速找到面部并裁剪。</li>
-<li>使用cv2.cvtColor函数将裁剪面部图片转化为灰度图，并使用cv2.resize改变图片大小为48x48像素。处理完的面部图片，相比于原始的（3，48，48）三色RGB格式“瘦身”不少。同时也确保传入输入层的图片是（1，48，48）的numpy数组。</li>
-</ul>
-<h6 id="卷积层"><a href="#卷积层" class="headerlink" title="卷积层"></a>卷积层</h6><ul>
-<li>numpy数组传入Convolution2D层，指定过滤层的数量作为超参数。过滤层（比如，核函数）是随机生成权重。每个过滤层，（3，3）的感受野，采用权值共享与原图像卷积生成feature map。</li>
-<li><p>卷积层生成的feature map代表像素值的强度。例如，图5，通过过滤层1和原始图像卷积生成一个feature map，其它过滤层紧接着进行卷积操作生成一系列feature map。<br><img src="http://img2.ph.126.net/5dussQ8UCCWvk6A8_nOvoQ==/6632702739490648439.png" alt="image"><br>Figure 5. Convolution and 1st max-pooling used in the network</p>
-</li>
-<li><p>池化（Pooling）是一种降低维度的技术，常用于一个或者多个卷积层之后。池化操作是构建CNN的重要步骤，因为增加的多个卷积层会极大的影响计算时间。本文使用流行的池化方法MaxPooling2D，其使用（2，2）窗口作用于feature map求的最大像素值。池化后图像降低4个维度。</p>
-</li>
-</ul>
-<h6 id="稠密层"><a href="#稠密层" class="headerlink" title="稠密层"></a>稠密层</h6><ul>
-<li><p>稠密层（比如，全联接层）是模仿人脑传输神经元的方式。它输入大量输入特征和变换特征，通过联接层与训练权重相连。<br><img src="http://img2.ph.126.net/G3e8Ye0wiS4g595FhAVVrQ==/2601954684732937664.png" alt="image"><br>Figure 6. Neural network during training: Forward propagation (left) to Backward propagation (right).</p>
-</li>
-<li><p>模型训练时权重前向传播，而误差是反向传播。反向传播起始与预测值和实际值的差值，计算所需的权重调整大小反向传回到每层。采用超参数调优手段（比如，学习率和网络密度）控制训练速度和架构的复杂度。随着灌入更多的训练数据，神经网络能够使得误差最小化。</p>
-</li>
-<li>一般，神经网络层/节点数越多，越能捕捉到足够的信号。但是，也会造成算法模型训练过拟合。应用dropout可以防止训练模型过拟合。Dropout随机选择部分节点（通常，占总节点数的百分比不超过50%），并将其权重置为0。该方法能有效的控制模型对噪声对敏感度，同时也保留架构的复杂度。</li>
-</ul>
-<h6 id="输出层"><a href="#输出层" class="headerlink" title="输出层"></a>输出层</h6><ul>
-<li>本文的输出层使用softmax激励函数代替sigmoid函数，将输出每类表情的概率。</li>
-<li>因此，本文的算法模型能显示出人脸表情组成的详细组成概率。随后会发现没必要将人类表情表示为单个表情。本文采用的是混合表情来精确表示特定情感</li>
-</ul>
-<blockquote>
-<p>注意，没有特定的公式能建立一个神经网络保证对各种场景都有效。不同的问题需要不同的模型架构，产生期待的验证准确度。这也是为什么说神经网络是个“黒盒算法”。但是也不要太气馁，模型训练的时间会让你找到最佳模型，获得最大价值。</p>
-</blockquote>
-<h6 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h6><p>刚开始创建了一个简单的CNN深度学习模型，包括一个输入层，三个卷积层和一个输出层。事实证明，简单的算法模型效果比较差。准确度0.1500意味着仅仅是随机猜测的结果（1/6）。简单的网络结构导致不能有效的判别面部表情，那只能说明要“深挖”。。。<br><a href="http://img2.ph.126.net/uiC8pbN-PK9vk3i3i_E_dg==/6632460846935132816.png" target="_blank" rel="external">image</a><br>下面稍微修改下三部分的组合，增加模型的复杂度：</p>
-<ul>
-<li>卷积层的数量和配置</li>
-<li>稠密层的数量和配置</li>
-<li>稠密层的dropout占比</li>
-</ul>
-<p>使用AWS的GPU计算（g2.2xlarge）训练和评估组合的算法模型。这次极大的减少了训练时间和模型调优的效率。最后的网络模型是九层，每三层卷积层接着一个max-pooling层，见图7。<br><img src="http://img1.ph.126.net/byZdgskm07usZbByAzg6rQ==/6632680749258091039.png" alt="image"><br>Figure 7. Final model CNN architecture.</p>
-<h5 id="模型验证"><a href="#模型验证" class="headerlink" title="模型验证"></a>模型验证</h5><p><img src="http://img0.ph.126.net/MyTvn8QWikiz0lzd4WKVyw==/6632437757190955644.png" alt="image"></p>
-<h6 id="结果"><a href="#结果" class="headerlink" title="结果"></a>结果</h6><p>最后的CNN模型交叉验证准确度是58%，其具有积极意义。因为人类面部表情经常由多个基本表情组合，仅仅用单一表情是很难描述。本例中，当训练模型预测不准确时，正确的标签一般是第二相似的表情，见图8（浅蓝色标签）。<br><img src="http://img0.ph.126.net/D-QOV5WTGJ_hnBtTAi6mVQ==/6632316810911891151.png" alt="image"><br>Figure 8. Prediction of 24 example faces randomly selected from test set.</p>
-<h6 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h6><p><img src="http://img1.ph.126.net/_I-J4aQiQ910-JCPhYx8-Q==/3082713944954739157.png" alt="image"><br>Figure 9. Confusion matrix for true and prediction emotion counts.</p>
-<p>仔细看下每个表情的预测结果。图9是测试集的模型预测的混淆矩阵。矩阵给出表情预测的数量和多分类模型的效果展示：</p>
-<ul>
-<li>该模型很好的鉴别出正表情（happy和surprised），预测准确度高。大约7000张训练集中，happy表情的准确度达到76.7%。surprised表情预测准确度为69.3%。</li>
-<li>平均意义上讲，本例的神经网络模型对负表情的预测效果较差。sad表情只有39.7%的准确度，并且该网络模型频繁的误判别angry、fear和neutral表情。另外，当预测sad表情和neutral表情时经常搞混，可能是因为这两个表情很少出现。</li>
-<li>误分类预测小于3的频率<br><img src="http://img2.ph.126.net/_w5tDCvH66Aqjk3XbQS4ow==/6632441055725838950.png" alt="image"><br>Figure 10. Correct predictions on 2nd and 3rd highest probable emotion.</li>
-</ul>
-<h6 id="计算机视觉"><a href="#计算机视觉" class="headerlink" title="计算机视觉"></a>计算机视觉</h6><p>随着池化层数量的增加，下游神经网络管道的feature map越来越抽象。图11和图12可视化第二次和第三次max-pooling池化层后的feature map。</p>
-<p>分析和可视化卷积神经网络内层输出的代码见，<a href="https://github.com/JostineHo/mememoji/blob/master/data_visualization.ipynb" target="_blank" rel="external">https://github.com/JostineHo/mememoji/blob/master/data_visualization.ipynb</a>。<br><img src="http://img2.ph.126.net/YdQguRO5Fk-FllUX_Nzi1Q==/1282962943866801548.png" alt="image"><br>Figure 11. 第二个max-pooling池化层后的CNN (64-filter) feature maps。<br><img src="http://img1.ph.126.net/jVkrxuRkGihe8C6ywfJYLA==/6632453150353738432.png" alt="iamge"><br>Figure 12. 第三个max-pooling池化层后的CNN (128-filter) feature maps。</p>
-<h5 id="关于作者"><a href="#关于作者" class="headerlink" title="关于作者"></a>关于作者</h5><p><strong>Jostine Ho</strong>是数据科学家和深度学习研究者。她感兴趣于计算机视觉和自动化解决现实世界中具体问题。她毕业于德克萨斯大学奥斯汀分校，取得石油系统工程专业硕士学位。</p>
-<h5 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h5><ol>
-<li><a href="https://www.kaggle.com/c/challenges-in-representation-learning-facial-expression-recognition-challenge/data" target="_blank" rel="external"><em>“Dataset: Facial Emotion Recognition (FER2013)”</em></a> ICML 2013 Workshop in Challenges in Representation Learning, June 21 in Atlanta, GA.</li>
-<li><a href="http://cs231n.github.io/convolutional-networks/" target="_blank" rel="external"><em>“Andrej Karpathy’s Convolutional Neural Networks (CNNs / ConvNets)”</em></a> Convolutional Neural Networks for Visual Recognition (CS231n), Stanford University.</li>
-<li>Srivastava et al., 2014. <em>“Dropout: A Simple Way to Prevent Neural Networks from Overfitting”</em>, Journal of Machine Learning Research, 15:1929-1958.</li>
-<li>Duncan, D., Shine, G., English, C., 2016. <a href="http://cs231n.stanford.edu/reports2016/022_Report.pdf" target="_blank" rel="external"><em>“Report: Facial Emotion Recognition in Real-time”</em></a> Convolutional Neural Networks for Visual Recognition (CS231n), Stanford University.</li>
-</ol>
-<h2 id="Enjoy"><a href="#Enjoy" class="headerlink" title="Enjoy!"></a>Enjoy!</h2><p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
-<p>若发现以上文章有任何不妥，请联系我。</p>
-<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -2026,7 +2019,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">35</span>
+              <span class="site-state-item-count">37</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
