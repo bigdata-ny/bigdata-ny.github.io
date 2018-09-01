@@ -238,6 +238,153 @@
             
               
                 
+                <a class="post-title-link" href="/2018/09/01/ubuntu-install-pylucene/" itemprop="url">
+                  Ubuntu上安装PyLucene
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-09-01T20:35:06+08:00" content="2018-09-01">
+              2018-09-01
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>机器环境：Ubuntu 16.04，Java 1.8</p>
+<ol>
+<li>安装ANT：</li>
+</ol>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt install ant</div></pre></td></tr></table></figure>
+<ol>
+<li><p>下载<a href="http://mirrors.hust.edu.cn/apache/lucene/pylucene/pylucene-4.10.1-1-src.tar.gz" target="_blank" rel="external">pylucene-4.10.1-1</a>或者<a href="http://mirrors.hust.edu.cn/apache/lucene/pylucene/pylucene-6.5.0-src.tar.gz" target="_blank" rel="external">pylucene-6.5.0</a>包，并解压。</p>
+<blockquote>
+<p>注意，不要去pylucene的github仓库<a href="https://github.com/svn2github/pylucene下载，其中缺少部分文件。" target="_blank" rel="external">https://github.com/svn2github/pylucene下载，其中缺少部分文件。</a></p>
+<p>当执行make命令时会报错：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">&gt; make</div><div class="line">&gt; mkdir -p lucene-java-7.4.0</div><div class="line">&gt; tar -C ~/apache/lucene.git -cf - lucene | tar -C lucene-java-7.4.0 -xvf -</div><div class="line">&gt; tar: ~/apache/lucene.git: Cannot open: No such file or directory</div><div class="line">&gt; tar: Error is not recoverable: exiting now</div><div class="line">&gt; tar: This does not look like a tar archive</div><div class="line">&gt; tar: Exiting with failure status due to previous errors</div><div class="line">&gt; Makefile:191: recipe <span class="keyword">for</span> target <span class="string">'lucene-java-7.4.0'</span> failed</div><div class="line">&gt; make: *** [lucene-java-7.4.0] Error 2</div><div class="line">&gt;</div></pre></td></tr></table></figure>
+</blockquote>
+</li>
+<li><p><a href="http://lucene.apache.org/pylucene/jcc/install.html" target="_blank" rel="external">安装JCC</a>：</p>
+<ul>
+<li><p>pylucene-4.10.1-1</p>
+<p>进入jcc，修改setup.py：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">JDK = &#123;</div><div class="line">    <span class="string">'darwin'</span>: JAVAHOME or JAVAFRAMEWORKS,</div><div class="line">    <span class="string">'ipod'</span>: <span class="string">'/usr/include/gcc'</span>,</div><div class="line">    <span class="string">'linux2'</span>: <span class="string">'/usr/lib/jvm/java-8-oracle'</span>,</div><div class="line"><span class="comment">#    'linux2': '/usr/lib/jvm/java-7-openjdk-amd64',</span></div><div class="line">    <span class="string">'sunos5'</span>: <span class="string">'/usr/jdk/instances/jdk1.6.0'</span>,</div><div class="line">    <span class="string">'win32'</span>: JAVAHOME,</div><div class="line">    <span class="string">'mingw32'</span>: JAVAHOME,</div><div class="line">    <span class="string">'freebsd7'</span>: <span class="string">'/usr/local/diablo-jdk1.6.0'</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>执行下面的命令：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">sudo python setup.py build</div><div class="line">sudo python setup.py install</div></pre></td></tr></table></figure>
+<p>验证JCC安装成功：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">python -m jcc</div></pre></td></tr></table></figure>
+</li>
+<li><p>pylucene-6.5.0</p>
+<p>进入jcc文件夹，</p>
+<p>执行下面的命令：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">sudo python setup.py build</div><div class="line">sudo python setup.py install</div></pre></td></tr></table></figure>
+<p>验证JCC安装成功：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">python -m jcc</div></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li><p><a href="http://lucene.apache.org/pylucene/install.html" target="_blank" rel="external">安装pylucene</a>：</p>
+<p>根据系统环境修改Makefile文件：</p>
+<p><a href="http://mirrors.hust.edu.cn/apache/lucene/pylucene/pylucene-4.10.1-1-src.tar.gz" target="_blank" rel="external">pylucene-4.10.1-1</a></p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">PREFIX_PYTHON=/usr</div><div class="line"><span class="comment">#ANT=JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64 /usr/bin/ant</span></div><div class="line">ANT=JAVA_HOME=/usr/lib/jvm/java-8-oracle /usr/bin/ant</div><div class="line">PYTHON=$(PREFIX_PYTHON)/bin/python</div><div class="line">JCC=$(PYTHON) -m jcc --shared</div><div class="line">NUM_FILES=8</div></pre></td></tr></table></figure>
+<p><a href="http://mirrors.hust.edu.cn/apache/lucene/pylucene/pylucene-6.5.0-src.tar.gz" target="_blank" rel="external">pylucene-6.5.0</a></p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">PREFIX_PYTHON=/usr</div><div class="line">ANT=JAVA_HOME=/usr/lib/jvm/java-8-oracle /usr/bin/ant</div><div class="line">PYTHON=$(PREFIX_PYTHON)/bin/python</div><div class="line">JCC=$(PYTHON) -m jcc --shared</div><div class="line">NUM_FILES=8</div></pre></td></tr></table></figure>
+<p>执行下面的命令：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">make</div><div class="line">sudo make install</div></pre></td></tr></table></figure>
+<p>验证lucene安装成功：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">python -c <span class="string">"import lucene"</span></div></pre></td></tr></table></figure>
+</li>
+<li><p>遇到的问题</p>
+<p>执行make命令时报错：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">...</div><div class="line">BUILD SUCCESSFUL</div><div class="line">Total time: 12 seconds</div><div class="line">ICU not installed</div><div class="line">/opt/apache/pylucene/_install/bin/python -m jcc --shared --jar lucene-java-6.5.0/lucene/build/core/lucene-core-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/analysis/common/lucene-analyzers-common-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/memory/lucene-memory-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/highlighter/lucene-highlighter-6.5.0.jar --jar build/jar/extensions.jar --jar lucene-java-6.5.0/lucene/build/queries/lucene-queries-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/queryparser/lucene-queryparser-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/sandbox/lucene-sandbox-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/analysis/stempel/lucene-analyzers-stempel-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/grouping/lucene-grouping-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/join/lucene-join-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/facet/lucene-facet-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/suggest/lucene-suggest-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/expressions/lucene-expressions-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/analysis/kuromoji/lucene-analyzers-kuromoji-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/misc/lucene-misc-6.5.0.jar  --use_full_names --include lucene-java-6.5.0/lucene/expressions/lib/antlr4-runtime-4.5.1-1.jar --include lucene-java-6.5.0/lucene/expressions/lib/asm-5.1.jar --include lucene-java-6.5.0/lucene/expressions/lib/asm-commons-5.1.jar --package java.lang java.lang.System java.lang.Runtime --package java.util java.util.Arrays java.util.Collections java.util.HashMap java.util.HashSet java.util.TreeSet java.lang.IllegalStateException java.lang.IndexOutOfBoundsException java.util.NoSuchElementException java.text.SimpleDateFormat java.text.DecimalFormat java.text.Collator --package java.util.concurrent java.util.concurrent.Executors --package java.util.regex --package java.io java.io.StringReader --package java.nio.file java.nio.file.Path java.nio.file.Files java.nio.file.Paths --exclude org.apache.lucene.sandbox.queries.regex.JakartaRegexpCapabilities --exclude org.apache.regexp.RegexpTunnel --exclude org.apache.lucene.store.WindowsDirectory --exclude org.apache.lucene.store.NativePosixUtil --python lucene --mapping org.apache.lucene.document.Document <span class="string">'get:(Ljava/lang/String;)Ljava/lang/String;'</span> --mapping java.util.Properties <span class="string">'getProperty:(Ljava/lang/String;)Ljava/lang/String;'</span> --sequence java.util.AbstractList <span class="string">'size:()I'</span> <span class="string">'get:(I)Ljava/lang/Object;'</span> org.apache.lucene.index.IndexWriter:getReader org.apache.lucene.analysis.Tokenizer:input --version 6.5.0 --module python/collections.py --module python/ICUNormalizer2Filter.py --module python/ICUFoldingFilter.py --module python/ICUTransformFilter.py  --files 8 --build </div><div class="line">make: /opt/apache/pylucene/_install/bin/python: Command not found</div><div class="line">Makefile:340: recipe <span class="keyword">for</span> target <span class="string">'compile'</span> failed</div><div class="line">make: *** [compile] Error 127</div></pre></td></tr></table></figure>
+<p>原因是：Makefile文件中的“PREFIX_PYTHON”配置错误，</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">PREFIX_PYTHON=/opt/apache/pylucene/_install</div></pre></td></tr></table></figure>
+<p>解决办法：按上面的Makefile修改即可。</p>
+</li>
+</ol>
+<h2 id="Enjoy"><a href="#Enjoy" class="headerlink" title="Enjoy!"></a>Enjoy!</h2><p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
+<p>若发现以上文章有任何不妥，请联系我。</p>
+<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2018/09/01/deep-learning-with-python-chapter-6-6.2/" itemprop="url">
                   《Deep Learning with Python》第六章 6.2 理解循环神经网络（RNN）
                 </a>
@@ -361,158 +508,6 @@
 <li>如何使用Keras的RNN layer处理序列数据</li>
 </ul>
 <p>未完待续。。。</p>
-<p>Enjoy!</p>
-<blockquote>
-<p>翻译本书系列的初衷是，觉得其中把深度学习讲解的通俗易懂。不光有实例，也包含作者多年实践对深度学习概念、原理的深度理解。最后说不重要的一点，François Chollet是Keras作者。<br>声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。</p>
-</blockquote>
-<hr>
-<p>侠天，专注于大数据、机器学习和数学相关的内容，并有个人公众号：bigdata_ny分享相关技术文章。</p>
-<p>若发现以上文章有任何不妥，请联系我。</p>
-<p><img src="http://img1.ph.126.net/FQI2AsgiKe9OkxHv6LZ2JQ==/6631621919559857881.jpg" alt="image"></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/09/01/ubuntu-install-pylucene/" itemprop="url">
-                  Ubuntu上安装PyLucene
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-09-01T20:28:19+08:00" content="2018-09-01">
-              2018-09-01
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>机器环境：Ubuntu 16.04，Java 1.8</p>
-<ol>
-<li>安装ANT：</li>
-</ol>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt install ant</div></pre></td></tr></table></figure>
-<ol>
-<li><p>下载<a href="http://mirrors.hust.edu.cn/apache/lucene/pylucene/pylucene-4.10.1-1-src.tar.gz" target="_blank" rel="external">pylucene-4.10.1-1</a>或者<a href="http://mirrors.hust.edu.cn/apache/lucene/pylucene/pylucene-6.5.0-src.tar.gz" target="_blank" rel="external">pylucene-6.5.0</a>包，并解压。</p>
-<blockquote>
-<p>注意，不要去pylucene的github仓库<a href="https://github.com/svn2github/pylucene下载，其中缺少部分文件。" target="_blank" rel="external">https://github.com/svn2github/pylucene下载，其中缺少部分文件。</a></p>
-<p>当执行make命令时会报错：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">&gt; make</div><div class="line">&gt; mkdir -p lucene-java-7.4.0</div><div class="line">&gt; tar -C ~/apache/lucene.git -cf - lucene | tar -C lucene-java-7.4.0 -xvf -</div><div class="line">&gt; tar: ~/apache/lucene.git: Cannot open: No such file or directory</div><div class="line">&gt; tar: Error is not recoverable: exiting now</div><div class="line">&gt; tar: This does not look like a tar archive</div><div class="line">&gt; tar: Exiting with failure status due to previous errors</div><div class="line">&gt; Makefile:191: recipe <span class="keyword">for</span> target <span class="string">'lucene-java-7.4.0'</span> failed</div><div class="line">&gt; make: *** [lucene-java-7.4.0] Error 2</div><div class="line">&gt;</div></pre></td></tr></table></figure>
-</blockquote>
-</li>
-<li><p><a href="http://lucene.apache.org/pylucene/jcc/install.html" target="_blank" rel="external">安装JCC</a>：</p>
-<ul>
-<li><p>pylucene-4.10.1-1</p>
-<p>进入jcc，修改setup.py：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">JDK = &#123;</div><div class="line">    <span class="string">'darwin'</span>: JAVAHOME or JAVAFRAMEWORKS,</div><div class="line">    <span class="string">'ipod'</span>: <span class="string">'/usr/include/gcc'</span>,</div><div class="line">    <span class="string">'linux2'</span>: <span class="string">'/usr/lib/jvm/java-8-oracle'</span>,</div><div class="line"><span class="comment">#    'linux2': '/usr/lib/jvm/java-7-openjdk-amd64',</span></div><div class="line">    <span class="string">'sunos5'</span>: <span class="string">'/usr/jdk/instances/jdk1.6.0'</span>,</div><div class="line">    <span class="string">'win32'</span>: JAVAHOME,</div><div class="line">    <span class="string">'mingw32'</span>: JAVAHOME,</div><div class="line">    <span class="string">'freebsd7'</span>: <span class="string">'/usr/local/diablo-jdk1.6.0'</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>执行下面的命令：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">sudo python setup.py build</div><div class="line">sudo python setup.py install</div></pre></td></tr></table></figure>
-<p>验证JCC安装成功：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">python -m jcc</div></pre></td></tr></table></figure>
-</li>
-<li><p>pylucene-6.5.0</p>
-<p>进入jcc文件夹，</p>
-<p>执行下面的命令：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">sudo python setup.py build</div><div class="line">sudo python setup.py install</div></pre></td></tr></table></figure>
-<p>验证JCC安装成功：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">python -m jcc</div></pre></td></tr></table></figure>
-</li>
-</ul>
-</li>
-<li><p><a href="http://lucene.apache.org/pylucene/install.html" target="_blank" rel="external">安装pylucene</a>：</p>
-<p>根据系统环境修改Makefile文件：</p>
-<p><a href="http://mirrors.hust.edu.cn/apache/lucene/pylucene/pylucene-4.10.1-1-src.tar.gz" target="_blank" rel="external">pylucene-4.10.1-1</a></p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">PREFIX_PYTHON=/usr</div><div class="line"><span class="comment">#ANT=JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64 /usr/bin/ant</span></div><div class="line">ANT=JAVA_HOME=/usr/lib/jvm/java-8-oracle /usr/bin/ant</div><div class="line">PYTHON=$(PREFIX_PYTHON)/bin/python</div><div class="line">JCC=$(PYTHON) -m jcc --shared</div><div class="line">NUM_FILES=8</div></pre></td></tr></table></figure>
-<p><a href="http://mirrors.hust.edu.cn/apache/lucene/pylucene/pylucene-6.5.0-src.tar.gz" target="_blank" rel="external">pylucene-6.5.0</a></p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">PREFIX_PYTHON=/usr</div><div class="line">ANT=JAVA_HOME=/usr/lib/jvm/java-8-oracle /usr/bin/ant</div><div class="line">PYTHON=$(PREFIX_PYTHON)/bin/python</div><div class="line">JCC=$(PYTHON) -m jcc --shared</div><div class="line">NUM_FILES=8</div></pre></td></tr></table></figure>
-<p>执行下面的命令：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">make</div><div class="line">sudo make install</div></pre></td></tr></table></figure>
-<p>验证lucene安装成功：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">python -c <span class="string">"import lucene"</span></div></pre></td></tr></table></figure>
-</li>
-<li><p>遇到的问题</p>
-<p>执行make命令时报错：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">...</div><div class="line">BUILD SUCCESSFUL</div><div class="line">Total time: 12 seconds</div><div class="line">ICU not installed</div><div class="line">/opt/apache/pylucene/_install/bin/python -m jcc --shared --jar lucene-java-6.5.0/lucene/build/core/lucene-core-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/analysis/common/lucene-analyzers-common-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/memory/lucene-memory-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/highlighter/lucene-highlighter-6.5.0.jar --jar build/jar/extensions.jar --jar lucene-java-6.5.0/lucene/build/queries/lucene-queries-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/queryparser/lucene-queryparser-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/sandbox/lucene-sandbox-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/analysis/stempel/lucene-analyzers-stempel-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/grouping/lucene-grouping-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/join/lucene-join-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/facet/lucene-facet-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/suggest/lucene-suggest-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/expressions/lucene-expressions-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/analysis/kuromoji/lucene-analyzers-kuromoji-6.5.0.jar --jar lucene-java-6.5.0/lucene/build/misc/lucene-misc-6.5.0.jar  --use_full_names --include lucene-java-6.5.0/lucene/expressions/lib/antlr4-runtime-4.5.1-1.jar --include lucene-java-6.5.0/lucene/expressions/lib/asm-5.1.jar --include lucene-java-6.5.0/lucene/expressions/lib/asm-commons-5.1.jar --package java.lang java.lang.System java.lang.Runtime --package java.util java.util.Arrays java.util.Collections java.util.HashMap java.util.HashSet java.util.TreeSet java.lang.IllegalStateException java.lang.IndexOutOfBoundsException java.util.NoSuchElementException java.text.SimpleDateFormat java.text.DecimalFormat java.text.Collator --package java.util.concurrent java.util.concurrent.Executors --package java.util.regex --package java.io java.io.StringReader --package java.nio.file java.nio.file.Path java.nio.file.Files java.nio.file.Paths --exclude org.apache.lucene.sandbox.queries.regex.JakartaRegexpCapabilities --exclude org.apache.regexp.RegexpTunnel --exclude org.apache.lucene.store.WindowsDirectory --exclude org.apache.lucene.store.NativePosixUtil --python lucene --mapping org.apache.lucene.document.Document <span class="string">'get:(Ljava/lang/String;)Ljava/lang/String;'</span> --mapping java.util.Properties <span class="string">'getProperty:(Ljava/lang/String;)Ljava/lang/String;'</span> --sequence java.util.AbstractList <span class="string">'size:()I'</span> <span class="string">'get:(I)Ljava/lang/Object;'</span> org.apache.lucene.index.IndexWriter:getReader org.apache.lucene.analysis.Tokenizer:input --version 6.5.0 --module python/collections.py --module python/ICUNormalizer2Filter.py --module python/ICUFoldingFilter.py --module python/ICUTransformFilter.py  --files 8 --build </div><div class="line">make: /opt/apache/pylucene/_install/bin/python: Command not found</div><div class="line">Makefile:340: recipe <span class="keyword">for</span> target <span class="string">'compile'</span> failed</div><div class="line">make: *** [compile] Error 127</div></pre></td></tr></table></figure>
-<p>原因是：Makefile文件中的“PREFIX_PYTHON”配置错误，</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">PREFIX_PYTHON=/opt/apache/pylucene/_install</div></pre></td></tr></table></figure>
-<p>解决办法：按上面的Makefile修改即可。</p>
-</li>
-</ol>
 <p>Enjoy!</p>
 <blockquote>
 <p>翻译本书系列的初衷是，觉得其中把深度学习讲解的通俗易懂。不光有实例，也包含作者多年实践对深度学习概念、原理的深度理解。最后说不重要的一点，François Chollet是Keras作者。<br>声明本资料仅供个人学习交流、研究，禁止用于其他目的。如果喜欢，请购买英文原版。</p>
